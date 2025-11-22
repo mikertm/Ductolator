@@ -29,6 +29,8 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
@@ -76,6 +78,40 @@
                             <StackPanel Grid.Row="2" Grid.Column="3" Margin="4" Orientation="Vertical">
                                 <TextBlock Text="ΣK (fittings loss coefficient)" />
                                 <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless)" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Supply Static (in. w.g.)" />
+                                <TextBox Name="InSupplyStatic" ToolTip="Design supply fan static pressure in inches of water" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Return/Exhaust Static (in. w.g.)" />
+                                <TextBox Name="InReturnStatic" ToolTip="Return or exhaust static pressure in inches of water" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Leakage Class (cfm/100ft² @1in)" />
+                                <TextBox Name="InLeakageClass" ToolTip="SMACNA leakage class (3, 6, 12, 24). Default 6" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="3" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Leak Test Pressure (in. w.g.)" />
+                                <TextBox Name="InLeakTestPressure" ToolTip="Test pressure for leakage calc; often design static" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Fan Efficiency (0-1)" />
+                                <TextBox Name="InFanEff" ToolTip="Total-to-static fan efficiency as a decimal (e.g., 0.65)" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Ambient Temp (°F)" />
+                                <TextBox Name="InAmbientTemp" ToolTip="Surrounding ambient temperature for heat gain/loss" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Max Allowable ΔT (°F)" />
+                                <TextBox Name="InMaxDeltaT" ToolTip="Allowed supply temperature drop across the run" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Existing Insulation R" />
+                                <TextBox Name="InExistingInsulR" ToolTip="Installed insulation R (hr·ft²·°F/Btu) if known" />
                             </StackPanel>
                         </Grid>
 
@@ -139,6 +175,46 @@
                             <StackPanel Margin="4">
                                 <TextBlock Text="Total ΔP (in. w.g.)" />
                                 <TextBox Name="OutTotalDp" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Pressure Class / Leakage / Fan" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Pressure Class (in. w.g.)" />
+                                <TextBox Name="OutPressureClass" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Leakage (cfm)" />
+                                <TextBox Name="OutLeakage" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Fan BHP" />
+                                <TextBox Name="OutFanBhp" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Velocity Pressure (in. w.g.)" />
+                                <TextBox Name="OutVpEcho" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Heat Gain/Loss & Insulation" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Heat Transfer (Btuh)" />
+                                <TextBox Name="OutHeatTransfer" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Supply ΔT (°F)" />
+                                <TextBox Name="OutDeltaT" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Needed Insul R" />
+                                <TextBox Name="OutRequiredR" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Est. Thickness (in)" />
+                                <TextBox Name="OutInsulThk" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
 
@@ -451,6 +527,104 @@
                             </StackPanel>
                         </UniformGrid>
                         <TextBlock Name="GasNote" Margin="4,0" TextWrapping="Wrap" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="DHW Recirculation" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Loop Volume (gal)" />
+                                <TextBox Name="RecircVolumeInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Turnover (min)" />
+                                <TextBox Name="RecircTurnoverInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Heat Loss (Btuh)" />
+                                <TextBox Name="RecircHeatLossInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Allowed ΔT (°F)" />
+                                <TextBox Name="RecircDeltaTInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Recirc Dia (in)" />
+                                <TextBox Name="RecircDiaInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="C-factor" />
+                                <TextBox Name="RecircCInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Run Length (ft)" />
+                                <TextBox Name="RecircLengthInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Fitting Eq. Length (ft)" />
+                                <TextBox Name="RecircEqLengthInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Calc Recirc" Width="140" Click="BtnRecircCalc_Click" />
+                        </StackPanel>
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Recirc Flow (gpm)" />
+                                <TextBox Name="RecircFlowOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Recirc Head (ft)" />
+                                <TextBox Name="RecircHeadOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Recirc Head (psi)" />
+                                <TextBox Name="RecircHeadPsiOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Name="RecircNote" Margin="4,0" TextWrapping="Wrap" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Water Hammer Check" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Line Velocity (ft/s)" />
+                                <TextBox Name="HammerVelocityInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Line Length (ft)" />
+                                <TextBox Name="HammerLengthInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Closure Time (s)" />
+                                <TextBox Name="HammerClosureInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Static Pressure (psi)" />
+                                <TextBox Name="HammerStaticInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Check Hammer" Width="140" Click="BtnHammerCalc_Click" />
+                        </StackPanel>
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Wave Speed (ft/s)" />
+                                <TextBox Name="HammerWaveSpeedOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Surge (psi)" />
+                                <TextBox Name="HammerSurgeOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Total Pressure (psi)" />
+                                <TextBox Name="HammerTotalOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Name="HammerNote" Margin="4,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

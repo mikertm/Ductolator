@@ -24,3 +24,10 @@ Core duct sizing ASHRAE compliant engineering tool.
   drainage (rainfall intensity + Manning full-pipe solver), and low-pressure gas
   sizing helpers aligned with IPC/UPC/IFGC/NFPA practice so plumbers can size
   domestic, storm, and gas services alongside ducts.
+- SMACNA pressure-class selection, leakage estimation, and fan brake horsepower
+  outputs to pair friction sizing with casing and fan checks.
+- Duct heat-gain/loss helper with insulation guidance so supply temperature drops
+  can be bounded by target ΔT over known surface areas and lengths.
+- Domestic hot-water recirculation flow/head calculator (volume-turnover or
+  heat-loss driven) and water-hammer surge checker with material-specific wave
+  speeds to flag transient overpressure against common pipe ratings.

@@ -18,6 +18,7 @@ namespace RTM.Ductolator.Models
         private const double InPerFt = 12.0;
         private const double FtPer100Ft = 100.0;
         private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
+        private const double BtuhPerGpmDeltaTF = 500.0; // water, 60 °F
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
         private const double WaterNu60F_Ft2PerS = 1.13e-5;
@@ -53,6 +54,17 @@ namespace RTM.Ductolator.Models
             { PipeMaterial.PvcSchedule40, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
             { PipeMaterial.CpvcSchedule80, new MaterialHydraulics(0.000005, 150, 140, 8.0, 8.0) },
             { PipeMaterial.PexTubing, new MaterialHydraulics(0.0001, 150, 140, 8.0, 5.0) }
+        };
+
+        private static readonly Dictionary<PipeMaterial, double> WaveSpeed_FtPerS = new()
+        {
+            { PipeMaterial.CopperTypeK, 4000 },
+            { PipeMaterial.CopperTypeL, 4000 },
+            { PipeMaterial.CopperTypeM, 4000 },
+            { PipeMaterial.SteelSchedule40, 4000 },
+            { PipeMaterial.PvcSchedule40, 1400 },
+            { PipeMaterial.CpvcSchedule80, 1500 },
+            { PipeMaterial.PexTubing, 1500 }
         };
 
         /// <summary>
@@ -749,6 +761,59 @@ namespace RTM.Ductolator.Models
             double flowCfs = flowScfh / 3600.0;
             double area = Area_Round_Ft2(diameterIn);
             return area > 0 ? flowCfs / area : 0;
+        }
+
+        // === Domestic hot-water recirculation ===
+
+        public static double RecirculationFlowFromVolume(double loopVolumeGallons, double turnoverMinutes)
+        {
+            if (loopVolumeGallons <= 0 || turnoverMinutes <= 0) return 0;
+            return loopVolumeGallons / turnoverMinutes;
+        }
+
+        public static double RecirculationFlowFromHeatLoss(double totalHeatLossBtuh, double allowableDeltaTF)
+        {
+            if (totalHeatLossBtuh <= 0 || allowableDeltaTF <= 0) return 0;
+            return totalHeatLossBtuh / (BtuhPerGpmDeltaTF * allowableDeltaTF);
+        }
+
+        public static double RecirculationHeadFt(double gpm, double diameterIn, double cFactor, double straightLengthFt, double fittingEquivalentLengthFt)
+        {
+            double totalLength = Math.Max(0, straightLengthFt) + Math.Max(0, fittingEquivalentLengthFt);
+            double psi = HazenWilliamsPsi(gpm, diameterIn, cFactor, totalLength);
+            return psi / PsiPerFtHead;
+        }
+
+        // === Water hammer ===
+
+        public static double GetWaveSpeedFps(PipeMaterial material)
+        {
+            return WaveSpeed_FtPerS.TryGetValue(material, out double a) ? a : 4000.0;
+        }
+
+        public static double SurgePressurePsi(double velocityChangeFps, PipeMaterial material)
+        {
+            if (velocityChangeFps <= 0) return 0;
+
+            double a = GetWaveSpeedFps(material);
+            double densitySlugPerFt3 = WaterDensity_LbmPerFt3 / LbmPerSlug;
+            double deltaPLbPerFt2 = densitySlugPerFt3 * a * velocityChangeFps;
+            return deltaPLbPerFt2 / 144.0;
+        }
+
+        public static double SurgePressureWithClosure(double flowVelocityFps, double pipeLengthFt, double closureTimeSeconds, PipeMaterial material)
+        {
+            if (flowVelocityFps <= 0) return 0;
+
+            double a = GetWaveSpeedFps(material);
+            if (closureTimeSeconds > 0 && pipeLengthFt > 0)
+            {
+                double wavePeriod = 2.0 * pipeLengthFt / a;
+                double scaling = Math.Min(1.0, wavePeriod / closureTimeSeconds);
+                return SurgePressurePsi(flowVelocityFps * scaling, material);
+            }
+
+            return SurgePressurePsi(flowVelocityFps, material);
         }
     }
 }

@@ -29,10 +29,15 @@ namespace RTM.Ductolator.Models
         private const double InPerFt = 12.0;
         private const double FtPer100Ft = 100.0;
         private const double Pi = Math.PI;
+        private const double CpAir_BtuPerLbmF = 0.24;
 
         // 1 in. water column ≈ 5.20233 lb/ft^2 (62.42796 lb/ft^3 / 12 in/ft)
         private const double LbPerFt2_Per_InWG = 5.20233;
         private const double PsiPerInWg = 0.0360912;
+
+        private const double InteriorFilmR_HrFt2FPerBtu = 0.61; // supply, forced convection
+        private const double ExteriorFilmR_HrFt2FPerBtu = 0.17; // still air
+        private const double FiberglassRPerIn_HrFt2FPerBtu = 4.2; // typical duct wrap
 
         /// <summary>
         /// Compute air properties at a given dry-bulb temperature (°F) and altitude (ft).
@@ -407,6 +412,99 @@ namespace RTM.Ductolator.Models
             double vp = VelocityPressure_InWG(velocityFpm, air);
             double fittingDrop = sumLossCoefficients * vp;
             return frictionDrop + fittingDrop;
+        }
+
+        // === Leakage, pressure class, fan power ===
+
+        public static double SelectSmacnaPressureClass(double designStaticInWg)
+        {
+            double[] classes = { 0.5, 1, 2, 3, 4, 6, 8, 10 };
+            if (designStaticInWg <= 0)
+                return classes[0];
+
+            foreach (double pc in classes)
+            {
+                if (designStaticInWg <= pc)
+                    return pc;
+            }
+
+            return classes[^1];
+        }
+
+        public static double LeakageCfm(double leakageClass, double testPressureInWg, double surfaceAreaFt2)
+        {
+            if (leakageClass <= 0 || testPressureInWg <= 0 || surfaceAreaFt2 <= 0)
+                return 0;
+
+            // SMACNA leakage relation: Q = CL * (P^0.65) * (A/100)
+            return leakageClass * Math.Pow(testPressureInWg, 0.65) * (surfaceAreaFt2 / 100.0);
+        }
+
+        public static double FanBrakeHorsepower(double cfm, double totalPressureInWg, double fanEfficiency)
+        {
+            if (cfm <= 0 || totalPressureInWg <= 0 || fanEfficiency <= 0)
+                return 0;
+
+            return (cfm * totalPressureInWg) / (6356.0 * fanEfficiency);
+        }
+
+        public static double SurfaceAreaFromPerimeter(double perimeterFt, double lengthFt)
+        {
+            if (perimeterFt <= 0 || lengthFt <= 0) return 0;
+            return perimeterFt * lengthFt;
+        }
+
+        // === Heat gain/loss and insulation guidance ===
+
+        public static double HeatTransfer_Btuh(double uValue_BtuPerHrFt2F,
+                                               double surfaceAreaFt2,
+                                               double deltaTAmbientF)
+        {
+            if (uValue_BtuPerHrFt2F <= 0 || surfaceAreaFt2 <= 0 || deltaTAmbientF == 0)
+                return 0;
+
+            return uValue_BtuPerHrFt2F * surfaceAreaFt2 * Math.Abs(deltaTAmbientF);
+        }
+
+        public static double AirTemperatureChangeFromHeat(double heatBtuh, double cfm, AirProperties? airProps = null)
+        {
+            if (heatBtuh == 0 || cfm <= 0) return 0;
+
+            AirProperties air = airProps ?? AirProperties.Standard;
+            double massFlowLbmPerHr = cfm * air.DensityLbmPerFt3 * 60.0;
+            if (massFlowLbmPerHr <= 0) return 0;
+
+            return heatBtuh / (massFlowLbmPerHr * CpAir_BtuPerLbmF);
+        }
+
+        public static double RequiredInsulationR(double allowedDeltaTF,
+                                                 double surfaceAreaFt2,
+                                                 double ambientDeltaTF,
+                                                 double cfm,
+                                                 AirProperties? airProps = null)
+        {
+            if (allowedDeltaTF <= 0 || surfaceAreaFt2 <= 0 || ambientDeltaTF == 0 || cfm <= 0)
+                return 0;
+
+            AirProperties air = airProps ?? AirProperties.Standard;
+            double massFlowLbmPerHr = cfm * air.DensityLbmPerFt3 * 60.0;
+            double allowableHeat = massFlowLbmPerHr * CpAir_BtuPerLbmF * Math.Abs(allowedDeltaTF);
+            double requiredU = allowableHeat / (surfaceAreaFt2 * Math.Abs(ambientDeltaTF));
+            if (requiredU <= 0) return 0;
+
+            double requiredTotalR = 1.0 / requiredU;
+            double availableFilmR = InteriorFilmR_HrFt2FPerBtu + ExteriorFilmR_HrFt2FPerBtu;
+            double requiredInsulationR = Math.Max(0, requiredTotalR - availableFilmR);
+
+            return requiredInsulationR;
+        }
+
+        public static double InsulationThicknessInFromR(double insulationR_HrFt2FPerBtu)
+        {
+            if (insulationR_HrFt2FPerBtu <= 0)
+                return 0;
+
+            return insulationR_HrFt2FPerBtu / FiberglassRPerIn_HrFt2FPerBtu;
         }
 
         /// <summary>
