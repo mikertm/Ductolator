@@ -86,6 +86,12 @@ namespace RTM.Ductolator
             {
                 InCfm, InDp100, InVel, InDia, InS1, InS2, InAR,
                 InAirTemp, InAltitude, InLength, InLossCoeff,
+                InSupplyStatic, InReturnStatic, InLeakageClass, InLeakTestPressure,
+                InFanEff, InAmbientTemp, InMaxDeltaT, InExistingInsulR,
+                OutRe, OutF, OutCfm, OutVel, OutDp100, OutVp, OutVpEcho, OutTotalDp,
+                OutPressureClass, OutLeakage, OutFanBhp,
+                OutHeatTransfer, OutDeltaT, OutRequiredR, OutInsulThk,
+                OutAirDensity, OutAirNu,
                 OutRe, OutF, OutCfm, OutVel, OutDp100, OutVp, OutTotalDp,
                 OutAirDensity, OutAirNu,
                 OutRe, OutF, OutCfm, OutVel, OutDp100,
@@ -118,10 +124,22 @@ namespace RTM.Ductolator
             double altitudeFt = string.IsNullOrWhiteSpace(InAltitude?.Text) ? 0.0 : ParseBox(InAltitude);
             double straightLengthFt = string.IsNullOrWhiteSpace(InLength?.Text) ? 100.0 : ParseBox(InLength);
             double sumLossCoeff = ParseBox(InLossCoeff);
+            double supplyStatic = ParseBox(InSupplyStatic);
+            double returnStatic = ParseBox(InReturnStatic);
+            double leakageClass = ParseBox(InLeakageClass);
+            double leakTestPressure = ParseBox(InLeakTestPressure);
+            double fanEfficiency = ParseBox(InFanEff);
+            double ambientTempF = string.IsNullOrWhiteSpace(InAmbientTemp?.Text) ? 75.0 : ParseBox(InAmbientTemp);
+            double maxDeltaTF = ParseBox(InMaxDeltaT);
+            double existingInsulR = ParseBox(InExistingInsulR);
 
             var air = DuctCalculator.AirAt(airTempF, altitudeFt);
 
             var ductProfile = CodeGuidance.GetDuctProfile(SelectedDuctRegionKey());
+
+            if (leakageClass <= 0) leakageClass = 6.0;
+            if (leakTestPressure <= 0) leakTestPressure = Math.Max(1.0, Math.Max(supplyStatic, returnStatic));
+            if (fanEfficiency <= 0) fanEfficiency = 0.65;
 
             if (DuctStatusNote != null)
                 DuctStatusNote.Text = string.Empty;
@@ -324,12 +342,14 @@ namespace RTM.Ductolator
 
             // === Air data (Re, f, dP/100ft) ===
             double reRaw = DuctCalculator.Reynolds(usedVelFpm, dhIn, air);
+            double f = DuctCalculator.FrictionFactor(reRaw, dhIn);
             double reForFriction = reRaw < 2300 && reRaw > 0 ? 2300 : reRaw;
             double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
             double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, straightLengthFt, sumLossCoeff, usedVelFpm, air);
 
+            SetBox(OutRe, reRaw, "0");
             SetBox(OutRe, reForFriction, "0");
             double re = DuctCalculator.Reynolds(usedVelFpm, dhIn);
             double f = DuctCalculator.FrictionFactor(re, dhIn);
@@ -341,9 +361,37 @@ namespace RTM.Ductolator
             SetBox(OutVel, usedVelFpm, "0.00");
             SetBox(OutDp100, dpPer100, "0.0000");
             SetBox(OutVp, vp, "0.0000");
+            SetBox(OutVpEcho, vp, "0.0000");
             SetBox(OutTotalDp, totalDp, "0.0000");
             SetBox(OutAirDensity, air.DensityLbmPerFt3, "0.0000");
             SetBox(OutAirNu, air.KinematicViscosityFt2PerS, "0.000000");
+
+            double pressureClass = DuctCalculator.SelectSmacnaPressureClass(Math.Max(supplyStatic, returnStatic));
+            double ductSurfaceArea = DuctCalculator.SurfaceAreaFromPerimeter(perimFt, straightLengthFt);
+            double leakageCfm = DuctCalculator.LeakageCfm(leakageClass, leakTestPressure, ductSurfaceArea);
+            double fanBhp = DuctCalculator.FanBrakeHorsepower(cfm, totalDp, fanEfficiency);
+
+            double supplyToAmbientDelta = airTempF - ambientTempF;
+            double interiorFilmR = 0.61;
+            double exteriorFilmR = 0.17;
+            double uValue = existingInsulR > 0
+                ? 1.0 / (existingInsulR + interiorFilmR + exteriorFilmR)
+                : 1.0 / (interiorFilmR + exteriorFilmR);
+
+            double heatTransfer = DuctCalculator.HeatTransfer_Btuh(uValue, ductSurfaceArea, supplyToAmbientDelta);
+            double deltaTAir = DuctCalculator.AirTemperatureChangeFromHeat(heatTransfer, cfm, air);
+            double requiredR = (maxDeltaTF > 0 && Math.Abs(supplyToAmbientDelta) > 0 && ductSurfaceArea > 0 && cfm > 0)
+                ? DuctCalculator.RequiredInsulationR(maxDeltaTF, ductSurfaceArea, supplyToAmbientDelta, cfm, air)
+                : 0;
+            double insulThickness = DuctCalculator.InsulationThicknessInFromR(requiredR);
+
+            SetBox(OutPressureClass, pressureClass, "0.0#");
+            SetBox(OutLeakage, leakageCfm, "0.##");
+            SetBox(OutFanBhp, fanBhp, "0.00");
+            SetBox(OutHeatTransfer, heatTransfer, "0");
+            SetBox(OutDeltaT, deltaTAir, "0.00");
+            SetBox(OutRequiredR, requiredR, "0.00");
+            SetBox(OutInsulThk, insulThickness, "0.00");
 
             if (DuctCodeNote != null)
             {
@@ -377,6 +425,32 @@ namespace RTM.Ductolator
                 else
                     velocityStatus = "Velocity is within regional supply-main guidance.";
 
+                string regimeStatus;
+                if (reRaw < 2300 && reRaw > 0)
+                {
+                    regimeStatus = "Laminar regime; ASHRAE charts assume turbulent flow—verify viscous losses separately.";
+                }
+                else if (reRaw < 4000)
+                {
+                    regimeStatus = "Transitional regime; pressure drops may deviate from chart values.";
+                }
+                else
+                {
+                    regimeStatus = "Turbulent regime consistent with ASHRAE/SMACNA friction charts.";
+                }
+
+                string totalStatus = totalDp > 0.0
+                    ? $"Total drop (friction + fittings) over {straightLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
+
+                string pressureStatus = pressureClass > 0
+                    ? $"Pressure class {pressureClass:0.0} in. w.g.; leakage class {leakageClass:0.#} ≈ {leakageCfm:0.#} cfm over {straightLengthFt:0.#} ft."
+                    : string.Empty;
+
+                string fanStatus = fanBhp > 0
+                    ? $"Fan bhp at {fanEfficiency:0.00} eff: {fanBhp:0.00} bhp."
+                    : string.Empty;
+
+                DuctStatusNote.Text = string.Join(" ", new[] { velocityStatus, frictionStatus, regimeStatus, totalStatus, pressureStatus, fanStatus }.Where(s => !string.IsNullOrWhiteSpace(s)));
                 string totalStatus = totalDp > 0.0
                     ? $"Total drop (friction + fittings) over {straightLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
 
@@ -627,6 +701,99 @@ namespace RTM.Ductolator
             }
         }
 
+        private void BtnRecircCalc_Click(object sender, RoutedEventArgs e)
+        {
+            var material = SelectedMaterial();
+            if (material == null)
+            {
+                MessageBox.Show("Select a pipe material for recirculation calculations.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var matData = PlumbingCalculator.GetMaterialData(material.Value);
+
+            double volumeGal = ParseBox(RecircVolumeInput);
+            double turnoverMin = ParseBox(RecircTurnoverInput);
+            double heatLossBtuh = ParseBox(RecircHeatLossInput);
+            double allowableDeltaT = ParseBox(RecircDeltaTInput);
+            double recircDia = ParseBox(RecircDiaInput);
+            double recircC = ParseBox(RecircCInput);
+            double lengthFt = ParseBox(RecircLengthInput);
+            double eqLengthFt = ParseBox(RecircEqLengthInput);
+
+            if (recircC <= 0) recircC = matData.C_New;
+
+            double gpmVol = PlumbingCalculator.RecirculationFlowFromVolume(volumeGal, turnoverMin);
+            double gpmHeat = PlumbingCalculator.RecirculationFlowFromHeatLoss(heatLossBtuh, allowableDeltaT);
+            double recircGpm = Math.Max(gpmVol, gpmHeat);
+            if (recircGpm <= 0)
+                recircGpm = gpmVol > 0 ? gpmVol : gpmHeat;
+
+            if (recircDia <= 0)
+            {
+                MessageBox.Show("Enter a recirculation pipe diameter.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            double headFt = recircGpm > 0 ? PlumbingCalculator.RecirculationHeadFt(recircGpm, recircDia, recircC, lengthFt, eqLengthFt) : 0;
+            double headPsi = headFt * 0.4335275;
+
+            SetBox(RecircFlowOutput, recircGpm, "0.00");
+            SetBox(RecircHeadOutput, headFt, "0.00");
+            SetBox(RecircHeadPsiOutput, headPsi, "0.000");
+
+            if (RecircNote != null)
+            {
+                string basis = gpmVol > 0 && gpmHeat > 0
+                    ? "Flow is the max of volume turnover and heat-loss criteria."
+                    : gpmHeat > 0
+                        ? "Flow based on heat-loss ΔT criterion."
+                        : "Flow based on volume turnover criterion.";
+
+                RecircNote.Text = basis + " Head via Hazen-Williams with fitting equivalent length.";
+            }
+        }
+
+        private void BtnHammerCalc_Click(object sender, RoutedEventArgs e)
+        {
+            var material = SelectedMaterial();
+            if (material == null)
+            {
+                MessageBox.Show("Select a pipe material to evaluate water hammer.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            double velocityFps = ParseBox(HammerVelocityInput);
+            double lengthFt = ParseBox(HammerLengthInput);
+            double closureS = ParseBox(HammerClosureInput);
+            double staticPsi = ParseBox(HammerStaticInput);
+
+            if (velocityFps <= 0)
+            {
+                MessageBox.Show("Enter the flowing line velocity (ft/s).", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material.Value);
+            double surgePsi = PlumbingCalculator.SurgePressureWithClosure(velocityFps, lengthFt, closureS, material.Value);
+            double totalPsi = staticPsi > 0 ? staticPsi + surgePsi : surgePsi;
+
+            SetBox(HammerWaveSpeedOutput, waveSpeed, "0");
+            SetBox(HammerSurgeOutput, surgePsi, "0.00");
+            SetBox(HammerTotalOutput, totalPsi, "0.00");
+
+            if (HammerNote != null)
+            {
+                string caution = totalPsi > 150
+                    ? "Total pressure exceeds 150 psi—verify pipe ratings and add arrestors."
+                    : "Compare total pressure to pipe/valve ratings; add arrestors if near limits.";
+                string closureNote = closureS > 0 && lengthFt > 0
+                    ? "Closure-time scaling applied when slower than wave travel."
+                    : "Instantaneous closure assumed.";
+                HammerNote.Text = string.Join(" ", new[] { closureNote, caution });
+            }
+        }
+
         private static double FindNearestNominal(PlumbingCalculator.PipeMaterial material, double requiredIdIn)
         {
             if (requiredIdIn <= 0) return 0;
@@ -651,6 +818,12 @@ namespace RTM.Ductolator
                 StormAreaInput, StormRainfallInput, StormSlopeInput, StormRoughnessInput,
                 StormFlowOutput, StormDiameterOutput,
                 GasLoadInput, GasLengthInput, GasPressureDropInput, GasSpecificGravityInput,
+                GasBasePressureInput, GasDiameterOutput, GasFlowOutput, GasVelocityOutput,
+                RecircVolumeInput, RecircTurnoverInput, RecircHeatLossInput, RecircDeltaTInput,
+                RecircDiaInput, RecircCInput, RecircLengthInput, RecircEqLengthInput,
+                RecircFlowOutput, RecircHeadOutput, RecircHeadPsiOutput,
+                HammerVelocityInput, HammerLengthInput, HammerClosureInput, HammerStaticInput,
+                HammerWaveSpeedOutput, HammerSurgeOutput, HammerTotalOutput
                 GasBasePressureInput, GasDiameterOutput, GasFlowOutput, GasVelocityOutput
             })
             {
@@ -674,6 +847,12 @@ namespace RTM.Ductolator
 
             if (GasNote != null)
                 GasNote.Text = string.Empty;
+
+            if (RecircNote != null)
+                RecircNote.Text = string.Empty;
+
+            if (HammerNote != null)
+                HammerNote.Text = string.Empty;
 
             if (PlUseAgedC != null)
                 PlUseAgedC.IsChecked = false;
