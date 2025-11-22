@@ -1,0 +1,459 @@
+<Window x:Class="RTM.Ductolator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ductolator & Plumbing Sizer" Height="720" Width="1100"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="ASHRAE/SMACNA duct sizing and ASPE/UPC plumbing calculations"
+                   FontSize="16" FontWeight="Bold"/>
+
+        <TabControl Grid.Row="1" Margin="0,12,0,0">
+            <TabItem Header="Duct Sizing">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8" Orientation="Vertical">
+                        <TextBlock Text="Inputs" FontWeight="Bold" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Flow (CFM)" />
+                                <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Velocity (FPM)" />
+                                <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Friction (in. w.g. / 100 ft)" />
+                                <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Aspect Ratio (long/short)" />
+                                <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Round Diameter (in)" />
+                                <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Rect Side 1 (in)" />
+                                <TextBox Name="InS1" ToolTip="Long side in inches" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Rect Side 2 (in)" />
+                                <TextBox Name="InS2" ToolTip="Short side in inches" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Air Temp (°F)" />
+                                <TextBox Name="InAirTemp" ToolTip="Dry-bulb air temperature in °F; used for density/viscosity" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Altitude (ft)" />
+                                <TextBox Name="InAltitude" ToolTip="Site elevation above sea level in feet" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="Straight Length (ft)" />
+                                <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                <TextBlock Text="ΣK (fittings loss coefficient)" />
+                                <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless)" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
+                            <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ComboBox Name="DuctRegionCombo" Width="260" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" />
+                            <Button Name="BtnClear" Content="Clear" Width="80" Click="BtnClear_Click" />
+                        </StackPanel>
+
+                        <Border Margin="4,0,4,4" Padding="8" Background="#f0f4ff" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Input tips" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and ΣK add fittings to total pressure." />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Name="DuctCodeNote" Margin="4,0" TextWrapping="Wrap" />
+                        <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="DarkRed" />
+
+                        <TextBlock Text="Air Data" FontWeight="Bold" />
+                        <UniformGrid Columns="3" Rows="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Reynolds Number" />
+                                <TextBox Name="OutRe" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Darcy f" />
+                                <TextBox Name="OutF" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="dP / 100 ft (in. w.g.)" />
+                                <TextBox Name="OutDp100" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Calculated Flow (CFM)" />
+                                <TextBox Name="OutCfm" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Calculated Velocity (FPM)" />
+                                <TextBox Name="OutVel" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Velocity Pressure (in. w.g.)" />
+                                <TextBox Name="OutVp" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Air Density (lb/ft³)" />
+                                <TextBox Name="OutAirDensity" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Kinematic ν (ft²/s)" />
+                                <TextBox Name="OutAirNu" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Total ΔP (in. w.g.)" />
+                                <TextBox Name="OutTotalDp" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Round Geometry" FontWeight="Bold" />
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Round Dia (in)" />
+                                <TextBox Name="OutDia" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Area (ft²)" />
+                                <TextBox Name="OutAreaRound" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Circumference (ft)" />
+                                <TextBox Name="OutCircRound" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Rectangular Equivalent" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Side 1 (in)" />
+                                <TextBox Name="OutRS1" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Side 2 (in)" />
+                                <TextBox Name="OutRS2" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Aspect Ratio" />
+                                <TextBox Name="OutRAR" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Area (ft²)" />
+                                <TextBox Name="OutRArea" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Perimeter (ft)" />
+                                <TextBox Name="OutRPerim" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Flat Oval Equivalent" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Major (in)" />
+                                <TextBox Name="OutOS1" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Minor (in)" />
+                                <TextBox Name="OutOS2" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Aspect Ratio" />
+                                <TextBox Name="OutOAR" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Area (ft²)" />
+                                <TextBox Name="OutOArea" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Perimeter (ft)" />
+                                <TextBox Name="OutOPerim" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Plumbing">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8" Orientation="Vertical">
+                        <TextBlock Text="Pipe Conditions" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Flow (gpm)" />
+                                <TextBox Name="PlGpmInput" ToolTip="Gallons per minute" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Length (ft)" />
+                                <TextBox Name="PlLengthInput" ToolTip="Straight length for friction in feet" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Nominal Size (in)" />
+                                <TextBox Name="PlNominalInput" ToolTip="Nominal trade size in inches" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Explicit ID (in)" />
+                                <TextBox Name="PlExplicitIdInput" ToolTip="Override with an inside diameter in inches" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Material" />
+                                <ComboBox Name="PlMaterialCombo" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <CheckBox Name="PlUseAgedC" Content="Use aged C-factor" />
+                                <CheckBox Name="PlIsHotWater" Content="Hot water (velocity check)" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
+                            <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ComboBox Name="PlRegionCombo" Width="260" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
+                            <Button Content="Clear" Width="80" Click="BtnPlClear_Click" />
+                        </StackPanel>
+
+                        <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Input tips" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams ψ/100 ft follows IPC/UPC practice; Darcy-Weisbach uses ε from material and Re from flow." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Results" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Resolved ID (in)" />
+                                <TextBox Name="PlResolvedIdOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Velocity (ft/s)" />
+                                <TextBox Name="PlVelocityOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Reynolds Number" />
+                                <TextBox Name="PlReOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Darcy f" />
+                                <TextBox Name="PlFrictionOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Hazen-Williams ψ/100 ft" />
+                                <TextBox Name="PlHazenPsi100Output" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Hazen-Williams total ψ" />
+                                <TextBox Name="PlHazenPsiTotalOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Darcy-Weisbach ψ/100 ft" />
+                                <TextBox Name="PlDarcyPsi100Output" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Darcy-Weisbach total ψ" />
+                                <TextBox Name="PlDarcyPsiTotalOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Name="PlVelocityNote" Margin="4,0" TextWrapping="Wrap" />
+                        <TextBlock Name="PlStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="DarkRed" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Flow (gpm)" />
+                                <TextBox Name="PlSizeGpmInput" ToolTip="Gallons per minute" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Target ψ/100 ft" />
+                                <TextBox Name="PlTargetPsi100Input" ToolTip="Pressure drop target in psi per 100 ft" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Solve Diameter" Width="140" Click="BtnPlSize_Click" />
+                        </StackPanel>
+
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Solved ID (in)" />
+                                <TextBox Name="PlSizedDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Nearest Nominal (in)" />
+                                <TextBox Name="PlSizedNominalOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Name="PlSizeNote" Margin="4,0" TextWrapping="Wrap" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Fixture Units & Drainage" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Total Fixture Units" />
+                                <TextBox Name="FixtureUnitsInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Calc Hunter Demand" Width="160" Click="BtnFixtureDemand_Click" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Probable Demand (gpm)" />
+                                <TextBox Name="FixtureDemandOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Sanitary DFU" />
+                                <TextBox Name="SanitaryDfuInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Slope (ft/ft)" />
+                                <TextBox Name="SanitarySlopeInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Size Sanitary" Width="140" Click="BtnSanitarySize_Click" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Min Diameter (in)" />
+                                <TextBox Name="SanitaryDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Name="SanitaryNote" Margin="4,0" TextWrapping="Wrap" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Storm Drainage" FontWeight="Bold" />
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Roof/Area (ft²)" />
+                                <TextBox Name="StormAreaInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Rainfall Intensity (in/hr)" />
+                                <TextBox Name="StormRainfallInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Slope (ft/ft)" />
+                                <TextBox Name="StormSlopeInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Manning n" />
+                                <TextBox Name="StormRoughnessInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Calc Storm Size" Width="160" Click="BtnStormSize_Click" />
+                        </StackPanel>
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Storm Flow (gpm)" />
+                                <TextBox Name="StormFlowOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Required Diameter (in)" />
+                                <TextBox Name="StormDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Name="StormNote" Margin="4,0" TextWrapping="Wrap" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Natural Gas (IFGC/NFPA 54)" FontWeight="Bold" />
+                        <UniformGrid Columns="5" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Load (MBH)" />
+                                <TextBox Name="GasLoadInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Length (ft)" />
+                                <TextBox Name="GasLengthInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="ΔP (in. w.c.)" />
+                                <TextBox Name="GasPressureDropInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Specific Gravity" />
+                                <TextBox Name="GasSpecificGravityInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Base Pressure (psi)" />
+                                <TextBox Name="GasBasePressureInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                            <Button Content="Size Gas" Width="140" Click="BtnGasSize_Click" />
+                        </StackPanel>
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Required Dia (in)" />
+                                <TextBox Name="GasDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Flow (scfh)" />
+                                <TextBox Name="GasFlowOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Velocity (ft/s)" />
+                                <TextBox Name="GasVelocityOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBlock Name="GasNote" Margin="4,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
