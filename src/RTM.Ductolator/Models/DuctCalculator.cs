@@ -11,6 +11,13 @@ namespace RTM.Ductolator.Models
     {
         // === Air properties & constants ===
 
+        public readonly record struct AirProperties(
+            double DensityLbmPerFt3,
+            double DensitySlugPerFt3,
+            double KinematicViscosityFt2PerS)
+        {
+            public static AirProperties Standard => new(0.075, 0.075 / LbmPerSlug, 1.57e-4);
+        }
         // ASHRAE "standard air" density ~0.075 lbm/ft^3
         private const double AirDensity_LbmPerFt3 = 0.075;
 
@@ -34,6 +41,45 @@ namespace RTM.Ductolator.Models
 
         // 1 in. water column ≈ 5.20233 lb/ft^2 (62.42796 lb/ft^3 / 12 in/ft)
         private const double LbPerFt2_Per_InWG = 5.20233;
+        private const double PsiPerInWg = 0.0360912;
+
+        /// <summary>
+        /// Compute air properties at a given dry-bulb temperature (°F) and altitude (ft).
+        /// Uses a standard atmosphere barometric formula and Sutherland viscosity to
+        /// keep friction/pressure calculations aligned with ASHRAE Fundamentals tables.
+        /// </summary>
+        public static AirProperties AirAt(double temperatureF, double altitudeFt)
+        {
+            // Standard atmosphere parameters
+            const double T0_K = 288.15;          // sea-level standard temp (K)
+            const double P0_Pa = 101325.0;       // sea-level standard pressure (Pa)
+            const double L_KPerM = 0.0065;       // temperature lapse rate (K/m)
+            const double g = 9.80665;            // m/s²
+            const double M = 0.0289644;          // kg/mol
+            const double R = 8.31447;            // J/(mol·K)
+            const double R_specific = 287.058;   // J/(kg·K) for dry air
+
+            double altitudeM = altitudeFt * 0.3048;
+            double tempK = (temperatureF + 459.67) * (5.0 / 9.0);
+
+            double p = P0_Pa * Math.Pow(1.0 - (L_KPerM * altitudeM) / T0_K,
+                                        (g * M) / (R * L_KPerM));
+            double density_kgPerM3 = p / (R_specific * tempK);
+
+            // Sutherland dynamic viscosity (kg/m·s)
+            const double mu0 = 1.716e-5; // reference at 273.15 K
+            const double T_ref = 273.15;
+            const double S = 111.0;
+            double mu = mu0 * Math.Pow(tempK / T_ref, 1.5) * (T_ref + S) / (tempK + S);
+
+            double nu_m2PerS = mu / density_kgPerM3;
+
+            double density_lbmPerFt3 = density_kgPerM3 * 0.062428;
+            double density_slugPerFt3 = density_lbmPerFt3 / LbmPerSlug;
+            double nu_ft2PerS = nu_m2PerS * 10.7639;
+
+            return new AirProperties(density_lbmPerFt3, density_slugPerFt3, nu_ft2PerS);
+        }
 
         // === Basic geometry ===
 
@@ -287,6 +333,29 @@ namespace RTM.Ductolator.Models
         /// Reynolds number using hydraulic diameter (inches) and velocity (FPM).
         /// Re = V * D / ν, with V in ft/s, D in ft, ν in ft²/s.
         /// </summary>
+        public static double Reynolds(double velocityFpm,
+                                      double hydraulicDiameterIn,
+                                      AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+
+            double vFtPerS = velocityFpm / 60.0;
+            double dFt = hydraulicDiameterIn / InPerFt;
+
+            if (air.KinematicViscosityFt2PerS <= 0 || dFt <= 0 || vFtPerS <= 0)
+                return 0;
+
+            return (vFtPerS * dFt) / air.KinematicViscosityFt2PerS;
+        }
+
+        public static double VelocityPressure_InWG(double velocityFpm, AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (velocityFpm <= 0 || air.DensitySlugPerFt3 <= 0) return 0;
+
+            double vFtPerS = velocityFpm / 60.0;
+            double vpLbPerFt2 = air.DensitySlugPerFt3 * vFtPerS * vFtPerS / 2.0;
+            return vpLbPerFt2 / LbPerFt2_Per_InWG;
         public static double Reynolds(double velocityFpm, double hydraulicDiameterIn)
         {
             double vFtPerS = velocityFpm / 60.0;
@@ -324,6 +393,10 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double DpPer100Ft_InWG(double velocityFpm,
                                              double hydraulicDiameterIn,
+                                             double frictionFactor,
+                                             AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
                                              double frictionFactor)
         {
             double vFtPerS = velocityFpm / 60.0;
@@ -332,6 +405,7 @@ namespace RTM.Ductolator.Models
             if (dFt <= 0 || frictionFactor <= 0 || vFtPerS <= 0) return 0;
 
             double dpPerFt_LbPerFt2 =
+                frictionFactor * (air.DensitySlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
                 frictionFactor * (AirDensity_SlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
 
             double dpPer100Ft_LbPerFt2 = dpPerFt_LbPerFt2 * FtPer100Ft;
@@ -340,11 +414,31 @@ namespace RTM.Ductolator.Models
             return dpPer100Ft_InWG;
         }
 
+        public static double TotalPressureDrop_InWG(double dpPer100Ft_InWG,
+                                                    double straightLengthFt,
+                                                    double sumLossCoefficients,
+                                                    double velocityFpm,
+                                                    AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (dpPer100Ft_InWG < 0 || straightLengthFt < 0 || sumLossCoefficients < 0)
+                return 0;
+
+            double frictionDrop = dpPer100Ft_InWG * (straightLengthFt / FtPer100Ft);
+            double vp = VelocityPressure_InWG(velocityFpm, air);
+            double fittingDrop = sumLossCoefficients * vp;
+            return frictionDrop + fittingDrop;
+        }
+
         /// <summary>
         /// Solve round diameter (in) for target CFM and friction rate (in.w.g./100 ft)
         /// using bisection on Darcy–Weisbach + Churchill friction factor.
         /// </summary>
         public static double SolveRoundDiameter_FromCfmAndFriction(double cfm,
+                                                                   double targetDpPer100Ft_InWG,
+                                                                   AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
                                                                    double targetDpPer100Ft_InWG)
         {
             if (cfm <= 0 || targetDpPer100Ft_InWG <= 0) return 0;
@@ -356,6 +450,9 @@ namespace RTM.Ductolator.Models
             {
                 double area = Area_Round_Ft2(dIn);
                 double vel = VelocityFpmFromCfmAndArea(cfm, area);
+                double re = Reynolds(vel, dIn, air);
+                double f = FrictionFactor(re, dIn);
+                double dp = DpPer100Ft_InWG(vel, dIn, f, air);
                 double re = Reynolds(vel, dIn);
                 double f = FrictionFactor(re, dIn);
                 double dp = DpPer100Ft_InWG(vel, dIn, f);
@@ -405,6 +502,10 @@ namespace RTM.Ductolator.Models
         /// duct size and friction rate (no CFM or velocity given).
         /// </summary>
         public static double SolveVelocityFpm_FromDp(double hydraulicDiameterIn,
+                                                     double targetDpPer100Ft_InWG,
+                                                     AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
                                                      double targetDpPer100Ft_InWG)
         {
             if (hydraulicDiameterIn <= 0 || targetDpPer100Ft_InWG <= 0)
@@ -415,6 +516,9 @@ namespace RTM.Ductolator.Models
 
             double Fn(double vFpm)
             {
+                double re = Reynolds(vFpm, hydraulicDiameterIn, air);
+                double f = FrictionFactor(re, hydraulicDiameterIn);
+                double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f, air);
                 double re = Reynolds(vFpm, hydraulicDiameterIn);
                 double f = FrictionFactor(re, hydraulicDiameterIn);
                 double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f);

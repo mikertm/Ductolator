@@ -199,6 +199,19 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
+        /// Returns the available nominal sizes and inside diameters for a material.
+        /// </summary>
+        public static IReadOnlyDictionary<double, double> GetAvailableNominalIds(PipeMaterial material)
+        {
+            if (NominalToIdIn.TryGetValue(material, out var table))
+            {
+                return table;
+            }
+
+            return new Dictionary<double, double>();
+        }
+
+        /// <summary>
         /// Fluid velocity (ft/s) from flow (gpm) and diameter (in).
         /// </summary>
         public static double VelocityFpsFromGpm(double gpm, double diameterIn)
@@ -381,6 +394,9 @@ namespace RTM.Ductolator.Models
             if (reynolds <= 0 || diameterIn <= 0 || roughnessFt < 0) return 0;
 
             double dFt = diameterIn / InPerFt;
+            if (reynolds < 2000)
+                return 64.0 / reynolds;
+
             double term = (roughnessFt / (3.7 * dFt)) + 5.74 / Math.Pow(reynolds, 0.9);
             return 0.25 / Math.Pow(Math.Log10(term), 2.0);
         }
@@ -488,6 +504,251 @@ namespace RTM.Ductolator.Models
             var data = GetMaterialData(material);
             double limit = isHotWater ? data.MaxHotFps : data.MaxColdFps;
             return velocityFps <= limit;
+        }
+
+        // === Fixture unit / drainage helpers (IPC/UPC style tables) ===
+
+        private static readonly List<(double FixtureUnits, double DemandGpm)> HunterCurvePoints = new()
+        {
+            // IPC/UPC Hunter curve anchor points (total fixture units -> probable demand gpm)
+            (1, 1.0),
+            (2, 1.4),
+            (4, 2.0),
+            (6, 2.4),
+            (8, 2.8),
+            (10, 3.1),
+            (15, 3.8),
+            (20, 4.4),
+            (30, 5.8),
+            (40, 7.0),
+            (60, 8.9),
+            (80, 10.7),
+            (100, 12.3),
+            (150, 15.6),
+            (200, 18.2),
+            (400, 26.9),
+            (600, 34.0),
+            (1000, 48.0)
+        };
+
+        /// <summary>
+        /// Convert total fixture units to probable peak demand (gpm) using Hunter's curve
+        /// with log-log interpolation between IPC/UPC anchor points.
+        /// </summary>
+        public static double HunterDemandGpm(double totalFixtureUnits)
+        {
+            if (totalFixtureUnits <= 0) return 0;
+
+            if (totalFixtureUnits <= HunterCurvePoints[0].FixtureUnits)
+                return HunterCurvePoints[0].DemandGpm * totalFixtureUnits / HunterCurvePoints[0].FixtureUnits;
+
+            for (int i = 0; i < HunterCurvePoints.Count - 1; i++)
+            {
+                var a = HunterCurvePoints[i];
+                var b = HunterCurvePoints[i + 1];
+                if (totalFixtureUnits >= a.FixtureUnits && totalFixtureUnits <= b.FixtureUnits)
+                {
+                    double logFu = Math.Log10(totalFixtureUnits);
+                    double logA = Math.Log10(a.FixtureUnits);
+                    double logB = Math.Log10(b.FixtureUnits);
+                    double t = (logFu - logA) / (logB - logA);
+
+                    double logQa = Math.Log10(a.DemandGpm);
+                    double logQb = Math.Log10(b.DemandGpm);
+                    double logQ = logQa + t * (logQb - logQa);
+                    return Math.Pow(10, logQ);
+                }
+            }
+
+            // Extrapolate beyond the last point conservatively using the last slope
+            var last = HunterCurvePoints[^1];
+            var prev = HunterCurvePoints[^2];
+            double lastSlope = (Math.Log10(last.DemandGpm) - Math.Log10(prev.DemandGpm)) /
+                               (Math.Log10(last.FixtureUnits) - Math.Log10(prev.FixtureUnits));
+            double extrapolated = Math.Log10(last.DemandGpm) +
+                                  lastSlope * (Math.Log10(totalFixtureUnits) - Math.Log10(last.FixtureUnits));
+            return Math.Pow(10, extrapolated);
+        }
+
+        // IPC Table 703.2 style DFU limits for horizontal drainage (dfu capacity at typical slopes)
+        private static readonly Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
+        {
+            { 0.25, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
+            { 0.0125, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
+            { 0.0625, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
+        };
+
+        /// <summary>
+        /// Minimum nominal diameter (in) to carry the given sanitary drainage fixture units
+        /// for a horizontal branch at the provided slope (ft/ft). Uses embedded IPC-style DFU caps.
+        /// Returns 0 when no table value satisfies the demand.
+        /// </summary>
+        public static double MinSanitaryDiameterFromDfu(double drainageFixtureUnits, double slopeFtPerFt)
+        {
+            if (drainageFixtureUnits <= 0 || slopeFtPerFt <= 0) return 0;
+
+            // Find nearest slope in table (simple nearest match)
+            double closestSlope = 0;
+            double minDelta = double.MaxValue;
+            foreach (var kvp in SanitaryCapacity)
+            {
+                double delta = Math.Abs(kvp.Key - slopeFtPerFt);
+                if (delta < minDelta)
+                {
+                    minDelta = delta;
+                    closestSlope = kvp.Key;
+                }
+            }
+
+            if (closestSlope == 0) return 0;
+
+            foreach (var entry in SanitaryCapacity[closestSlope])
+            {
+                if (drainageFixtureUnits <= entry.MaxDfu)
+                    return entry.DiameterIn;
+            }
+
+            return 0;
+        }
+
+        // === Storm drainage (Manning full-pipe) ===
+
+        /// <summary>
+        /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
+        /// Q = I * A / 96.23 per IPC/UPC rainfall method.
+        /// </summary>
+        public static double StormFlowGpm(double areaFt2, double rainfallIntensityInPerHr)
+        {
+            if (areaFt2 <= 0 || rainfallIntensityInPerHr <= 0) return 0;
+            return rainfallIntensityInPerHr * areaFt2 / 96.23;
+        }
+
+        /// <summary>
+        /// Solve full-flow circular pipe diameter (in) for a storm flow using Manning's equation.
+        /// Q (gpm) = 449 * (1/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
+        /// </summary>
+        public static double StormDiameterFromFlow(double flowGpm, double slopeFtPerFt, double roughnessN = 0.012,
+                                                   double minDiameterIn = 2.0, double maxDiameterIn = 60.0)
+        {
+            if (flowGpm <= 0 || slopeFtPerFt <= 0 || roughnessN <= 0) return 0;
+
+            double FlowFromDiameter(double dIn)
+            {
+                double dFt = dIn / InPerFt;
+                double area = Math.PI * dFt * dFt / 4.0;
+                double radius = dFt / 4.0; // hydraulic radius for full pipe
+                double qCfs = (1.49 / roughnessN) * area * Math.Pow(radius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                return qCfs * 448.831; // to gpm
+            }
+
+            double lo = minDiameterIn;
+            double hi = maxDiameterIn;
+            double fLo = FlowFromDiameter(lo) - flowGpm;
+            double fHi = FlowFromDiameter(hi) - flowGpm;
+
+            for (int i = 0; i < 40; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = FlowFromDiameter(mid) - flowGpm;
+
+                if (Math.Abs(fMid) < 1e-3)
+                    return mid;
+
+                if (fLo * fMid > 0)
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+                else
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+            }
+
+            return 0.5 * (lo + hi);
+        }
+
+        // === Low-pressure natural gas sizing (IFGC/NFPA 54 style) ===
+
+        private const double InWcPerPsi = 27.7076;
+        private const double GasHeatingValue_BtuPerScf = 1000.0; // typical pipeline gas
+
+        /// <summary>
+        /// IFGC/NFPA 54 empirical sizing equation (low pressure):
+        /// Q_scfh = 3550 * (ΔP * P_base / (SG * L))^0.54 * d^2.63
+        /// where ΔP and P_base in psi, L in ft, d in inches, SG relative to air.
+        /// </summary>
+        public static double GasFlow_Scfh(double diameterIn, double lengthFt, double pressureDropInWc,
+                                          double specificGravity = 0.6, double basePressurePsi = 0.5)
+        {
+            if (diameterIn <= 0 || lengthFt <= 0 || pressureDropInWc <= 0 || specificGravity <= 0) return 0;
+
+            double deltaPsi = pressureDropInWc / InWcPerPsi;
+            double term = deltaPsi * basePressurePsi / (specificGravity * lengthFt);
+            double multiplier = Math.Pow(term, 0.54);
+            return 3550.0 * multiplier * Math.Pow(diameterIn, 2.63);
+        }
+
+        public static double GasFlow_Mbh(double diameterIn, double lengthFt, double pressureDropInWc,
+                                         double specificGravity = 0.6, double basePressurePsi = 0.5,
+                                         double heatingValueBtuPerScf = GasHeatingValue_BtuPerScf)
+        {
+            double scfh = GasFlow_Scfh(diameterIn, lengthFt, pressureDropInWc, specificGravity, basePressurePsi);
+            return scfh * heatingValueBtuPerScf / 1000.0;
+        }
+
+        /// <summary>
+        /// Solve minimum diameter (in) for a target gas load (MBH) given run length and allowable ΔP (in.w.c.).
+        /// </summary>
+        public static double SolveGasDiameterForLoad(double loadMbh, double lengthFt, double pressureDropInWc,
+                                                     double specificGravity = 0.6, double basePressurePsi = 0.5,
+                                                     double heatingValueBtuPerScf = GasHeatingValue_BtuPerScf,
+                                                     double minDiameterIn = 0.5, double maxDiameterIn = 6.0)
+        {
+            if (loadMbh <= 0 || lengthFt <= 0 || pressureDropInWc <= 0) return 0;
+
+            double targetScfh = loadMbh * 1000.0 / heatingValueBtuPerScf;
+
+            double Fn(double dIn) => GasFlow_Scfh(dIn, lengthFt, pressureDropInWc, specificGravity, basePressurePsi) - targetScfh;
+
+            double lo = minDiameterIn;
+            double hi = maxDiameterIn;
+            double fLo = Fn(lo);
+            double fHi = Fn(hi);
+
+            for (int i = 0; i < 50; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = Fn(mid);
+
+                if (Math.Abs(fMid) < 1e-3)
+                    return mid;
+
+                if (fLo * fMid > 0)
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+                else
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+            }
+
+            return 0.5 * (lo + hi);
+        }
+
+        /// <summary>
+        /// Gas velocity (ft/s) from flow (scfh) and diameter (in) at standard conditions.
+        /// </summary>
+        public static double GasVelocityFps(double flowScfh, double diameterIn)
+        {
+            if (flowScfh <= 0 || diameterIn <= 0) return 0;
+            double flowCfs = flowScfh / 3600.0;
+            double area = Area_Round_Ft2(diameterIn);
+            return area > 0 ? flowCfs / area : 0;
         }
     }
 }
