@@ -18,9 +18,18 @@ namespace RTM.Ductolator.Models
         {
             public static AirProperties Standard => new(0.075, 0.075 / LbmPerSlug, 1.57e-4);
         }
+        // ASHRAE "standard air" density ~0.075 lbm/ft^3
+        private const double AirDensity_LbmPerFt3 = 0.075;
 
         // 1 slug = 32.174 lbm
         private const double LbmPerSlug = 32.174;
+
+        // Density in slug/ft^3 for use in Newton's second law
+        private static readonly double AirDensity_SlugPerFt3 =
+            AirDensity_LbmPerFt3 / LbmPerSlug;
+
+        // Kinematic viscosity ν [ft^2/s] at room temperature (ASHRAE tables)
+        private const double KinematicViscosity_Ft2PerS = 1.57e-4;
 
         // Absolute roughness for galvanized steel duct (ASHRAE Fundamentals):
         // ε ≈ 0.0003 ft (medium-smooth galvanized steel).
@@ -347,6 +356,15 @@ namespace RTM.Ductolator.Models
             double vFtPerS = velocityFpm / 60.0;
             double vpLbPerFt2 = air.DensitySlugPerFt3 * vFtPerS * vFtPerS / 2.0;
             return vpLbPerFt2 / LbPerFt2_Per_InWG;
+        public static double Reynolds(double velocityFpm, double hydraulicDiameterIn)
+        {
+            double vFtPerS = velocityFpm / 60.0;
+            double dFt = hydraulicDiameterIn / InPerFt;
+
+            if (KinematicViscosity_Ft2PerS <= 0 || dFt <= 0 || vFtPerS <= 0)
+                return 0;
+
+            return (vFtPerS * dFt) / KinematicViscosity_Ft2PerS;
         }
 
         /// <summary>
@@ -379,6 +397,8 @@ namespace RTM.Ductolator.Models
                                              AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
+                                             double frictionFactor)
+        {
             double vFtPerS = velocityFpm / 60.0;
             double dFt = hydraulicDiameterIn / InPerFt;
 
@@ -386,6 +406,7 @@ namespace RTM.Ductolator.Models
 
             double dpPerFt_LbPerFt2 =
                 frictionFactor * (air.DensitySlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
+                frictionFactor * (AirDensity_SlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
 
             double dpPer100Ft_LbPerFt2 = dpPerFt_LbPerFt2 * FtPer100Ft;
 
@@ -418,6 +439,8 @@ namespace RTM.Ductolator.Models
                                                                    AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
+                                                                   double targetDpPer100Ft_InWG)
+        {
             if (cfm <= 0 || targetDpPer100Ft_InWG <= 0) return 0;
 
             double lo = 2.0;   // inches
@@ -430,6 +453,9 @@ namespace RTM.Ductolator.Models
                 double re = Reynolds(vel, dIn, air);
                 double f = FrictionFactor(re, dIn);
                 double dp = DpPer100Ft_InWG(vel, dIn, f, air);
+                double re = Reynolds(vel, dIn);
+                double f = FrictionFactor(re, dIn);
+                double dp = DpPer100Ft_InWG(vel, dIn, f);
                 return dp - targetDpPer100Ft_InWG;
             }
 
@@ -480,6 +506,8 @@ namespace RTM.Ductolator.Models
                                                      AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
+                                                     double targetDpPer100Ft_InWG)
+        {
             if (hydraulicDiameterIn <= 0 || targetDpPer100Ft_InWG <= 0)
                 return 0;
 
@@ -491,6 +519,9 @@ namespace RTM.Ductolator.Models
                 double re = Reynolds(vFpm, hydraulicDiameterIn, air);
                 double f = FrictionFactor(re, hydraulicDiameterIn);
                 double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f, air);
+                double re = Reynolds(vFpm, hydraulicDiameterIn);
+                double f = FrictionFactor(re, hydraulicDiameterIn);
+                double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f);
                 return dp - targetDpPer100Ft_InWG;
             }
 

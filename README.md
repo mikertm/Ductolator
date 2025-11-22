@@ -6,6 +6,7 @@ Core duct sizing ASHRAE compliant engineering tool.
 - Air duct sizing and equal-friction conversions using ASHRAE/SMACNA practice,
   including altitude/temperature-adjusted air properties, velocity pressure, and
   fitting/straight-run total static drop outputs.
+- Air duct sizing and equal-friction conversions using ASHRAE/SMACNA practice.
 - Plumbing water sizing helpers (Hazen-Williams and Darcy–Weisbach) aligned with
   common U.S. standards (ASHRAE/ASPE/UPC design guidance).
 - Embedded pipe material tables (Type K/L/M copper, Schedule 40 steel/PVC, CPVC
