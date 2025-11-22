@@ -1,14 +1,75 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Win32;
 using RTM.Ductolator.Models;
 
 namespace RTM.Ductolator
 {
     public partial class MainWindow : Window
     {
+        private record DuctExportRow(
+            double FlowCfm,
+            double VelocityFpm,
+            double FrictionInWgPer100Ft,
+            double VelocityPressureInWg,
+            double TotalPressureDropInWg,
+            double StraightLengthFt,
+            double SumK,
+            double FittingLossInWg,
+            double SupplyStaticInWg,
+            double ReturnStaticInWg,
+            double PressureClassInWg,
+            double LeakageCfm,
+            double FanBhp,
+            double AirTempF,
+            double AltitudeFt,
+            double AirDensityLbmPerFt3,
+            double AirKinematicNuFt2PerS,
+            double RoundDiaIn,
+            double RectSide1In,
+            double RectSide2In,
+            double RectAreaFt2,
+            double RectPerimeterFt,
+            double RectAspectRatio,
+            double OvalMajorIn,
+            double OvalMinorIn,
+            double OvalAreaFt2,
+            double OvalPerimeterFt,
+            double OvalAspectRatio,
+            double InsulationR,
+            double HeatTransferBtuh,
+            double SupplyDeltaTF,
+            double RequiredInsulR,
+            double InsulationThicknessIn);
+
+        private record PlumbingExportRow(
+            double FlowGpm,
+            double LengthFt,
+            string Material,
+            double NominalIn,
+            double ResolvedIdIn,
+            bool UsedAgedC,
+            bool IsHotWater,
+            double VelocityFps,
+            double VelocityLimitFps,
+            double Reynolds,
+            double DarcyFriction,
+            double HazenPsiPer100Ft,
+            double HazenPsiTotal,
+            double DarcyPsiPer100Ft,
+            double DarcyPsiTotal,
+            double HazenCFactor,
+            double RoughnessFt,
+            double WaveSpeedFps);
+
+        private DuctExportRow? _lastDuctExport;
+        private PlumbingExportRow? _lastPlumbingExport;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -42,6 +103,34 @@ namespace RTM.Ductolator
             }
 
             tb.Text = value.ToString(format, CultureInfo.InvariantCulture);
+        }
+
+        private static string CsvEscape(object value)
+        {
+            string s = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+            if (s.Contains('"'))
+                s = s.Replace("\"", "\"\"");
+
+            if (s.Contains(',') || s.Contains('\n'))
+                s = $"\"{s}\"";
+
+            return s;
+        }
+
+        private static bool SaveCsvToPath(string defaultFileName, string content)
+        {
+            var dialog = new SaveFileDialog
+            {
+                FileName = defaultFileName,
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+            };
+
+            bool? result = dialog.ShowDialog();
+            if (result != true)
+                return false;
+
+            File.WriteAllText(dialog.FileName, content, Encoding.UTF8);
+            return true;
         }
 
         private void PopulatePlumbingMaterials()
@@ -108,6 +197,8 @@ namespace RTM.Ductolator
 
             if (DuctStatusNote != null)
                 DuctStatusNote.Text = string.Empty;
+
+            _lastDuctExport = null;
         }
 
         private void BtnCalc_Click(object sender, RoutedEventArgs e)
@@ -341,19 +432,13 @@ namespace RTM.Ductolator
                 cfm = areaFt2 * usedVelFpm;
 
             // === Air data (Re, f, dP/100ft) ===
-            double reRaw = DuctCalculator.Reynolds(usedVelFpm, dhIn, air);
-            double f = DuctCalculator.FrictionFactor(reRaw, dhIn);
-            double reForFriction = reRaw < 2300 && reRaw > 0 ? 2300 : reRaw;
+            double re = DuctCalculator.Reynolds(usedVelFpm, dhIn, air);
+            double reRaw = re;
+            double reForFriction = re < 2300 && re > 0 ? 2300 : re;
             double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
             double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, straightLengthFt, sumLossCoeff, usedVelFpm, air);
-
-            SetBox(OutRe, reRaw, "0");
-            SetBox(OutRe, reForFriction, "0");
-            double re = DuctCalculator.Reynolds(usedVelFpm, dhIn);
-            double f = DuctCalculator.FrictionFactor(re, dhIn);
-            double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f);
 
             SetBox(OutRe, re, "0");
             SetBox(OutF, f, "0.0000");
@@ -451,10 +536,6 @@ namespace RTM.Ductolator
                     : string.Empty;
 
                 DuctStatusNote.Text = string.Join(" ", new[] { velocityStatus, frictionStatus, regimeStatus, totalStatus, pressureStatus, fanStatus }.Where(s => !string.IsNullOrWhiteSpace(s)));
-                string totalStatus = totalDp > 0.0
-                    ? $"Total drop (friction + fittings) over {straightLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
-
-                DuctStatusNote.Text = string.Join(" ", new[] { velocityStatus, frictionStatus, totalStatus }.Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
             // === Equal-friction rectangle & flat oval when we have a round Dh ===
@@ -493,6 +574,114 @@ namespace RTM.Ductolator
                 SetBox(OutOAR, ovalMajor / ovalMinor, "0.000");
                 SetBox(OutOArea, ovalAreaFt2, "0.000");
                 SetBox(OutOPerim, ovalPerimFt, "0.000");
+            }
+
+            double rectSide1 = ParseBox(OutRS1);
+            double rectSide2 = ParseBox(OutRS2);
+            double rectArea = ParseBox(OutRArea);
+            double rectPerimeter = ParseBox(OutRPerim);
+            double rectAr = ParseBox(OutRAR);
+
+            double ovalMajorIn = ParseBox(OutOS1);
+            double ovalMinorIn = ParseBox(OutOS2);
+            double ovalArea = ParseBox(OutOArea);
+            double ovalPerimeter = ParseBox(OutOPerim);
+            double ovalAr = ParseBox(OutOAR);
+
+            double roundDia = ParseBox(OutDia);
+            double fittingDrop = sumLossCoeff > 0 ? sumLossCoeff * vp : 0;
+            double heatTransferBtuh = ParseBox(OutHeatTransfer);
+            double deltaTAir = ParseBox(OutDeltaT);
+            double requiredR = ParseBox(OutRequiredR);
+            double insulThk = ParseBox(OutInsulThk);
+
+            _lastDuctExport = new DuctExportRow(
+                FlowCfm: cfm,
+                VelocityFpm: usedVelFpm,
+                FrictionInWgPer100Ft: dpPer100,
+                VelocityPressureInWg: vp,
+                TotalPressureDropInWg: totalDp,
+                StraightLengthFt: straightLengthFt,
+                SumK: sumLossCoeff,
+                FittingLossInWg: fittingDrop,
+                SupplyStaticInWg: supplyStatic,
+                ReturnStaticInWg: returnStatic,
+                PressureClassInWg: pressureClass,
+                LeakageCfm: leakageCfm,
+                FanBhp: fanBhp,
+                AirTempF: airTempF,
+                AltitudeFt: altitudeFt,
+                AirDensityLbmPerFt3: air.DensityLbmPerFt3,
+                AirKinematicNuFt2PerS: air.KinematicViscosityFt2PerS,
+                RoundDiaIn: roundDia,
+                RectSide1In: rectSide1,
+                RectSide2In: rectSide2,
+                RectAreaFt2: rectArea,
+                RectPerimeterFt: rectPerimeter,
+                RectAspectRatio: rectAr,
+                OvalMajorIn: ovalMajorIn,
+                OvalMinorIn: ovalMinorIn,
+                OvalAreaFt2: ovalArea,
+                OvalPerimeterFt: ovalPerimeter,
+                OvalAspectRatio: ovalAr,
+                InsulationR: existingInsulR,
+                HeatTransferBtuh: heatTransferBtuh,
+                SupplyDeltaTF: deltaTAir,
+                RequiredInsulR: requiredR,
+                InsulationThicknessIn: insulThk);
+        }
+
+        private void BtnExportDuct_Click(object sender, RoutedEventArgs e)
+        {
+            if (_lastDuctExport == null)
+            {
+                MessageBox.Show("Calculate a duct run before exporting.", "Nothing to export", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var d = _lastDuctExport.Value;
+            var sb = new StringBuilder();
+            sb.AppendLine("Flow (cfm),Velocity (fpm),Friction (in.w.g./100 ft),Velocity Pressure (in.w.g.),Total Drop (in.w.g.),Straight Length (ft),Sum K,Fitting Drop (in.w.g.),Supply Static (in.w.g.),Return Static (in.w.g.),Pressure Class (in.w.g.),Leakage (cfm),Fan BHP,Air Temp (F),Altitude (ft),Air Density (lbm/ft^3),Air Kinematic Nu (ft^2/s),Round Dia (in),Rect Side 1 (in),Rect Side 2 (in),Rect Area (ft^2),Rect Perimeter (ft),Rect AR,Oval Major (in),Oval Minor (in),Oval Area (ft^2),Oval Perimeter (ft),Oval AR,Existing Insulation R,Heat Transfer (Btuh),Supply DeltaT (F),Required Insulation R,Estimated Thickness (in)");
+            sb.AppendLine(string.Join(",", new[]
+            {
+                CsvEscape(d.FlowCfm),
+                CsvEscape(d.VelocityFpm),
+                CsvEscape(d.FrictionInWgPer100Ft),
+                CsvEscape(d.VelocityPressureInWg),
+                CsvEscape(d.TotalPressureDropInWg),
+                CsvEscape(d.StraightLengthFt),
+                CsvEscape(d.SumK),
+                CsvEscape(d.FittingLossInWg),
+                CsvEscape(d.SupplyStaticInWg),
+                CsvEscape(d.ReturnStaticInWg),
+                CsvEscape(d.PressureClassInWg),
+                CsvEscape(d.LeakageCfm),
+                CsvEscape(d.FanBhp),
+                CsvEscape(d.AirTempF),
+                CsvEscape(d.AltitudeFt),
+                CsvEscape(d.AirDensityLbmPerFt3),
+                CsvEscape(d.AirKinematicNuFt2PerS),
+                CsvEscape(d.RoundDiaIn),
+                CsvEscape(d.RectSide1In),
+                CsvEscape(d.RectSide2In),
+                CsvEscape(d.RectAreaFt2),
+                CsvEscape(d.RectPerimeterFt),
+                CsvEscape(d.RectAspectRatio),
+                CsvEscape(d.OvalMajorIn),
+                CsvEscape(d.OvalMinorIn),
+                CsvEscape(d.OvalAreaFt2),
+                CsvEscape(d.OvalPerimeterFt),
+                CsvEscape(d.OvalAspectRatio),
+                CsvEscape(d.InsulationR),
+                CsvEscape(d.HeatTransferBtuh),
+                CsvEscape(d.SupplyDeltaTF),
+                CsvEscape(d.RequiredInsulR),
+                CsvEscape(d.InsulationThicknessIn)
+            }));
+
+            if (SaveCsvToPath("duct-export.csv", sb.ToString()))
+            {
+                MessageBox.Show("Duct results exported for Excel review.", "Export complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -578,6 +767,66 @@ namespace RTM.Ductolator
                     ? "Reynolds number indicates transitional/laminar flow—verify minor loss methods." : string.Empty;
 
                 PlStatusNote.Text = string.Join(" ", new[] { frictionNote, reynoldsNote }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            }
+
+            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material.Value);
+            _lastPlumbingExport = new PlumbingExportRow(
+                FlowGpm: gpm,
+                LengthFt: lengthFt,
+                Material: material.Value.ToString(),
+                NominalIn: nominal,
+                ResolvedIdIn: idIn,
+                UsedAgedC: useAgedC,
+                IsHotWater: isHot,
+                VelocityFps: velocityFps,
+                VelocityLimitFps: limitingCap,
+                Reynolds: reynolds,
+                DarcyFriction: darcyF,
+                HazenPsiPer100Ft: psiPer100Hw,
+                HazenPsiTotal: psiTotalHw,
+                DarcyPsiPer100Ft: psiPer100Darcy,
+                DarcyPsiTotal: psiTotalDarcy,
+                HazenCFactor: cFactor,
+                RoughnessFt: roughness,
+                WaveSpeedFps: waveSpeed);
+        }
+
+        private void BtnExportPlumbing_Click(object sender, RoutedEventArgs e)
+        {
+            if (_lastPlumbingExport == null)
+            {
+                MessageBox.Show("Calculate a pipe run before exporting.", "Nothing to export", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var p = _lastPlumbingExport.Value;
+            var sb = new StringBuilder();
+            sb.AppendLine("Flow (gpm),Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s)");
+            sb.AppendLine(string.Join(",", new[]
+            {
+                CsvEscape(p.FlowGpm),
+                CsvEscape(p.LengthFt),
+                CsvEscape(p.Material),
+                CsvEscape(p.NominalIn),
+                CsvEscape(p.ResolvedIdIn),
+                CsvEscape(p.UsedAgedC),
+                CsvEscape(p.IsHotWater),
+                CsvEscape(p.VelocityFps),
+                CsvEscape(p.VelocityLimitFps),
+                CsvEscape(p.Reynolds),
+                CsvEscape(p.DarcyFriction),
+                CsvEscape(p.HazenPsiPer100Ft),
+                CsvEscape(p.HazenPsiTotal),
+                CsvEscape(p.DarcyPsiPer100Ft),
+                CsvEscape(p.DarcyPsiTotal),
+                CsvEscape(p.HazenCFactor),
+                CsvEscape(p.RoughnessFt),
+                CsvEscape(p.WaveSpeedFps)
+            }));
+
+            if (SaveCsvToPath("plumbing-export.csv", sb.ToString()))
+            {
+                MessageBox.Show("Plumbing results exported for Excel review.", "Export complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -859,6 +1108,8 @@ namespace RTM.Ductolator
 
             if (PlIsHotWater != null)
                 PlIsHotWater.IsChecked = false;
+
+            _lastPlumbingExport = null;
         }
     }
 }
