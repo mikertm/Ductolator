@@ -1,0 +1,655 @@
+using System;
+
+namespace RTM.Ductolator.Models
+{
+    /// <summary>
+    /// Core duct sizing and air-data math (imperial).
+    /// Equations follow ASHRAE/SMACNA friction-chart practice for
+    /// galvanized steel ducts carrying standard air at 70 °F and 1 atm.
+    /// </summary>
+    public static class DuctCalculator
+    {
+        // === Air properties & constants ===
+
+        public readonly record struct AirProperties(
+            double DensityLbmPerFt3,
+            double DensitySlugPerFt3,
+            double KinematicViscosityFt2PerS)
+        {
+            public static AirProperties Standard => new(0.075, 0.075 / LbmPerSlug, 1.57e-4);
+        }
+
+        // 1 slug = 32.174 lbm
+        private const double LbmPerSlug = 32.174;
+
+        // Absolute roughness for galvanized steel duct (ASHRAE Fundamentals):
+        // ε ≈ 0.0003 ft (medium-smooth galvanized steel).
+        private const double Roughness_Ft = 0.0003;
+
+        private const double InPerFt = 12.0;
+        private const double FtPer100Ft = 100.0;
+        private const double Pi = Math.PI;
+        private const double CpAir_BtuPerLbmF = 0.24;
+
+        // 1 in. water column ≈ 5.20233 lb/ft^2 (62.42796 lb/ft^3 / 12 in/ft)
+        private const double LbPerFt2_Per_InWG = 5.20233;
+        private const double PsiPerInWg = 0.0360912;
+
+        private const double InteriorFilmR_HrFt2FPerBtu = 0.61; // supply, forced convection
+        private const double ExteriorFilmR_HrFt2FPerBtu = 0.17; // still air
+        private const double FiberglassRPerIn_HrFt2FPerBtu = 4.2; // typical duct wrap
+
+        /// <summary>
+        /// Compute air properties at a given dry-bulb temperature (°F) and altitude (ft).
+        /// Uses a standard atmosphere barometric formula and Sutherland viscosity to
+        /// keep friction/pressure calculations aligned with ASHRAE Fundamentals tables.
+        /// </summary>
+        public static AirProperties AirAt(double temperatureF, double altitudeFt)
+        {
+            // Standard atmosphere parameters
+            const double T0_K = 288.15;          // sea-level standard temp (K)
+            const double P0_Pa = 101325.0;       // sea-level standard pressure (Pa)
+            const double L_KPerM = 0.0065;       // temperature lapse rate (K/m)
+            const double g = 9.80665;            // m/s²
+            const double M = 0.0289644;          // kg/mol
+            const double R = 8.31447;            // J/(mol·K)
+            const double R_specific = 287.058;   // J/(kg·K) for dry air
+
+            double altitudeM = altitudeFt * 0.3048;
+            double tempK = (temperatureF + 459.67) * (5.0 / 9.0);
+
+            double p = P0_Pa * Math.Pow(1.0 - (L_KPerM * altitudeM) / T0_K,
+                                        (g * M) / (R * L_KPerM));
+            double density_kgPerM3 = p / (R_specific * tempK);
+
+            // Sutherland dynamic viscosity (kg/m·s)
+            const double mu0 = 1.716e-5; // reference at 273.15 K
+            const double T_ref = 273.15;
+            const double S = 111.0;
+            double mu = mu0 * Math.Pow(tempK / T_ref, 1.5) * (T_ref + S) / (tempK + S);
+
+            double nu_m2PerS = mu / density_kgPerM3;
+
+            double density_lbmPerFt3 = density_kgPerM3 * 0.062428;
+            double density_slugPerFt3 = density_lbmPerFt3 / LbmPerSlug;
+            double nu_ft2PerS = nu_m2PerS * 10.7639;
+
+            return new AirProperties(density_lbmPerFt3, density_slugPerFt3, nu_ft2PerS);
+        }
+
+        // === Basic geometry ===
+
+        public static double Area_Round_Ft2(double diameterIn)
+        {
+            if (diameterIn <= 0) return 0;
+
+            double dFt = diameterIn / InPerFt;
+            return Pi * dFt * dFt / 4.0;
+        }
+
+        public static double Circumference_Round_Ft(double diameterIn)
+        {
+            if (diameterIn <= 0) return 0;
+
+            double dFt = diameterIn / InPerFt;
+            return Pi * dFt;
+        }
+
+        /// <summary>
+        /// Rectangle geometry from sides (inches).
+        /// Returns (area ft², perimeter ft, hydraulic diameter ft).
+        /// </summary>
+        public static (double AreaFt2, double PerimeterFt, double HydraulicDiameterFt)
+            RectGeometry(double side1In, double side2In)
+        {
+            if (side1In <= 0 || side2In <= 0) return (0, 0, 0);
+
+            double a = side1In / InPerFt;
+            double b = side2In / InPerFt;
+
+            double area = a * b;
+            double perimeter = 2.0 * (a + b);
+            double dh = 4.0 * area / perimeter;
+
+            return (area, perimeter, dh);
+        }
+
+        /// <summary>
+        /// Flat-oval geometry using A and P relationships from SMACNA / ASHRAE.
+        /// aminorIn = minor axis (in), amajorIn = major axis (in).
+        /// Returns (area ft², perimeter ft, hydraulic diameter ft).
+        /// </summary>
+        public static (double AreaFt2, double PerimeterFt, double HydraulicDiameterFt)
+            FlatOvalGeometry(double aminorIn, double amajorIn)
+        {
+            if (aminorIn <= 0 || amajorIn <= 0)
+                return (0, 0, 0);
+
+            // Area and perimeter in inches:
+            // A = π a^2 / 4 + a (A - a)
+            double A_in2 = Pi * aminorIn * aminorIn / 4.0 +
+                           aminorIn * (amajorIn - aminorIn);
+
+            // P = π a + 2 (A - a)
+            double P_in = Pi * aminorIn + 2.0 * (amajorIn - aminorIn);
+
+            double areaFt2 = A_in2 / (InPerFt * InPerFt);
+            double perimeterFt = P_in / InPerFt;
+
+            double dhFt = perimeterFt > 0 ? 4.0 * areaFt2 / perimeterFt : 0;
+
+            return (areaFt2, perimeterFt, dhFt);
+        }
+
+        // === Equivalent round diameters ===
+
+        /// <summary>
+        /// Equivalent round diameter De (in) for rectangular duct.
+        /// Huebscher equal-friction equation:
+        /// De = 1.30 (ab)^0.625 / (a + b)^0.25 where a,b in inches.
+        /// </summary>
+        public static double EquivalentRound_Rect(double side1In, double side2In)
+        {
+            if (side1In <= 0 || side2In <= 0) return 0;
+
+            double a = side1In;
+            double b = side2In;
+            double ab = a * b;
+
+            return 1.30 * Math.Pow(ab, 0.625) / Math.Pow(a + b, 0.25);
+        }
+
+        /// <summary>
+        /// Equivalent round diameter De (in) for flat-oval duct.
+        /// ASHRAE / SMACNA form: De = 1.55 A^0.625 / P^0.25 with A [in^2], P [in].
+        /// </summary>
+        public static double EquivalentRound_FlatOval(double aminorIn, double amajorIn)
+        {
+            if (aminorIn <= 0 || amajorIn <= 0) return 0;
+
+            double A = Pi * aminorIn * aminorIn / 4.0 +
+                       aminorIn * (amajorIn - aminorIn);
+            double P = Pi * aminorIn + 2.0 * (amajorIn - aminorIn);
+
+            return 1.55 * Math.Pow(A, 0.625) / Math.Pow(P, 0.25);
+        }
+
+        /// <summary>
+        /// Equal-friction rectangular equivalent for a given round diameter
+        /// and target aspect ratio (long/short >= 1).
+        /// Returns (side1In, side2In) with side1 >= side2.
+        /// </summary>
+        public static (double Side1In, double Side2In)
+            EqualFrictionRectangleForRound(double roundDiaIn, double aspectRatio)
+        {
+            if (roundDiaIn <= 0 || aspectRatio <= 0)
+                return (0, 0);
+
+            double R = aspectRatio >= 1.0 ? aspectRatio : 1.0 / aspectRatio;
+            double targetD = roundDiaIn;
+
+            double Func(double bIn)
+            {
+                double aIn = R * bIn;
+                double De = EquivalentRound_Rect(aIn, bIn);
+                return De - targetD;
+            }
+
+            double lo = 0.5;
+            double hi = 10.0 * roundDiaIn;
+
+            double fLo = Func(lo);
+            double fHi = Func(hi);
+
+            // Try to bracket the root
+            for (int i = 0; i < 100 && fLo * fHi > 0; i++)
+            {
+                lo /= 2.0;
+                hi *= 2.0;
+                fLo = Func(lo);
+                fHi = Func(hi);
+            }
+
+            for (int i = 0; i < 80; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = Func(mid);
+
+                if (Math.Abs(fMid) < 1e-6)
+                {
+                    lo = hi = mid;
+                    break;
+                }
+
+                if (fLo * fMid > 0)
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+                else
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+            }
+
+            double side2 = 0.5 * (lo + hi);
+            double side1 = R * side2;
+
+            if (side1 < side2)
+            {
+                double t = side1;
+                side1 = side2;
+                side2 = t;
+            }
+
+            return (side1, side2);
+        }
+
+        /// <summary>
+        /// Equal-friction flat-oval equivalent for a given round diameter
+        /// and target aspect ratio amajor/aminor >= 1.
+        /// Returns (amajorIn, aminorIn) with amajor >= aminor.
+        /// </summary>
+        public static (double MajorIn, double MinorIn)
+            EqualFrictionFlatOvalForRound(double roundDiaIn, double aspectRatio)
+        {
+            if (roundDiaIn <= 0 || aspectRatio <= 0)
+                return (0, 0);
+
+            double R = aspectRatio >= 1.0 ? aspectRatio : 1.0 / aspectRatio;
+            double targetD = roundDiaIn;
+
+            double Func(double aminorIn)
+            {
+                double amajorIn = R * aminorIn;
+                double De = EquivalentRound_FlatOval(aminorIn, amajorIn);
+                return De - targetD;
+            }
+
+            double lo = 0.5;
+            double hi = 10.0 * roundDiaIn;
+
+            double fLo = Func(lo);
+            double fHi = Func(hi);
+
+            for (int i = 0; i < 100 && fLo * fHi > 0; i++)
+            {
+                lo /= 2.0;
+                hi *= 2.0;
+                fLo = Func(lo);
+                fHi = Func(hi);
+            }
+
+            for (int i = 0; i < 80; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = Func(mid);
+
+                if (Math.Abs(fMid) < 1e-6)
+                {
+                    lo = hi = mid;
+                    break;
+                }
+
+                if (fLo * fMid > 0)
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+                else
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+            }
+
+            double aminor = 0.5 * (lo + hi);
+            double amajor = R * aminor;
+
+            if (amajor < aminor)
+            {
+                double t = amajor;
+                amajor = aminor;
+                aminor = t;
+            }
+
+            return (amajor, aminor);
+        }
+
+        // === Flow properties & friction ===
+
+        public static double VelocityFpmFromCfmAndArea(double cfm, double areaFt2)
+        {
+            if (areaFt2 <= 0) return 0;
+            return cfm / areaFt2;
+        }
+
+        /// <summary>
+        /// Reynolds number using hydraulic diameter (inches) and velocity (FPM).
+        /// Re = V * D / ν, with V in ft/s, D in ft, ν in ft²/s.
+        /// </summary>
+        public static double Reynolds(double velocityFpm,
+                                      double hydraulicDiameterIn,
+                                      AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+
+            double vFtPerS = velocityFpm / 60.0;
+            double dFt = hydraulicDiameterIn / InPerFt;
+
+            if (air.KinematicViscosityFt2PerS <= 0 || dFt <= 0 || vFtPerS <= 0)
+                return 0;
+
+            return (vFtPerS * dFt) / air.KinematicViscosityFt2PerS;
+        }
+
+        public static double VelocityPressure_InWG(double velocityFpm, AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (velocityFpm <= 0 || air.DensitySlugPerFt3 <= 0) return 0;
+
+            double vFtPerS = velocityFpm / 60.0;
+            double vpLbPerFt2 = air.DensitySlugPerFt3 * vFtPerS * vFtPerS / 2.0;
+            return vpLbPerFt2 / LbPerFt2_Per_InWG;
+        }
+
+        /// <summary>
+        /// Friction factor using Churchill correlation to remain valid
+        /// for laminar, transitional, and turbulent regimes.
+        /// This avoids clamping Re and remains consistent with ASHRAE charts.
+        /// </summary>
+        public static double FrictionFactor(double reynolds, double hydraulicDiameterIn)
+        {
+            double re = Math.Max(reynolds, 1.0);
+            double dFt = hydraulicDiameterIn / InPerFt;
+            if (dFt <= 0) return 0;
+
+            double termLaminar = Math.Pow(8.0 / re, 12.0);
+
+            // Churchill (1977):
+            // A = [2.457 ln(1 / ((7/Re)^0.9 + 0.27 ε/D))]^16
+            // B = (37530 / Re)^16
+            double A = Math.Pow(2.457 * Math.Log(1.0 /
+                                                 (Math.Pow(7.0 / re, 0.9) + 0.27 * (Roughness_Ft / dFt))),
+                                 16.0);
+            double B = Math.Pow(37530.0 / re, 16.0);
+            double termMixed = Math.Pow(1.0 / (A + B), 1.5);
+
+            double frictionDarcy = 8.0 * Math.Pow(termLaminar + termMixed, 1.0 / 12.0);
+            return frictionDarcy;
+        }
+
+        /// <summary>
+        /// Darcy–Weisbach: ΔP/L = f * (ρ V² / (2 D_h))  [lb/ft² per ft].
+        /// Returns ΔP per 100 ft in inches of water column.
+        /// </summary>
+        public static double DpPer100Ft_InWG(double velocityFpm,
+                                             double hydraulicDiameterIn,
+                                             double frictionFactor,
+                                             AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            double vFtPerS = velocityFpm / 60.0;
+            double dFt = hydraulicDiameterIn / InPerFt;
+
+            if (dFt <= 0 || frictionFactor <= 0 || vFtPerS <= 0) return 0;
+
+            double dpPerFt_LbPerFt2 =
+                frictionFactor * (air.DensitySlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
+
+            double dpPer100Ft_LbPerFt2 = dpPerFt_LbPerFt2 * FtPer100Ft;
+
+            double dpPer100Ft_InWG = dpPer100Ft_LbPerFt2 / LbPerFt2_Per_InWG;
+            return dpPer100Ft_InWG;
+        }
+
+        public static double TotalPressureDrop_InWG(double dpPer100Ft_InWG,
+                                                    double straightLengthFt,
+                                                    double sumLossCoefficients,
+                                                    double velocityFpm,
+                                                    AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (dpPer100Ft_InWG < 0 || straightLengthFt < 0 || sumLossCoefficients < 0)
+                return 0;
+
+            double frictionDrop = dpPer100Ft_InWG * (straightLengthFt / FtPer100Ft);
+            double vp = VelocityPressure_InWG(velocityFpm, air);
+            double fittingDrop = sumLossCoefficients * vp;
+            return frictionDrop + fittingDrop;
+        }
+
+        // === Leakage, pressure class, fan power ===
+
+        public static double SelectSmacnaPressureClass(double designStaticInWg)
+        {
+            double[] classes = { 0.5, 1, 2, 3, 4, 6, 8, 10 };
+            if (designStaticInWg <= 0)
+                return classes[0];
+
+            foreach (double pc in classes)
+            {
+                if (designStaticInWg <= pc)
+                    return pc;
+            }
+
+            return classes[^1];
+        }
+
+        public static double LeakageCfm(double leakageClass, double testPressureInWg, double surfaceAreaFt2)
+        {
+            if (leakageClass <= 0 || testPressureInWg <= 0 || surfaceAreaFt2 <= 0)
+                return 0;
+
+            // SMACNA leakage relation: Q = CL * (P^0.65) * (A/100)
+            return leakageClass * Math.Pow(testPressureInWg, 0.65) * (surfaceAreaFt2 / 100.0);
+        }
+
+        public static double FanBrakeHorsepower(double cfm, double totalPressureInWg, double fanEfficiency)
+        {
+            if (cfm <= 0 || totalPressureInWg <= 0 || fanEfficiency <= 0)
+                return 0;
+
+            return (cfm * totalPressureInWg) / (6356.0 * fanEfficiency);
+        }
+
+        public static double SurfaceAreaFromPerimeter(double perimeterFt, double lengthFt)
+        {
+            if (perimeterFt <= 0 || lengthFt <= 0) return 0;
+            return perimeterFt * lengthFt;
+        }
+
+        // === Heat gain/loss and insulation guidance ===
+
+        public static double HeatTransfer_Btuh(double uValue_BtuPerHrFt2F,
+                                               double surfaceAreaFt2,
+                                               double deltaTAmbientF)
+        {
+            if (uValue_BtuPerHrFt2F <= 0 || surfaceAreaFt2 <= 0 || deltaTAmbientF == 0)
+                return 0;
+
+            return uValue_BtuPerHrFt2F * surfaceAreaFt2 * Math.Abs(deltaTAmbientF);
+        }
+
+        public static double AirTemperatureChangeFromHeat(double heatBtuh, double cfm, AirProperties? airProps = null)
+        {
+            if (heatBtuh == 0 || cfm <= 0) return 0;
+
+            AirProperties air = airProps ?? AirProperties.Standard;
+            double massFlowLbmPerHr = cfm * air.DensityLbmPerFt3 * 60.0;
+            if (massFlowLbmPerHr <= 0) return 0;
+
+            return heatBtuh / (massFlowLbmPerHr * CpAir_BtuPerLbmF);
+        }
+
+        public static double RequiredInsulationR(double allowedDeltaTF,
+                                                 double surfaceAreaFt2,
+                                                 double ambientDeltaTF,
+                                                 double cfm,
+                                                 AirProperties? airProps = null)
+        {
+            if (allowedDeltaTF <= 0 || surfaceAreaFt2 <= 0 || ambientDeltaTF == 0 || cfm <= 0)
+                return 0;
+
+            AirProperties air = airProps ?? AirProperties.Standard;
+            double massFlowLbmPerHr = cfm * air.DensityLbmPerFt3 * 60.0;
+            double allowableHeat = massFlowLbmPerHr * CpAir_BtuPerLbmF * Math.Abs(allowedDeltaTF);
+            double requiredU = allowableHeat / (surfaceAreaFt2 * Math.Abs(ambientDeltaTF));
+            if (requiredU <= 0) return 0;
+
+            double requiredTotalR = 1.0 / requiredU;
+            double availableFilmR = InteriorFilmR_HrFt2FPerBtu + ExteriorFilmR_HrFt2FPerBtu;
+            double requiredInsulationR = Math.Max(0, requiredTotalR - availableFilmR);
+
+            return requiredInsulationR;
+        }
+
+        public static double InsulationThicknessInFromR(double insulationR_HrFt2FPerBtu)
+        {
+            if (insulationR_HrFt2FPerBtu <= 0)
+                return 0;
+
+            return insulationR_HrFt2FPerBtu / FiberglassRPerIn_HrFt2FPerBtu;
+        }
+
+        /// <summary>
+        /// Solve round diameter (in) for target CFM and friction rate (in.w.g./100 ft)
+        /// using bisection on Darcy–Weisbach + Churchill friction factor.
+        /// </summary>
+        public static double SolveRoundDiameter_FromCfmAndFriction(double cfm,
+                                                                   double targetDpPer100Ft_InWG,
+                                                                   AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (cfm <= 0 || targetDpPer100Ft_InWG <= 0) return 0;
+
+            double lo = 2.0;   // inches
+            double hi = 120.0; // inches
+
+            double Fn(double dIn)
+            {
+                double area = Area_Round_Ft2(dIn);
+                double vel = VelocityFpmFromCfmAndArea(cfm, area);
+                double re = Reynolds(vel, dIn, air);
+                double f = FrictionFactor(re, dIn);
+                double dp = DpPer100Ft_InWG(vel, dIn, f, air);
+                return dp - targetDpPer100Ft_InWG;
+            }
+
+            double fLo = Fn(lo);
+            double fHi = Fn(hi);
+
+            // Try to bracket a root
+            for (int i = 0; i < 20 && fLo * fHi > 0; i++)
+            {
+                lo = Math.Max(1.0, lo / 1.5);
+                hi *= 1.5;
+                fLo = Fn(lo);
+                fHi = Fn(hi);
+            }
+
+            for (int i = 0; i < 80; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = Fn(mid);
+
+                if (Math.Abs(fMid) < 1e-4)
+                    return mid;
+
+                if (fLo * fMid < 0)
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+                else
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+            }
+
+            return 0.5 * (lo + hi);
+        }
+
+        /// <summary>
+        /// Solve velocity (FPM) for a given hydraulic diameter (in)
+        /// and friction rate (in.w.g./100 ft).
+        ///
+        /// This is used for reverse-calculating airflow from known
+        /// duct size and friction rate (no CFM or velocity given).
+        /// </summary>
+        public static double SolveVelocityFpm_FromDp(double hydraulicDiameterIn,
+                                                     double targetDpPer100Ft_InWG,
+                                                     AirProperties? airProps = null)
+        {
+            AirProperties air = airProps ?? AirProperties.Standard;
+            if (hydraulicDiameterIn <= 0 || targetDpPer100Ft_InWG <= 0)
+                return 0;
+
+            double lo = 100.0;   // FPM
+            double hi = 8000.0;  // FPM
+
+            double Fn(double vFpm)
+            {
+                double re = Reynolds(vFpm, hydraulicDiameterIn, air);
+                double f = FrictionFactor(re, hydraulicDiameterIn);
+                double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f, air);
+                return dp - targetDpPer100Ft_InWG;
+            }
+
+            double fLo = Fn(lo);
+            double fHi = Fn(hi);
+
+            // Try to bracket
+            for (int i = 0; i < 20 && fLo * fHi > 0; i++)
+            {
+                lo = Math.Max(10.0, lo / 1.5);
+                hi *= 1.5;
+                fLo = Fn(lo);
+                fHi = Fn(hi);
+            }
+
+            for (int i = 0; i < 80; i++)
+            {
+                double mid = 0.5 * (lo + hi);
+                double fMid = Fn(mid);
+
+                if (Math.Abs(fMid) < 1e-4)
+                    return mid;
+
+                if (fLo * fMid < 0)
+                {
+                    hi = mid;
+                    fHi = fMid;
+                }
+                else
+                {
+                    lo = mid;
+                    fLo = fMid;
+                }
+            }
+
+            return 0.5 * (lo + hi);
+        }
+
+        /// <summary>
+        /// Compute rectangular sides from area ft² and aspect ratio AR = long/short.
+        /// Returns (side1In, side2In) with side1 ≥ side2.
+        /// </summary>
+        public static (double s1In, double s2In) RectangleFromAreaAndAR(double areaFt2,
+                                                                        double aspectRatio)
+        {
+            if (areaFt2 <= 0 || aspectRatio <= 0) return (0, 0);
+
+            double R = aspectRatio >= 1.0 ? aspectRatio : 1.0 / aspectRatio;
+
+            // Let s2 = x (ft), s1 = R * x (ft), area = R x² → x = sqrt(area/R)
+            double xFt = Math.Sqrt(areaFt2 / R);
+            double s2In = xFt * InPerFt;
+            double s1In = R * xFt * InPerFt;
+
+            return (s1In, s2In);
+        }
+    }
+}
