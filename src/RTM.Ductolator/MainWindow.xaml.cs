@@ -92,6 +92,9 @@ namespace RTM.Ductolator
                 OutPressureClass, OutLeakage, OutFanBhp,
                 OutHeatTransfer, OutDeltaT, OutRequiredR, OutInsulThk,
                 OutAirDensity, OutAirNu,
+                OutRe, OutF, OutCfm, OutVel, OutDp100, OutVp, OutTotalDp,
+                OutAirDensity, OutAirNu,
+                OutRe, OutF, OutCfm, OutVel, OutDp100,
                 OutDia, OutAreaRound, OutCircRound,
                 OutRS1, OutRS2, OutRAR, OutRArea, OutRPerim,
                 OutOS1, OutOS2, OutOAR, OutOArea, OutOPerim
@@ -192,6 +195,7 @@ namespace RTM.Ductolator
                 {
                     // Reverse: diameter + dp/100 → velocity + CFM
                     usedVelFpm = DuctCalculator.SolveVelocityFpm_FromDp(dhIn, dp100Input, air);
+                    usedVelFpm = DuctCalculator.SolveVelocityFpm_FromDp(dhIn, dp100Input);
                     if (areaFt2 > 0 && usedVelFpm > 0)
                         cfm = areaFt2 * usedVelFpm;
                 }
@@ -241,6 +245,7 @@ namespace RTM.Ductolator
                 {
                     // Reverse: rectangle + dp/100 → velocity + CFM
                     usedVelFpm = DuctCalculator.SolveVelocityFpm_FromDp(dhIn, dp100Input, air);
+                    usedVelFpm = DuctCalculator.SolveVelocityFpm_FromDp(dhIn, dp100Input);
                     if (areaFt2 > 0 && usedVelFpm > 0)
                         cfm = areaFt2 * usedVelFpm;
                 }
@@ -307,6 +312,7 @@ namespace RTM.Ductolator
             {
                 // --- Case 4: CFM + dP/100ft → solve round diameter ---
                 primaryRoundDiaIn = DuctCalculator.SolveRoundDiameter_FromCfmAndFriction(cfm, dp100Input, air);
+                primaryRoundDiaIn = DuctCalculator.SolveRoundDiameter_FromCfmAndFriction(cfm, dp100Input);
                 dhIn = primaryRoundDiaIn;
                 areaFt2 = DuctCalculator.Area_Round_Ft2(primaryRoundDiaIn);
                 perimFt = DuctCalculator.Circumference_Round_Ft(primaryRoundDiaIn);
@@ -337,11 +343,19 @@ namespace RTM.Ductolator
             // === Air data (Re, f, dP/100ft) ===
             double reRaw = DuctCalculator.Reynolds(usedVelFpm, dhIn, air);
             double f = DuctCalculator.FrictionFactor(reRaw, dhIn);
+            double reForFriction = reRaw < 2300 && reRaw > 0 ? 2300 : reRaw;
+            double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
             double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, straightLengthFt, sumLossCoeff, usedVelFpm, air);
 
             SetBox(OutRe, reRaw, "0");
+            SetBox(OutRe, reForFriction, "0");
+            double re = DuctCalculator.Reynolds(usedVelFpm, dhIn);
+            double f = DuctCalculator.FrictionFactor(re, dhIn);
+            double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f);
+
+            SetBox(OutRe, re, "0");
             SetBox(OutF, f, "0.0000");
             SetBox(OutCfm, cfm, "0.##");
             SetBox(OutVel, usedVelFpm, "0.00");
@@ -437,6 +451,10 @@ namespace RTM.Ductolator
                     : string.Empty;
 
                 DuctStatusNote.Text = string.Join(" ", new[] { velocityStatus, frictionStatus, regimeStatus, totalStatus, pressureStatus, fanStatus }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                string totalStatus = totalDp > 0.0
+                    ? $"Total drop (friction + fittings) over {straightLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
+
+                DuctStatusNote.Text = string.Join(" ", new[] { velocityStatus, frictionStatus, totalStatus }.Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
             // === Equal-friction rectangle & flat oval when we have a round Dh ===
@@ -806,6 +824,7 @@ namespace RTM.Ductolator
                 RecircFlowOutput, RecircHeadOutput, RecircHeadPsiOutput,
                 HammerVelocityInput, HammerLengthInput, HammerClosureInput, HammerStaticInput,
                 HammerWaveSpeedOutput, HammerSurgeOutput, HammerTotalOutput
+                GasBasePressureInput, GasDiameterOutput, GasFlowOutput, GasVelocityOutput
             })
             {
                 if (tb != null) tb.Text = string.Empty;
