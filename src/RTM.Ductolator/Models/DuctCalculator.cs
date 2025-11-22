@@ -361,15 +361,6 @@ namespace RTM.Ductolator.Models
             double vFtPerS = velocityFpm / 60.0;
             double vpLbPerFt2 = air.DensitySlugPerFt3 * vFtPerS * vFtPerS / 2.0;
             return vpLbPerFt2 / LbPerFt2_Per_InWG;
-        public static double Reynolds(double velocityFpm, double hydraulicDiameterIn)
-        {
-            double vFtPerS = velocityFpm / 60.0;
-            double dFt = hydraulicDiameterIn / InPerFt;
-
-            if (KinematicViscosity_Ft2PerS <= 0 || dFt <= 0 || vFtPerS <= 0)
-                return 0;
-
-            return (vFtPerS * dFt) / KinematicViscosity_Ft2PerS;
         }
 
         /// <summary>
@@ -395,12 +386,6 @@ namespace RTM.Ductolator.Models
             double termMixed = Math.Pow(1.0 / (A + B), 1.5);
 
             double frictionDarcy = 8.0 * Math.Pow(termLaminar + termMixed, 1.0 / 12.0);
-            double term1 = Math.Pow(8.0 / re, 12.0);
-            double A = Math.Pow(2.457 * Math.Log(1.0 / Math.Pow((Roughness_Ft / (3.7 * dFt)) + (7.0 / re), 0.9)), 16.0);
-            double B = Math.Pow(37530.0 / re, 16.0);
-            double term2 = Math.Pow(1.0 / (A + B), 1.5);
-
-            double frictionDarcy = 8.0 * Math.Pow(term1 + term2, 1.0 / 12.0);
             return frictionDarcy;
         }
 
@@ -414,8 +399,6 @@ namespace RTM.Ductolator.Models
                                              AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
-                                             double frictionFactor)
-        {
             double vFtPerS = velocityFpm / 60.0;
             double dFt = hydraulicDiameterIn / InPerFt;
 
@@ -423,7 +406,6 @@ namespace RTM.Ductolator.Models
 
             double dpPerFt_LbPerFt2 =
                 frictionFactor * (air.DensitySlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
-                frictionFactor * (AirDensity_SlugPerFt3 * vFtPerS * vFtPerS / (2.0 * dFt));
 
             double dpPer100Ft_LbPerFt2 = dpPerFt_LbPerFt2 * FtPer100Ft;
 
@@ -549,8 +531,6 @@ namespace RTM.Ductolator.Models
                                                                    AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
-                                                                   double targetDpPer100Ft_InWG)
-        {
             if (cfm <= 0 || targetDpPer100Ft_InWG <= 0) return 0;
 
             double lo = 2.0;   // inches
@@ -563,9 +543,6 @@ namespace RTM.Ductolator.Models
                 double re = Reynolds(vel, dIn, air);
                 double f = FrictionFactor(re, dIn);
                 double dp = DpPer100Ft_InWG(vel, dIn, f, air);
-                double re = Reynolds(vel, dIn);
-                double f = FrictionFactor(re, dIn);
-                double dp = DpPer100Ft_InWG(vel, dIn, f);
                 return dp - targetDpPer100Ft_InWG;
             }
 
@@ -616,8 +593,6 @@ namespace RTM.Ductolator.Models
                                                      AirProperties? airProps = null)
         {
             AirProperties air = airProps ?? AirProperties.Standard;
-                                                     double targetDpPer100Ft_InWG)
-        {
             if (hydraulicDiameterIn <= 0 || targetDpPer100Ft_InWG <= 0)
                 return 0;
 
@@ -629,9 +604,6 @@ namespace RTM.Ductolator.Models
                 double re = Reynolds(vFpm, hydraulicDiameterIn, air);
                 double f = FrictionFactor(re, hydraulicDiameterIn);
                 double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f, air);
-                double re = Reynolds(vFpm, hydraulicDiameterIn);
-                double f = FrictionFactor(re, hydraulicDiameterIn);
-                double dp = DpPer100Ft_InWG(vFpm, hydraulicDiameterIn, f);
                 return dp - targetDpPer100Ft_InWG;
             }
 
