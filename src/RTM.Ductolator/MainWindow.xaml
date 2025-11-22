@@ -122,7 +122,8 @@
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" />
-                            <Button Name="BtnClear" Content="Clear" Width="80" Click="BtnClear_Click" />
+                            <Button Name="BtnClear" Content="Clear" Width="80" Click="BtnClear_Click" Margin="0,0,8,0" />
+                            <Button Name="BtnExportDuct" Content="Export to CSV" Width="140" Click="BtnExportDuct_Click" />
                         </StackPanel>
 
                         <Border Margin="4,0,4,4" Padding="8" Background="#f0f4ff" BorderBrush="#c5d2f7" BorderThickness="1">
@@ -326,7 +327,8 @@
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
-                            <Button Content="Clear" Width="80" Click="BtnPlClear_Click" />
+                            <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
+                            <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
                         </StackPanel>
 
                         <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1">
