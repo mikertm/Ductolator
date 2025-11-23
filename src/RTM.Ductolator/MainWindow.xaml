@@ -16,6 +16,18 @@
             <TabItem Header="Duct Sizing">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8" Orientation="Vertical">
+                        <Border Margin="4" Padding="8" Background="#eef8f2" BorderBrush="#c6e6d1" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="How to use" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="2) Pick a code region to load common velocity and friction guidance." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="3) Click Calculate to fill air properties, pressure class, and equivalent shapes; Export saves the latest result to CSV." />
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="Inputs" FontWeight="Bold" />
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -289,6 +301,18 @@
             <TabItem Header="Plumbing">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8" Orientation="Vertical">
+                        <Border Margin="4" Padding="8" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="How to use" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="1) Enter flow, length, and nominal size (or explicit ID) plus material. Toggle aged C or hot-water checks as needed." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="2) Pick a code region to show local velocity/FU guidance." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="3) Use Calculate Loss for friction, Solve Diameter for target ψ/100 ft, or the specialized buttons for fixtures, storm, gas, recirc, and hammer. Export saves the latest result to CSV." />
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="Pipe Conditions" FontWeight="Bold" />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
