@@ -85,7 +85,7 @@
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="2" Margin="4" Orientation="Vertical">
                                 <TextBlock Text="Straight Length (ft)" />
-                                <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" />
+                                <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" TextChanged="InLength_TextChanged" />
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="3" Margin="4" Orientation="Vertical">
                                 <TextBlock Text="ΣK (fittings loss coefficient)" />
@@ -131,6 +131,42 @@
                             <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
                             <ComboBox Name="DuctRegionCombo" Width="260" />
                         </StackPanel>
+
+                        <Border Margin="4" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Fittings (ASHRAE/SMACNA)" FontWeight="Bold" />
+                                <UniformGrid Columns="3" Margin="0,4">
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Fitting" />
+                                        <ComboBox Name="DuctFittingCombo" DisplayMemberPath="Name" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Quantity" />
+                                        <TextBox Name="DuctFittingQty" Text="1" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                        <Button Content="Add" Width="60" Click="AddDuctFitting_Click" Margin="0,0,6,0" />
+                                        <Button Content="Remove" Width="70" Click="RemoveDuctFitting_Click" Margin="0,0,6,0" />
+                                        <Button Content="Clear" Width="60" Click="ClearDuctFittings_Click" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <ListBox Name="DuctFittingRunList" Height="120" Margin="4,0" />
+                                <UniformGrid Columns="3" Margin="0,4">
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="ΣK from fittings" />
+                                        <TextBox Name="DuctFittingSumKOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Equivalent length (ft)" />
+                                        <TextBox Name="DuctFittingEquivalentLengthOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Total run length (ft)" />
+                                        <TextBox Name="DuctTotalRunLengthOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" />
@@ -321,7 +357,7 @@
                             </StackPanel>
                             <StackPanel Margin="4">
                                 <TextBlock Text="Length (ft)" />
-                                <TextBox Name="PlLengthInput" ToolTip="Straight length for friction in feet" />
+                                <TextBox Name="PlLengthInput" ToolTip="Straight length for friction in feet" TextChanged="PlLengthInput_TextChanged" />
                             </StackPanel>
                             <StackPanel Margin="4">
                                 <TextBlock Text="Nominal Size (in)" />
@@ -363,6 +399,42 @@
                             <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
                             <ComboBox Name="PlRegionCombo" Width="260" />
                         </StackPanel>
+
+                        <Border Margin="4" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Fittings (ASPE/UPC)" FontWeight="Bold" />
+                                <UniformGrid Columns="3" Margin="0,4">
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Fitting" />
+                                        <ComboBox Name="PlFittingCombo" DisplayMemberPath="Name" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Quantity" />
+                                        <TextBox Name="PlFittingQty" Text="1" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                        <Button Content="Add" Width="60" Click="AddPlumbingFitting_Click" Margin="0,0,6,0" />
+                                        <Button Content="Remove" Width="70" Click="RemovePlumbingFitting_Click" Margin="0,0,6,0" />
+                                        <Button Content="Clear" Width="60" Click="ClearPlumbingFittings_Click" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <ListBox Name="PlFittingRunList" Height="120" Margin="4,0" />
+                                <UniformGrid Columns="3" Margin="0,4">
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="ΣK from fittings" />
+                                        <TextBox Name="PlFittingSumKOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Equivalent length (ft)" />
+                                        <TextBox Name="PlFittingEquivalentLengthOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Total run length (ft)" />
+                                        <TextBox Name="PlTotalRunLengthOutput" IsReadOnly="True" />
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
