@@ -680,7 +680,14 @@ namespace RTM.Ductolator
             double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
-            double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, totalRunLengthFt, sumLossCoeff, usedVelFpm, air);
+            // When fitting equivalent length is included in the total run length, avoid
+            // also charging the K-based minor loss term to prevent double-counting.
+            double totalDp = DuctCalculator.TotalPressureDrop_InWG(
+                dpPer100,
+                totalRunLengthFt,
+                fittingEquivalentLength > 0 ? 0 : sumLossCoeff,
+                usedVelFpm,
+                air);
 
             SetBox(OutRe, re, "0");
             SetBox(OutF, f, "0.0000");
@@ -1004,12 +1011,14 @@ namespace RTM.Ductolator
             double fittingPsi = velocityFps > 0 && plFittingSumK > 0
                 ? PlumbingCalculator.MinorLossPsi(velocityFps, plFittingSumK, fluidProps.DensityLbmPerFt3)
                 : 0;
-            double psiTotalHw = psiPer100Hw * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0) + fittingPsi;
+            double psiTotalHw = psiPer100Hw * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
+                + (plFittingEqLength > 0 ? 0 : fittingPsi);
 
             double reynolds = velocityFps > 0 ? PlumbingCalculator.Reynolds(velocityFps, idIn, fluidProps.KinematicViscosityFt2PerS) : 0;
             double darcyF = (reynolds > 0) ? PlumbingCalculator.FrictionFactor(reynolds, idIn, roughness) : 0;
             double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, psiPerFtHead) : 0;
-            double psiTotalDarcy = psiPer100Darcy * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0) + fittingPsi;
+            double psiTotalDarcy = psiPer100Darcy * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
+                + (plFittingEqLength > 0 ? 0 : fittingPsi);
 
             SetBox(PlResolvedIdOutput, idIn, "0.###");
             SetBox(PlVelocityOutput, velocityFps, "0.00");
