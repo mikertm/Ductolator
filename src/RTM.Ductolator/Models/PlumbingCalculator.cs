@@ -14,7 +14,6 @@ namespace RTM.Ductolator.Models
         private const double WaterDensity_LbmPerFt3 = 62.4; // at ~60 °F
         private const double LbmPerSlug = 32.174;
         private const double GravitationalAcceleration_FtPerS2 = 32.174;
-        private const double PsiPerFtHead = 0.4335275; // 1 psi ≈ 2.31 ft head
         private const double InPerFt = 12.0;
         private const double FtPer100Ft = 100.0;
         private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
@@ -22,6 +21,22 @@ namespace RTM.Ductolator.Models
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
         private const double WaterNu60F_Ft2PerS = 1.13e-5;
+
+        /// <summary>
+        /// Supported fluids for plumbing calculations.
+        /// </summary>
+        public enum FluidType
+        {
+            Water,
+            EthyleneGlycol,
+            PropyleneGlycol
+        }
+
+        public record FluidProperties(
+            double DensityLbmPerFt3,
+            double KinematicViscosityFt2PerS,
+            double HazenWilliamsCFactorMultiplier,
+            double RoughnessMultiplier);
 
         /// <summary>
         /// Nominal pipe families that share internal diameter tables and C/ε defaults.
@@ -182,6 +197,56 @@ namespace RTM.Ductolator.Models
         public const double Roughness_Steel_Ft = 0.00015;     // Schedule 40 steel (aged)
         public const double Roughness_PVC_Ft = 0.000005;      // PVC / CPVC smooth
 
+        private record FluidPropertyTableEntry(
+            FluidType Fluid,
+            double TemperatureF,
+            double PercentGlycol,
+            double DensityLbmPerFt3,
+            double KinematicViscosityFt2PerS,
+            double HazenWilliamsMultiplier,
+            double RoughnessMultiplier);
+
+        // Limited table of temperature- and mixture-dependent properties for water and common glycol blends (approximate)
+        // Density and viscosity values compiled from ASHRAE/ASHRAE Fundamentals and manufacturer curves.
+        private static readonly List<FluidPropertyTableEntry> FluidPropertyData = new()
+        {
+            // Water only
+            new FluidPropertyTableEntry(FluidType.Water, 40, 0, 62.99, 1.62e-5, 1.0, 1.0),
+            new FluidPropertyTableEntry(FluidType.Water, 60, 0, 62.37, 1.13e-5, 1.0, 1.0),
+            new FluidPropertyTableEntry(FluidType.Water, 80, 0, 61.93, 8.59e-6, 1.0, 1.0),
+            new FluidPropertyTableEntry(FluidType.Water, 120, 0, 60.74, 5.41e-6, 1.0, 1.0),
+
+            // Ethylene glycol 30%
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 30, 64.7, 2.20e-5, 0.95, 1.05),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 30, 63.6, 1.50e-5, 0.95, 1.05),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 30, 62.4, 1.10e-5, 0.95, 1.05),
+
+            // Ethylene glycol 40%
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 40, 65.3, 2.90e-5, 0.9, 1.08),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 40, 64.0, 1.90e-5, 0.9, 1.08),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 40, 62.7, 1.30e-5, 0.9, 1.08),
+
+            // Ethylene glycol 50%
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 50, 66.1, 3.90e-5, 0.85, 1.12),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 50, 64.6, 2.60e-5, 0.85, 1.12),
+            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 50, 63.1, 1.70e-5, 0.85, 1.12),
+
+            // Propylene glycol 30%
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 30, 64.0, 2.70e-5, 0.93, 1.05),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 30, 62.8, 1.70e-5, 0.93, 1.05),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 30, 61.5, 1.20e-5, 0.93, 1.05),
+
+            // Propylene glycol 40%
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 40, 64.6, 3.70e-5, 0.88, 1.08),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 40, 63.2, 2.40e-5, 0.88, 1.08),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 40, 61.8, 1.60e-5, 0.88, 1.08),
+
+            // Propylene glycol 50%
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 50, 65.4, 5.10e-5, 0.83, 1.12),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 50, 63.8, 3.20e-5, 0.83, 1.12),
+            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 50, 62.2, 2.10e-5, 0.83, 1.12)
+        };
+
         // === Geometry ===
 
         /// <summary>
@@ -199,6 +264,94 @@ namespace RTM.Ductolator.Models
         /// Returns the material data set (roughness, C values, velocity caps) for a given pipe material.
         /// </summary>
         public static MaterialHydraulics GetMaterialData(PipeMaterial material) => MaterialData[material];
+
+        /// <summary>
+        /// Convert a static head (ft) to psi for a given fluid density.
+        /// </summary>
+        public static double PsiPerFtHeadFromDensity(double densityLbmPerFt3) => densityLbmPerFt3 / 144.0;
+
+        private static double Interpolate(double x0, double x1, double y0, double y1, double x)
+        {
+            if (Math.Abs(x1 - x0) < 1e-9) return y0;
+            double t = (x - x0) / (x1 - x0);
+            return y0 + t * (y1 - y0);
+        }
+
+        private static FluidPropertyTableEntry InterpolateAcrossTemperature(IEnumerable<FluidPropertyTableEntry> entries, double tempF)
+        {
+            var ordered = entries.OrderBy(e => e.TemperatureF).ToList();
+            if (ordered.Count == 0) return new FluidPropertyTableEntry(FluidType.Water, tempF, 0, WaterDensity_LbmPerFt3, WaterNu60F_Ft2PerS, 1.0, 1.0);
+
+            if (tempF <= ordered.First().TemperatureF) return ordered.First();
+            if (tempF >= ordered.Last().TemperatureF) return ordered.Last();
+
+            for (int i = 0; i < ordered.Count - 1; i++)
+            {
+                var lo = ordered[i];
+                var hi = ordered[i + 1];
+                if (tempF >= lo.TemperatureF && tempF <= hi.TemperatureF)
+                {
+                    return new FluidPropertyTableEntry(
+                        lo.Fluid,
+                        tempF,
+                        lo.PercentGlycol,
+                        Interpolate(lo.TemperatureF, hi.TemperatureF, lo.DensityLbmPerFt3, hi.DensityLbmPerFt3, tempF),
+                        Interpolate(lo.TemperatureF, hi.TemperatureF, lo.KinematicViscosityFt2PerS, hi.KinematicViscosityFt2PerS, tempF),
+                        Interpolate(lo.TemperatureF, hi.TemperatureF, lo.HazenWilliamsMultiplier, hi.HazenWilliamsMultiplier, tempF),
+                        Interpolate(lo.TemperatureF, hi.TemperatureF, lo.RoughnessMultiplier, hi.RoughnessMultiplier, tempF));
+                }
+            }
+
+            return ordered.Last();
+        }
+
+        /// <summary>
+        /// Resolve fluid density/viscosity and roughness/C multipliers for the chosen fluid and glycol percentage.
+        /// </summary>
+        public static FluidProperties ResolveFluidProperties(FluidType fluid, double temperatureF, double percentGlycol)
+        {
+            double clampedPercent = Math.Max(0, Math.Min(60, percentGlycol));
+            double clampedTemp = Math.Max(40, Math.Min(180, temperatureF <= 0 ? 60 : temperatureF));
+
+            if (clampedPercent <= 0.0001)
+            {
+                var waterRows = FluidPropertyData.Where(e => e.Fluid == FluidType.Water);
+                var water = InterpolateAcrossTemperature(waterRows, clampedTemp);
+                return new FluidProperties(water.DensityLbmPerFt3, water.KinematicViscosityFt2PerS, 1.0, 1.0);
+            }
+
+            var table = FluidPropertyData.Where(e => e.Fluid == fluid).ToList();
+            var percentLevels = table.Select(e => e.PercentGlycol).Distinct().OrderBy(p => p).ToList();
+
+            if (percentLevels.Count == 0)
+            {
+                return new FluidProperties(WaterDensity_LbmPerFt3, WaterNu60F_Ft2PerS, 1.0, 1.0);
+            }
+
+            double lowerPercent = percentLevels.Where(p => p <= clampedPercent).DefaultIfEmpty(percentLevels.First()).Max();
+            double upperPercent = percentLevels.Where(p => p >= clampedPercent).DefaultIfEmpty(percentLevels.Last()).Min();
+
+            FluidPropertyTableEntry InterpForPercent(double percent)
+            {
+                var rows = table.Where(e => Math.Abs(e.PercentGlycol - percent) < 1e-6);
+                return InterpolateAcrossTemperature(rows, clampedTemp);
+            }
+
+            var lower = InterpForPercent(lowerPercent);
+            var upper = InterpForPercent(upperPercent);
+
+            if (Math.Abs(upperPercent - lowerPercent) < 1e-9)
+            {
+                return new FluidProperties(lower.DensityLbmPerFt3, lower.KinematicViscosityFt2PerS, lower.HazenWilliamsMultiplier, lower.RoughnessMultiplier);
+            }
+
+            double density = Interpolate(lowerPercent, upperPercent, lower.DensityLbmPerFt3, upper.DensityLbmPerFt3, clampedPercent);
+            double viscosity = Interpolate(lowerPercent, upperPercent, lower.KinematicViscosityFt2PerS, upper.KinematicViscosityFt2PerS, clampedPercent);
+            double hazenMult = Interpolate(lowerPercent, upperPercent, lower.HazenWilliamsMultiplier, upper.HazenWilliamsMultiplier, clampedPercent);
+            double roughMult = Interpolate(lowerPercent, upperPercent, lower.RoughnessMultiplier, upper.RoughnessMultiplier, clampedPercent);
+
+            return new FluidProperties(density, viscosity, hazenMult, roughMult);
+        }
 
         /// <summary>
         /// Returns the internal diameter (in) for a nominal size (in) and material family.
@@ -276,31 +429,33 @@ namespace RTM.Ductolator.Models
             return numerator / denominator;
         }
 
-        public static double HazenWilliamsPsiPer100Ft(double gpm, double diameterIn, double cFactor)
+        public static double HazenWilliamsPsiPer100Ft(double gpm, double diameterIn, double cFactor, double? psiPerFtHead = null)
         {
             double headFtPer100 = HazenWilliamsHeadLoss_FtPer100Ft(gpm, diameterIn, cFactor);
-            return headFtPer100 * PsiPerFtHead;
+            double psiPerFt = psiPerFtHead ?? PsiPerFtHeadFromDensity(WaterDensity_LbmPerFt3);
+            return headFtPer100 * psiPerFt;
         }
 
         /// <summary>
         /// Hazen-Williams head loss (psi) across a specific run length (ft).
         /// </summary>
-        public static double HazenWilliamsPsi(double gpm, double diameterIn, double cFactor, double lengthFt)
+        public static double HazenWilliamsPsi(double gpm, double diameterIn, double cFactor, double lengthFt, double? psiPerFtHead = null)
         {
             if (lengthFt <= 0) return 0;
 
-            double psiPer100 = HazenWilliamsPsiPer100Ft(gpm, diameterIn, cFactor);
+            double psiPer100 = HazenWilliamsPsiPer100Ft(gpm, diameterIn, cFactor, psiPerFtHead);
             return psiPer100 * (lengthFt / FtPer100Ft);
         }
 
         /// <summary>
         /// Solve flow (gpm) for a target Hazen-Williams loss (psi/100 ft).
         /// </summary>
-        public static double SolveFlowFromHazenWilliams(double diameterIn, double targetPsiPer100Ft, double cFactor)
+        public static double SolveFlowFromHazenWilliams(double diameterIn, double targetPsiPer100Ft, double cFactor, double? psiPerFtHead = null)
         {
             if (diameterIn <= 0 || targetPsiPer100Ft <= 0 || cFactor <= 0) return 0;
 
-            double targetHead = targetPsiPer100Ft / PsiPerFtHead;
+            double psiPerFt = psiPerFtHead ?? PsiPerFtHeadFromDensity(WaterDensity_LbmPerFt3);
+            double targetHead = targetPsiPer100Ft / psiPerFt;
             double lo = 0.01;
             double hi = 5000.0;
 
@@ -347,11 +502,12 @@ namespace RTM.Ductolator.Models
         /// <summary>
         /// Solve pipe diameter (in) for a target Hazen-Williams loss (psi/100 ft).
         /// </summary>
-        public static double SolveDiameterFromHazenWilliams(double gpm, double targetPsiPer100Ft, double cFactor)
+        public static double SolveDiameterFromHazenWilliams(double gpm, double targetPsiPer100Ft, double cFactor, double? psiPerFtHead = null)
         {
             if (gpm <= 0 || targetPsiPer100Ft <= 0 || cFactor <= 0) return 0;
 
-            double targetHead = targetPsiPer100Ft / PsiPerFtHead;
+            double psiPerFt = psiPerFtHead ?? PsiPerFtHeadFromDensity(WaterDensity_LbmPerFt3);
+            double targetHead = targetPsiPer100Ft / psiPerFt;
 
             double lo = 0.25;  // in
             double hi = 48.0;  // in
@@ -432,31 +588,33 @@ namespace RTM.Ductolator.Models
             return headPer100Ft;
         }
 
-        public static double HeadLoss_Darcy_PsiPer100Ft(double gpm, double diameterIn, double roughnessFt, double? kinematicViscosityFt2PerS = null)
+        public static double HeadLoss_Darcy_PsiPer100Ft(double gpm, double diameterIn, double roughnessFt, double? kinematicViscosityFt2PerS = null, double? psiPerFtHead = null)
         {
             double headFt = HeadLoss_Darcy_FtPer100Ft(gpm, diameterIn, roughnessFt, kinematicViscosityFt2PerS);
-            return headFt * PsiPerFtHead;
+            double psiPerFt = psiPerFtHead ?? PsiPerFtHeadFromDensity(WaterDensity_LbmPerFt3);
+            return headFt * psiPerFt;
         }
 
         /// <summary>
         /// Darcy-Weisbach pressure drop (psi) over an arbitrary length (ft).
         /// </summary>
-        public static double HeadLoss_Darcy_Psi(double gpm, double diameterIn, double roughnessFt, double lengthFt, double? kinematicViscosityFt2PerS = null)
+        public static double HeadLoss_Darcy_Psi(double gpm, double diameterIn, double roughnessFt, double lengthFt, double? kinematicViscosityFt2PerS = null, double? psiPerFtHead = null)
         {
             if (lengthFt <= 0) return 0;
 
-            double psiPer100 = HeadLoss_Darcy_PsiPer100Ft(gpm, diameterIn, roughnessFt, kinematicViscosityFt2PerS);
+            double psiPer100 = HeadLoss_Darcy_PsiPer100Ft(gpm, diameterIn, roughnessFt, kinematicViscosityFt2PerS, psiPerFtHead);
             return psiPer100 * (lengthFt / FtPer100Ft);
         }
 
         /// <summary>
         /// Minor (fitting) loss using loss coefficient K: ΔP = K * (ρ V² / 2) / 144 to psi.
         /// </summary>
-        public static double MinorLossPsi(double velocityFps, double kCoefficient)
+        public static double MinorLossPsi(double velocityFps, double kCoefficient, double? fluidDensityLbmPerFt3 = null)
         {
             if (velocityFps <= 0 || kCoefficient < 0) return 0;
 
-            double velocityPressure_LbPerFt2 = WaterDensity_LbmPerFt3 / LbmPerSlug * velocityFps * velocityFps / 2.0;
+            double density = fluidDensityLbmPerFt3 ?? WaterDensity_LbmPerFt3;
+            double velocityPressure_LbPerFt2 = density / LbmPerSlug * velocityFps * velocityFps / 2.0;
             double deltaP_LbPerFt2 = kCoefficient * velocityPressure_LbPerFt2;
             return deltaP_LbPerFt2 / 144.0; // 1 psi = 144 lb/ft²
         }
@@ -782,11 +940,12 @@ namespace RTM.Ductolator.Models
             return totalHeatLossBtuh / (BtuhPerGpmDeltaTF * allowableDeltaTF);
         }
 
-        public static double RecirculationHeadFt(double gpm, double diameterIn, double cFactor, double straightLengthFt, double fittingEquivalentLengthFt)
+        public static double RecirculationHeadFt(double gpm, double diameterIn, double cFactor, double straightLengthFt, double fittingEquivalentLengthFt, double? psiPerFtHead = null)
         {
             double totalLength = Math.Max(0, straightLengthFt) + Math.Max(0, fittingEquivalentLengthFt);
-            double psi = HazenWilliamsPsi(gpm, diameterIn, cFactor, totalLength);
-            return psi / PsiPerFtHead;
+            double psi = HazenWilliamsPsi(gpm, diameterIn, cFactor, totalLength, psiPerFtHead);
+            double psiPerFt = psiPerFtHead ?? PsiPerFtHeadFromDensity(WaterDensity_LbmPerFt3);
+            return psi / psiPerFt;
         }
 
         // === Water hammer ===
