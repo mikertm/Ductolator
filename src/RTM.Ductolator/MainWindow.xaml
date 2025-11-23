@@ -342,6 +342,21 @@
                                 <CheckBox Name="PlUseAgedC" Content="Use aged C-factor" />
                                 <CheckBox Name="PlIsHotWater" Content="Hot water (velocity check)" />
                             </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Fluid" />
+                                <ComboBox Name="PlAntifreezeTypeCombo" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Fluid Temp (°F)" />
+                                <TextBox Name="PlFluidTempInput" ToolTip="Temperature of the fluid stream in °F" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Antifreeze %" />
+                                <TextBox Name="PlAntifreezePercentInput" ToolTip="Percentage of glycol by volume (0–60%)" />
+                            </StackPanel>
                         </UniformGrid>
 
                         <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
@@ -362,6 +377,8 @@
                                            Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams ψ/100 ft follows IPC/UPC practice; Darcy-Weisbach uses ε from material and Re from flow." />
                                 <TextBlock TextWrapping="Wrap" FontSize="12"
                                            Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                           Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes." />
                             </StackPanel>
                         </Border>
 
@@ -382,6 +399,14 @@
                             <StackPanel Margin="4">
                                 <TextBlock Text="Darcy f" />
                                 <TextBox Name="PlFrictionOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Fluid Density (lb/ft³)" />
+                                <TextBox Name="PlFluidDensityOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Kinematic ν (ft²/s)" />
+                                <TextBox Name="PlFluidNuOutput" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
 

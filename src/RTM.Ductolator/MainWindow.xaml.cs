@@ -55,6 +55,11 @@ namespace RTM.Ductolator
             double ResolvedIdIn,
             bool UsedAgedC,
             bool IsHotWater,
+            string Fluid,
+            double FluidTempF,
+            double AntifreezePercent,
+            double FluidDensity,
+            double FluidNu,
             double VelocityFps,
             double VelocityLimitFps,
             double Reynolds,
@@ -74,6 +79,7 @@ namespace RTM.Ductolator
         {
             InitializeComponent();
             PopulatePlumbingMaterials();
+            PopulateFluids();
             PopulateCodeProfiles();
         }
 
@@ -144,6 +150,17 @@ namespace RTM.Ductolator
             PlMaterialCombo.SelectedIndex = 0;
         }
 
+        private void PopulateFluids()
+        {
+            if (PlAntifreezeTypeCombo == null)
+                return;
+
+            PlAntifreezeTypeCombo.ItemsSource = Enum.GetValues(typeof(PlumbingCalculator.FluidType))
+                                                    .Cast<PlumbingCalculator.FluidType>()
+                                                    .ToList();
+            PlAntifreezeTypeCombo.SelectedItem = PlumbingCalculator.FluidType.Water;
+        }
+
         private void PopulateCodeProfiles()
         {
             if (DuctRegionCombo != null)
@@ -164,6 +181,14 @@ namespace RTM.Ductolator
             if (PlMaterialCombo?.SelectedItem is PlumbingCalculator.PipeMaterial mat)
                 return mat;
             return null;
+        }
+
+        private PlumbingCalculator.FluidType SelectedFluid()
+        {
+            if (PlAntifreezeTypeCombo?.SelectedItem is PlumbingCalculator.FluidType fluid)
+                return fluid;
+
+            return PlumbingCalculator.FluidType.Water;
         }
 
         private string SelectedDuctRegionKey() => DuctRegionCombo?.SelectedItem as string ?? CodeGuidance.AllDuctRegions.First();
@@ -702,6 +727,9 @@ namespace RTM.Ductolator
             double lengthFt = ParseBox(PlLengthInput);
             double nominal = ParseBox(PlNominalInput);
             double explicitId = ParseBox(PlExplicitIdInput);
+            double fluidTempF = ParseBox(PlFluidTempInput);
+            double antifreezePercent = ParseBox(PlAntifreezePercentInput);
+            var fluidType = SelectedFluid();
 
             double idIn = explicitId > 0
                 ? explicitId
@@ -718,17 +746,19 @@ namespace RTM.Ductolator
 
             var matData = PlumbingCalculator.GetMaterialData(material.Value);
             bool useAgedC = PlUseAgedC?.IsChecked ?? false;
-            double cFactor = useAgedC ? matData.C_Aged : matData.C_New;
-            double roughness = matData.RoughnessFt;
+            var fluidProps = PlumbingCalculator.ResolveFluidProperties(fluidType, fluidTempF, antifreezePercent);
+            double psiPerFtHead = PlumbingCalculator.PsiPerFtHeadFromDensity(fluidProps.DensityLbmPerFt3);
+            double cFactor = (useAgedC ? matData.C_Aged : matData.C_New) * fluidProps.HazenWilliamsCFactorMultiplier;
+            double roughness = matData.RoughnessFt * fluidProps.RoughnessMultiplier;
             bool isHot = PlIsHotWater?.IsChecked ?? false;
 
             double velocityFps = gpm > 0 ? PlumbingCalculator.VelocityFpsFromGpm(gpm, idIn) : 0;
-            double psiPer100Hw = (gpm > 0 && cFactor > 0) ? PlumbingCalculator.HazenWilliamsPsiPer100Ft(gpm, idIn, cFactor) : 0;
+            double psiPer100Hw = (gpm > 0 && cFactor > 0) ? PlumbingCalculator.HazenWilliamsPsiPer100Ft(gpm, idIn, cFactor, psiPerFtHead) : 0;
             double psiTotalHw = psiPer100Hw * (lengthFt > 0 ? lengthFt / 100.0 : 0);
 
-            double reynolds = velocityFps > 0 ? PlumbingCalculator.Reynolds(velocityFps, idIn) : 0;
+            double reynolds = velocityFps > 0 ? PlumbingCalculator.Reynolds(velocityFps, idIn, fluidProps.KinematicViscosityFt2PerS) : 0;
             double darcyF = (reynolds > 0) ? PlumbingCalculator.FrictionFactor(reynolds, idIn, roughness) : 0;
-            double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness) : 0;
+            double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, psiPerFtHead) : 0;
             double psiTotalDarcy = psiPer100Darcy * (lengthFt > 0 ? lengthFt / 100.0 : 0);
 
             SetBox(PlResolvedIdOutput, idIn, "0.###");
@@ -739,6 +769,8 @@ namespace RTM.Ductolator
             SetBox(PlDarcyPsiTotalOutput, psiTotalDarcy, "0.000");
             SetBox(PlReOutput, reynolds, "0");
             SetBox(PlFrictionOutput, darcyF, "0.0000");
+            SetBox(PlFluidDensityOutput, fluidProps.DensityLbmPerFt3, "0.00");
+            SetBox(PlFluidNuOutput, fluidProps.KinematicViscosityFt2PerS, "0.0000e+0");
 
             double materialCap = isHot ? matData.MaxHotFps : matData.MaxColdFps;
             double regionalCap = plumbingProfile.GetMaxVelocity(isHot);
@@ -748,9 +780,13 @@ namespace RTM.Ductolator
             if (PlVelocityNote != null)
             {
                 string capText = $"Limit: {limitingCap:0.0} fps ({plumbingProfile.Region}, {plumbingProfile.CodeBasis}).";
+                bool capsDiffer = Math.Abs(matData.MaxColdFps - matData.MaxHotFps) > 0.001;
+                string hotDiff = capsDiffer
+                    ? $" Hot water cap for this material is {matData.MaxHotFps:0.0} fps."
+                    : string.Empty;
                 PlVelocityNote.Text = velocityOk
-                    ? "Velocity is within common design guidance. " + capText
-                    : "Velocity exceeds regional/material velocity limits. " + capText;
+                    ? "Velocity is within common design guidance. " + capText + hotDiff
+                    : "Velocity exceeds regional/material velocity limits. " + capText + hotDiff;
             }
 
             if (PlStatusNote != null)
@@ -778,6 +814,11 @@ namespace RTM.Ductolator
                 ResolvedIdIn: idIn,
                 UsedAgedC: useAgedC,
                 IsHotWater: isHot,
+                Fluid: fluidType.ToString(),
+                FluidTempF: fluidTempF,
+                AntifreezePercent: antifreezePercent,
+                FluidDensity: fluidProps.DensityLbmPerFt3,
+                FluidNu: fluidProps.KinematicViscosityFt2PerS,
                 VelocityFps: velocityFps,
                 VelocityLimitFps: limitingCap,
                 Reynolds: reynolds,
@@ -801,7 +842,7 @@ namespace RTM.Ductolator
 
             var p = _lastPlumbingExport.Value;
             var sb = new StringBuilder();
-            sb.AppendLine("Flow (gpm),Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s)");
+            sb.AppendLine("Flow (gpm),Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Fluid,Fluid Temp (F),Antifreeze %,Fluid Density (lb/ft3),Fluid Kinematic Nu (ft2/s),Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s)");
             sb.AppendLine(string.Join(",", new[]
             {
                 CsvEscape(p.FlowGpm),
@@ -811,6 +852,11 @@ namespace RTM.Ductolator
                 CsvEscape(p.ResolvedIdIn),
                 CsvEscape(p.UsedAgedC),
                 CsvEscape(p.IsHotWater),
+                CsvEscape(p.Fluid),
+                CsvEscape(p.FluidTempF),
+                CsvEscape(p.AntifreezePercent),
+                CsvEscape(p.FluidDensity),
+                CsvEscape(p.FluidNu),
                 CsvEscape(p.VelocityFps),
                 CsvEscape(p.VelocityLimitFps),
                 CsvEscape(p.Reynolds),
@@ -841,6 +887,9 @@ namespace RTM.Ductolator
 
             double gpm = ParseBox(PlSizeGpmInput);
             double targetPsi100 = ParseBox(PlTargetPsi100Input);
+            double fluidTempF = ParseBox(PlFluidTempInput);
+            double antifreezePercent = ParseBox(PlAntifreezePercentInput);
+            var fluidType = SelectedFluid();
 
             if (gpm <= 0 || targetPsi100 <= 0)
             {
@@ -853,9 +902,11 @@ namespace RTM.Ductolator
 
             var matData = PlumbingCalculator.GetMaterialData(material.Value);
             bool useAgedC = PlUseAgedC?.IsChecked ?? false;
-            double cFactor = useAgedC ? matData.C_Aged : matData.C_New;
+            var fluidProps = PlumbingCalculator.ResolveFluidProperties(fluidType, fluidTempF, antifreezePercent);
+            double psiPerFtHead = PlumbingCalculator.PsiPerFtHeadFromDensity(fluidProps.DensityLbmPerFt3);
+            double cFactor = (useAgedC ? matData.C_Aged : matData.C_New) * fluidProps.HazenWilliamsCFactorMultiplier;
 
-            double solvedDiameterIn = PlumbingCalculator.SolveDiameterFromHazenWilliams(gpm, targetPsi100, cFactor);
+            double solvedDiameterIn = PlumbingCalculator.SolveDiameterFromHazenWilliams(gpm, targetPsi100, cFactor, psiPerFtHead);
             SetBox(PlSizedDiameterOutput, solvedDiameterIn, "0.###");
 
             double nearestNominal = FindNearestNominal(material.Value, solvedDiameterIn);
@@ -1061,8 +1112,10 @@ namespace RTM.Ductolator
             foreach (var tb in new[]
             {
                 PlGpmInput, PlLengthInput, PlNominalInput, PlExplicitIdInput,
+                PlFluidTempInput, PlAntifreezePercentInput,
                 PlResolvedIdOutput, PlVelocityOutput, PlHazenPsi100Output, PlHazenPsiTotalOutput,
                 PlDarcyPsi100Output, PlDarcyPsiTotalOutput, PlReOutput, PlFrictionOutput,
+                PlFluidDensityOutput, PlFluidNuOutput,
                 PlSizeGpmInput, PlTargetPsi100Input, PlSizedDiameterOutput, PlSizedNominalOutput,
                 FixtureUnitsInput, FixtureDemandOutput,
                 SanitaryDfuInput, SanitarySlopeInput, SanitaryDiameterOutput,
@@ -1110,6 +1163,9 @@ namespace RTM.Ductolator
 
             if (PlIsHotWater != null)
                 PlIsHotWater.IsChecked = false;
+
+            if (PlAntifreezeTypeCombo != null)
+                PlAntifreezeTypeCombo.SelectedItem = PlumbingCalculator.FluidType.Water;
 
             _lastPlumbingExport = null;
         }
