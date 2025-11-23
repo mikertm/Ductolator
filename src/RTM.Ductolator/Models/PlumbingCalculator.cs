@@ -583,11 +583,16 @@ namespace RTM.Ductolator.Models
         }
 
         // IPC Table 703.2 style DFU limits for horizontal drainage (dfu capacity at typical slopes)
+        // Slopes are stored in ft/ft, converted from the customary in/ft presentation
+        // (e.g., 1/4 in/ft → 0.0208 ft/ft) used by IPC/UPC branch sizing tables.
+        private const double SlopeQuarterInPerFt_FtPerFt = 0.25 / InPerFt;   // 1/4 in per ft
+        private const double SlopeEighthInPerFt_FtPerFt = 0.125 / InPerFt;   // 1/8 in per ft
+        private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
         private static readonly Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
         {
-            { 0.25, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
-            { 0.0125, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
-            { 0.0625, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
+            { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
+            { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
+            { SlopeSixteenthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
         };
 
         /// <summary>

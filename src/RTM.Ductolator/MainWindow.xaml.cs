@@ -894,11 +894,13 @@ namespace RTM.Ductolator
             {
                 if (diameter <= 0)
                 {
-                    SanitaryNote.Text = "Demand exceeds the embedded IPC-style branch table for the given slope.";
+                    SanitaryNote.Text = "Demand exceeds the embedded IPC-style branch table for the given slope (ft/ft). " +
+                                        "Example: 0.0208 = 1/4 in per ft.";
                 }
                 else
                 {
-                    SanitaryNote.Text = "Uses IPC/UPC DFU branch capacities; verify stack and trap arm separately.";
+                    SanitaryNote.Text = "Uses IPC/UPC DFU branch capacities; verify stack and trap arm separately. " +
+                                        "Enter slope in ft/ft (e.g., 0.0208 = 1/4 in per ft).";
                 }
             }
         }
