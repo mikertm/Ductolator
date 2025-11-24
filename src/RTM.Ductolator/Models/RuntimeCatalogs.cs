@@ -69,6 +69,7 @@ namespace RTM.Ductolator.Models
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNameCaseInsensitive = true
         };
 
         public static IReadOnlyList<PipeMaterialProfile> Materials { get; private set; } = BuiltInMaterials();
