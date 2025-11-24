@@ -43,104 +43,129 @@
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="Inputs" FontWeight="Bold" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                        <Border Margin="0,0,0,6" Padding="6" Background="#f7faff" BorderBrush="#d7e3f7" BorderThickness="1">
+                            <Expander Header="Quick start" IsExpanded="True">
+                                <StackPanel>
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,6"
+                                               Text="Use this for typical sizing: enter any two of flow, velocity, or friction plus one shape (round or rectangular) to solve the rest." />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Flow (CFM)" />
-                                <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Velocity (FPM)" />
-                                <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Friction (in. w.g. / 100 ft)" />
-                                <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Aspect Ratio (long/short)" />
-                                <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
-                            </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Flow (CFM)" />
+                                            <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Velocity (FPM)" />
+                                            <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Friction (in. w.g. / 100 ft)" />
+                                            <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Aspect Ratio (long/short)" />
+                                            <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
+                                        </StackPanel>
 
-                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Round Diameter (in)" />
-                                <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Rect Side 1 (in)" />
-                                <TextBox Name="InS1" ToolTip="Long side in inches" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Rect Side 2 (in)" />
-                                <TextBox Name="InS2" ToolTip="Short side in inches" />
-                            </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Round Diameter (in)" />
+                                            <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Rect Side 1 (in)" />
+                                            <TextBox Name="InS1" ToolTip="Long side in inches" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Rect Side 2 (in)" />
+                                            <TextBox Name="InS2" ToolTip="Short side in inches" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
 
-                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Air Temp (°F)" />
-                                <TextBox Name="InAirTemp" ToolTip="Dry-bulb air temperature in °F; used for density/viscosity" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Altitude (ft)" />
-                                <TextBox Name="InAltitude" ToolTip="Site elevation above sea level in feet" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Straight Length (ft)" />
-                                <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" TextChanged="InLength_TextChanged" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="2" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="ΣK (fittings loss coefficient)" />
-                                <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless)" />
-                            </StackPanel>
+                        <Border Margin="0,0,0,6" Padding="6" Background="#f8f5ff" BorderBrush="#dcd2f6" BorderThickness="1">
+                            <Expander Header="Advanced" IsExpanded="False">
+                                <StackPanel>
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,6"
+                                               Text="Use when you need site-specific corrections, leakage pressure class inputs, or thermal/insulation checks." />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Supply Static (in. w.g.)" />
-                                <TextBox Name="InSupplyStatic" ToolTip="Design supply fan static pressure in inches of water" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Return/Exhaust Static (in. w.g.)" />
-                                <TextBox Name="InReturnStatic" ToolTip="Return or exhaust static pressure in inches of water" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Leakage Class (cfm/100ft² @1in)" />
-                                <TextBox Name="InLeakageClass" ToolTip="SMACNA leakage class (3, 6, 12, 24). Default 6" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Leak Test Pressure (in. w.g.)" />
-                                <TextBox Name="InLeakTestPressure" ToolTip="Test pressure for leakage calc; often design static" />
-                            </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Air Temp (°F)" />
+                                            <TextBox Name="InAirTemp" ToolTip="Dry-bulb air temperature in °F; used for density/viscosity" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Altitude (ft)" />
+                                            <TextBox Name="InAltitude" ToolTip="Site elevation above sea level in feet" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Straight Length (ft)" />
+                                            <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" TextChanged="InLength_TextChanged" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="ΣK (fittings loss coefficient)" />
+                                            <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless)" />
+                                        </StackPanel>
 
-                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Fan Efficiency (0-1)" />
-                                <TextBox Name="InFanEff" ToolTip="Total-to-static fan efficiency as a decimal (e.g., 0.65)" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Ambient Temp (°F)" />
-                                <TextBox Name="InAmbientTemp" ToolTip="Surrounding ambient temperature for heat gain/loss" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="4" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Max Allowable ΔT (°F)" />
-                                <TextBox Name="InMaxDeltaT" ToolTip="Allowed supply temperature drop across the run" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="4" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                <TextBlock Text="Existing Insulation R" />
-                                <TextBox Name="InExistingInsulR" ToolTip="Installed insulation R (hr·ft²·°F/Btu) if known" />
-                            </StackPanel>
-                        </Grid>
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Supply Static (in. w.g.)" />
+                                            <TextBox Name="InSupplyStatic" ToolTip="Design supply fan static pressure in inches of water" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Return/Exhaust Static (in. w.g.)" />
+                                            <TextBox Name="InReturnStatic" ToolTip="Return or exhaust static pressure in inches of water" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Leakage Class (cfm/100ft² @1in)" />
+                                            <TextBox Name="InLeakageClass" ToolTip="SMACNA leakage class (3, 6, 12, 24). Default 6" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Leak Test Pressure (in. w.g.)" />
+                                            <TextBox Name="InLeakTestPressure" ToolTip="Test pressure for leakage calc; often design static" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Fan Efficiency (0-1)" />
+                                            <TextBox Name="InFanEff" ToolTip="Total-to-static fan efficiency as a decimal (e.g., 0.65)" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Ambient Temp (°F)" />
+                                            <TextBox Name="InAmbientTemp" ToolTip="Surrounding ambient temperature for heat gain/loss" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Max Allowable ΔT (°F)" />
+                                            <TextBox Name="InMaxDeltaT" ToolTip="Allowed supply temperature drop across the run" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="3" Margin="4" Orientation="Vertical">
+                                            <TextBlock Text="Existing Insulation R" />
+                                            <TextBox Name="InExistingInsulR" ToolTip="Installed insulation R (hr·ft²·°F/Btu) if known" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
 
                         <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
                             <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
