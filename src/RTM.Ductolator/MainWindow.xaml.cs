@@ -321,6 +321,39 @@ namespace RTM.Ductolator
             }
         }
 
+        private void ApplyVelocityPreset_Click(object sender, RoutedEventArgs e)
+        {
+            var ductProfile = CodeGuidance.GetDuctProfile(SelectedDuctRegionKey());
+
+            double? targetVel = null;
+            string label = "Preset";
+
+            if (sender is Button btn)
+            {
+                label = btn.Content?.ToString() ?? label;
+                string? tag = btn.Tag as string;
+                targetVel = tag switch
+                {
+                    "Supply" => ductProfile.MaxSupplyMainFpm,
+                    "Branch" => ductProfile.MaxBranchFpm,
+                    "Return" => ductProfile.MaxReturnFpm,
+                    _ => targetVel
+                };
+            }
+
+            if (targetVel.HasValue && InVel != null)
+                SetBox(InVel, targetVel.Value, "0");
+
+            if (InDp100 != null)
+                SetBox(InDp100, ductProfile.DefaultFriction_InWgPer100Ft, "0.###");
+
+            if (DuctStatusNote != null)
+            {
+                string velText = targetVel.HasValue ? $"{targetVel.Value:0} fpm" : "default velocity";
+                DuctStatusNote.Text = $"{label} loaded from {ductProfile.Region}: {velText}, friction {ductProfile.DefaultFriction_InWgPer100Ft:0.###} in. w.g./100 ft.";
+            }
+        }
+
         private PipeMaterialProfile? SelectedMaterial()
         {
             return PlMaterialCombo?.SelectedItem as PipeMaterialProfile;
