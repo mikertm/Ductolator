@@ -1,7 +1,7 @@
 <Window x:Class="RTM.Ductolator.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ductolator & Plumbing Sizer" Height="720" Width="1100"
+        Title="Ductolator &amp; Plumbing Sizer" Height="720" Width="1100"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Style x:Key="PillButtonStyle" TargetType="Button">
@@ -824,7 +824,7 @@
                             <TextBlock Text="Fixture Units" FontWeight="Bold" FontSize="14" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
                                        Text="Step 1: Enter total fixture units. Step 2: Calculate Hunter probable demand. Step 3: Use the demand to size branches and mains." />
-                            <TextBlock Text="Fixture Units & Drainage" FontWeight="Bold" />
+                            <TextBlock Text="Fixture Units &amp; Drainage" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
                                        Text="Provide total fixture units to get probable demand, then use sanitary DFU and slope inputs to size or check drainage lines." />
                             <UniformGrid Columns="4" Margin="0,4">
