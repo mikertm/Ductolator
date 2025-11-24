@@ -6,13 +6,28 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <TextBlock Text="ASHRAE/SMACNA duct sizing and ASPE/UPC plumbing calculations"
                    FontSize="16" FontWeight="Bold"/>
 
-        <TabControl Grid.Row="1" Margin="0,12,0,0">
+        <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Background="#f6f2ff" BorderBrush="#d7cef5" BorderThickness="1">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
+                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
+                           Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files are merged with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                    <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
+                    <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" />
+                    <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" />
+                </StackPanel>
+                <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Foreground="DarkRed" />
+            </StackPanel>
+        </Border>
+
+        <TabControl Grid.Row="2" Margin="0,12,0,0">
             <TabItem Header="Duct Sizing">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8" Orientation="Vertical">

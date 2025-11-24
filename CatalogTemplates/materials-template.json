@@ -1,0 +1,194 @@
+[
+  {
+    "key": "copper_type_l",
+    "displayName": "Copper Type L",
+    "serviceNote": "domestic water / heating",
+    "roughnessFt": 1.5e-06,
+    "cNew": 150,
+    "cAged": 135,
+    "maxColdFps": 8.0,
+    "maxHotFps": 5.0,
+    "waveSpeedFps": 4000,
+    "nominalSizes": [
+      { "nominalIn": 0.75, "idIn": 0.785 },
+      { "nominalIn": 1.0, "idIn": 1.025 },
+      { "nominalIn": 2.0, "idIn": 1.939 }
+    ]
+  },
+  {
+    "key": "steel_sch_40",
+    "displayName": "Carbon steel Sch 40",
+    "serviceNote": "process / hydronic / fire",
+    "roughnessFt": 0.00015,
+    "cNew": 120,
+    "cAged": 100,
+    "maxColdFps": 6.0,
+    "maxHotFps": 5.0,
+    "waveSpeedFps": 4000,
+    "nominalSizes": [
+      { "nominalIn": 2.0, "idIn": 2.067 },
+      { "nominalIn": 4.0, "idIn": 4.026 },
+      { "nominalIn": 6.0, "idIn": 6.065 }
+    ]
+  },
+  {
+    "key": "stainless_sch_10s",
+    "displayName": "Stainless steel Sch 10S",
+    "serviceNote": "process / RO / food",
+    "roughnessFt": 6e-06,
+    "cNew": 145,
+    "cAged": 140,
+    "maxColdFps": 8.0,
+    "maxHotFps": 6.0,
+    "waveSpeedFps": 3700,
+    "nominalSizes": [
+      { "nominalIn": 2.0, "idIn": 2.067 },
+      { "nominalIn": 3.0, "idIn": 3.068 },
+      { "nominalIn": 4.0, "idIn": 4.026 }
+    ]
+  },
+  {
+    "key": "cast_iron",
+    "displayName": "Cast iron NH",
+    "serviceNote": "DWV / storm",
+    "roughnessFt": 0.00085,
+    "cNew": 110,
+    "cAged": 90,
+    "maxColdFps": 10.0,
+    "maxHotFps": 8.0,
+    "waveSpeedFps": 3000,
+    "nominalSizes": [
+      { "nominalIn": 3.0, "idIn": 3.141 },
+      { "nominalIn": 4.0, "idIn": 4.09 },
+      { "nominalIn": 6.0, "idIn": 6.186 }
+    ]
+  },
+  {
+    "key": "ductile_iron_cl",
+    "displayName": "Ductile iron cement lined",
+    "serviceNote": "gray water / fire",
+    "roughnessFt": 0.00085,
+    "cNew": 140,
+    "cAged": 125,
+    "maxColdFps": 12.0,
+    "maxHotFps": 10.0,
+    "waveSpeedFps": 3500,
+    "nominalSizes": [
+      { "nominalIn": 4.0, "idIn": 4.26 },
+      { "nominalIn": 6.0, "idIn": 6.28 },
+      { "nominalIn": 8.0, "idIn": 8.32 }
+    ]
+  },
+  {
+    "key": "pvc_sch_40",
+    "displayName": "PVC Sch 40",
+    "serviceNote": "condensate / water",
+    "roughnessFt": 5e-06,
+    "cNew": 150,
+    "cAged": 140,
+    "maxColdFps": 10.0,
+    "maxHotFps": 8.0,
+    "waveSpeedFps": 1400,
+    "nominalSizes": [
+      { "nominalIn": 1.0, "idIn": 1.049 },
+      { "nominalIn": 2.0, "idIn": 2.067 },
+      { "nominalIn": 4.0, "idIn": 4.026 }
+    ]
+  },
+  {
+    "key": "cpvc_sch_80",
+    "displayName": "CPVC Sch 80",
+    "serviceNote": "hot water / corrosives",
+    "roughnessFt": 5e-06,
+    "cNew": 150,
+    "cAged": 140,
+    "maxColdFps": 8.0,
+    "maxHotFps": 8.0,
+    "waveSpeedFps": 1500,
+    "nominalSizes": [
+      { "nominalIn": 1.0, "idIn": 0.957 },
+      { "nominalIn": 2.0, "idIn": 1.913 },
+      { "nominalIn": 4.0, "idIn": 3.786 }
+    ]
+  },
+  {
+    "key": "pex",
+    "displayName": "PEX SDR-9",
+    "serviceNote": "distribution loops",
+    "roughnessFt": 0.0001,
+    "cNew": 150,
+    "cAged": 140,
+    "maxColdFps": 8.0,
+    "maxHotFps": 5.0,
+    "waveSpeedFps": 1500,
+    "nominalSizes": [
+      { "nominalIn": 0.75, "idIn": 0.671 },
+      { "nominalIn": 1.0, "idIn": 0.875 },
+      { "nominalIn": 1.5, "idIn": 1.265 }
+    ]
+  },
+  {
+    "key": "hdpe_sdr11",
+    "displayName": "HDPE SDR-11",
+    "serviceNote": "utility / gas / water",
+    "roughnessFt": 6e-06,
+    "cNew": 150,
+    "cAged": 140,
+    "maxColdFps": 10.0,
+    "maxHotFps": 8.0,
+    "waveSpeedFps": 1200,
+    "nominalSizes": [
+      { "nominalIn": 2.0, "idIn": 1.939 },
+      { "nominalIn": 3.0, "idIn": 2.889 },
+      { "nominalIn": 4.0, "idIn": 3.826 }
+    ]
+  },
+  {
+    "key": "ppr_sdr7_4",
+    "displayName": "PP-R SDR-7.4",
+    "serviceNote": "heating / DHW",
+    "roughnessFt": 6e-06,
+    "cNew": 150,
+    "cAged": 140,
+    "maxColdFps": 8.0,
+    "maxHotFps": 5.0,
+    "waveSpeedFps": 1200,
+    "nominalSizes": [
+      { "nominalIn": 1.0, "idIn": 0.866 },
+      { "nominalIn": 2.0, "idIn": 1.732 },
+      { "nominalIn": 3.0, "idIn": 2.598 }
+    ]
+  },
+  {
+    "key": "lined_steel",
+    "displayName": "Cement-lined steel",
+    "serviceNote": "lined process",
+    "roughnessFt": 0.0001,
+    "cNew": 140,
+    "cAged": 125,
+    "maxColdFps": 8.0,
+    "maxHotFps": 6.0,
+    "waveSpeedFps": 3600,
+    "nominalSizes": [
+      { "nominalIn": 2.0, "idIn": 2.067 },
+      { "nominalIn": 4.0, "idIn": 4.026 },
+      { "nominalIn": 6.0, "idIn": 6.065 }
+    ]
+  },
+  {
+    "key": "aluminum",
+    "displayName": "Aluminum tube",
+    "serviceNote": "lightweight HVAC",
+    "roughnessFt": 4e-05,
+    "cNew": 140,
+    "cAged": 130,
+    "maxColdFps": 8.0,
+    "maxHotFps": 6.0,
+    "waveSpeedFps": 4200,
+    "nominalSizes": [
+      { "nominalIn": 1.0, "idIn": 0.995 },
+      { "nominalIn": 2.0, "idIn": 1.939 },
+      { "nominalIn": 3.0, "idIn": 2.889 }
+    ]
+  }
+]

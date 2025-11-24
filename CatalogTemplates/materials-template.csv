@@ -1,0 +1,15 @@
+Key,DisplayName,ServiceNote,RoughnessFt,CNew,CAged,MaxColdFps,MaxHotFps,WaveSpeedFps,NominalIn,IdIn
+copper_type_l,Copper Type L,domestic water / heating,1.5e-06,150,135,8,5,4000,1,1.025
+copper_type_l,Copper Type L,domestic water / heating,1.5e-06,150,135,8,5,4000,2,1.939
+steel_sch_40,Carbon steel Sch 40,process / hydronic / fire,0.00015,120,100,6,5,4000,2,2.067
+steel_sch_40,Carbon steel Sch 40,process / hydronic / fire,0.00015,120,100,6,5,4000,4,4.026
+stainless_sch_10s,Stainless Sch 10S,process / RO / food,6e-06,145,140,8,6,3700,3,3.068
+cast_iron,Cast iron NH,DWV / storm,0.00085,110,90,10,8,3000,4,4.09
+ductile_iron_cl,Ductile iron CL,gray water / fire,0.00085,140,125,12,10,3500,6,6.28
+pvc_sch_40,PVC Sch 40,condensate / water,5e-06,150,140,10,8,1400,2,2.067
+cpvc_sch_80,CPVC Sch 80,hot water / corrosives,5e-06,150,140,8,8,1500,2,1.913
+pex,PEX SDR-9,distribution loops,0.0001,150,140,8,5,1500,1,0.875
+hdpe_sdr11,HDPE SDR-11,utility / gas / water,6e-06,150,140,10,8,1200,3,2.889
+ppr_sdr7_4,PP-R SDR-7.4,heating / DHW,6e-06,150,140,8,5,1200,2,1.732
+lined_steel,Cement-lined steel,lined process,0.0001,140,125,8,6,3600,4,4.026
+aluminum,Aluminum tube,lightweight HVAC,4e-05,140,130,8,6,4200,2,1.939
