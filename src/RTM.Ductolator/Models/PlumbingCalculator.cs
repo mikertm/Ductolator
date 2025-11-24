@@ -19,6 +19,7 @@ namespace RTM.Ductolator.Models
         private const double InPerFt = 12.0;
         private const double FtPer100Ft = 100.0;
         private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
+        private const double CfsToGpm = 448.831;
         private const double BtuhPerGpmDeltaTF = 500.0; // water, 60 °F
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
@@ -595,7 +596,7 @@ namespace RTM.Ductolator.Models
 
         /// <summary>
         /// Solve full-flow circular pipe diameter (in) for a storm flow using Manning's equation.
-        /// Q (gpm) = 449 * (1/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
+        /// Q (gpm) = 448.831 * (1.486/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
         /// </summary>
         public static double StormDiameterFromFlow(double flowGpm, double slopeFtPerFt, double roughnessN = 0.012,
                                                    double minDiameterIn = 2.0, double maxDiameterIn = 60.0)
@@ -606,9 +607,9 @@ namespace RTM.Ductolator.Models
             {
                 double dFt = dIn / InPerFt;
                 double area = Math.PI * dFt * dFt / 4.0;
-                double radius = dFt / 4.0; // hydraulic radius for full pipe
-                double qCfs = (1.49 / roughnessN) * area * Math.Pow(radius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * 448.831; // to gpm
+                double hydraulicRadius = dFt / 4.0; // hydraulic radius for full pipe
+                double qCfs = (1.486 / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                return qCfs * CfsToGpm; // to gpm
             }
 
             double lo = minDiameterIn;
