@@ -1126,6 +1126,26 @@ namespace RTM.Ductolator
             double fluidTempF = ParseBox(PlFluidTempInput);
             double antifreezePercent = ParseBox(PlAntifreezePercentInput);
             var fluidType = SelectedFluid();
+            double availableHeadPsiInput = ParseBox(PlAvailableHeadPsiInput);
+            double availableHeadFtInput = ParseBox(PlAvailableHeadFtInput);
+
+            if (gpm <= 0)
+            {
+                MessageBox.Show("Enter a flow rate in gpm before calculating plumbing losses.",
+                                "Inputs Required",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                return;
+            }
+
+            if (lengthFt <= 0)
+            {
+                MessageBox.Show("Enter a straight pipe length in feet to evaluate losses.",
+                                "Inputs Required",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                return;
+            }
 
             UpdatePlumbingFittingTotals();
             var (plFittingSumK, plFittingEqLength) = CurrentPlumbingFittingTotals();
@@ -1157,14 +1177,20 @@ namespace RTM.Ductolator
             double fittingPsi = velocityFps > 0 && plFittingSumK > 0
                 ? PlumbingCalculator.MinorLossPsi(velocityFps, plFittingSumK, fluidProps.DensityLbmPerFt3)
                 : 0;
-            double psiTotalHw = psiPer100Hw * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
-                + (plFittingEqLength > 0 ? 0 : fittingPsi);
+            double frictionPsiHw = psiPer100Hw * (lengthFt > 0 ? lengthFt / 100.0 : 0);
+            double fittingPsiHw = fittingPsi > 0
+                ? fittingPsi
+                : psiPer100Hw * (plFittingEqLength > 0 ? plFittingEqLength / 100.0 : 0);
+            double psiTotalHw = frictionPsiHw + fittingPsiHw;
 
             double reynolds = velocityFps > 0 ? PlumbingCalculator.Reynolds(velocityFps, idIn, fluidProps.KinematicViscosityFt2PerS) : 0;
             double darcyF = (reynolds > 0) ? PlumbingCalculator.FrictionFactor(reynolds, idIn, roughness) : 0;
             double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, psiPerFtHead) : 0;
-            double psiTotalDarcy = psiPer100Darcy * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
-                + (plFittingEqLength > 0 ? 0 : fittingPsi);
+            double frictionPsiDarcy = psiPer100Darcy * (lengthFt > 0 ? lengthFt / 100.0 : 0);
+            double fittingPsiDarcy = fittingPsi > 0
+                ? fittingPsi
+                : psiPer100Darcy * (plFittingEqLength > 0 ? plFittingEqLength / 100.0 : 0);
+            double psiTotalDarcy = frictionPsiDarcy + fittingPsiDarcy;
 
             SetBox(PlResolvedIdOutput, idIn, "0.###");
             SetBox(PlVelocityOutput, velocityFps, "0.00");
@@ -1207,11 +1233,39 @@ namespace RTM.Ductolator
                 string reynoldsNote = reynolds > 0 && reynolds < 4000
                     ? "Reynolds number indicates transitional/laminar flow—verify minor loss methods." : string.Empty;
 
-                PlStatusNote.Text = string.Join(" ", new[] { frictionNote, reynoldsNote }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                double availableHeadPsi = 0;
+                if (availableHeadPsiInput > 0) availableHeadPsi += availableHeadPsiInput;
+                if (availableHeadFtInput > 0 && psiPerFtHead > 0) availableHeadPsi += availableHeadFtInput * psiPerFtHead;
+                double totalRunLossPsi = psiTotalHw > 0 ? psiTotalHw : psiTotalDarcy;
+                string marginNote;
+
+                if (availableHeadPsi <= 0)
+                {
+                    marginNote = "Add available static/boost pressure or pump duty (psi or ft) to check remaining margin.";
+                }
+                else if (totalRunLossPsi <= 0)
+                {
+                    marginNote = "Provide flow, length, and size to evaluate head margin.";
+                }
+                else
+                {
+                    double marginPsi = availableHeadPsi - totalRunLossPsi;
+                    double marginFt = psiPerFtHead > 0 ? marginPsi / psiPerFtHead : 0;
+                    string marginMagnitude = $"{Math.Abs(marginPsi):0.###} psi";
+                    if (marginFt != 0)
+                        marginMagnitude += $" ({Math.Abs(marginFt):0.#} ft head)";
+
+                    marginNote = marginPsi >= 0
+                        ? $"Available head covers total run loss with {marginMagnitude} to spare."
+                        : $"Run loss exceeds available head by {marginMagnitude}. Consider a pump or larger pipe.";
+                }
+
+                PlStatusNote.Text = string.Join(" ", new[] { frictionNote, reynoldsNote, marginNote }.Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
             double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material);
             _lastPlumbingFittingSnapshot = _plumbingFittings.Select(f => f with { }).ToList();
+            double fittingLossPsiUsed = fittingPsi > 0 ? fittingPsi : fittingPsiHw;
             _lastPlumbingExport = new PlumbingExportRow(
                 FlowGpm: gpm,
                 LengthFt: lengthFt,
@@ -1239,7 +1293,7 @@ namespace RTM.Ductolator
                 RoughnessFt: roughness,
                 WaveSpeedFps: waveSpeed,
                 SumK: plFittingSumK,
-                FittingPsi: fittingPsi,
+                FittingPsi: fittingLossPsiUsed,
                 FittingsList: FittingListSummary(_lastPlumbingFittingSnapshot));
         }
 
@@ -1647,7 +1701,7 @@ namespace RTM.Ductolator
             foreach (var tb in new[]
             {
                 PlGpmInput, PlLengthInput, PlNominalInput, PlExplicitIdInput,
-                PlFluidTempInput, PlAntifreezePercentInput,
+                PlFluidTempInput, PlAntifreezePercentInput, PlAvailableHeadPsiInput, PlAvailableHeadFtInput,
                 PlResolvedIdOutput, PlVelocityOutput, PlHazenPsi100Output, PlHazenPsiTotalOutput,
                 PlDarcyPsi100Output, PlDarcyPsiTotalOutput, PlReOutput, PlFrictionOutput,
                 PlFluidDensityOutput, PlFluidNuOutput,
