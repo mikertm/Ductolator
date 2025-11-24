@@ -1,7 +1,7 @@
 <Window x:Class="RTM.Ductolator.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ductolator &amp; Plumbing Sizer" Height="720" Width="1100"
+        Title="Ductolator &amp; Plumbing Sizer" Height="720" Width="1200"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Style x:Key="PillButtonStyle" TargetType="Button">
@@ -639,6 +639,20 @@
                                     <TextBlock Text="Antifreeze %" />
                                     <TextBox Name="PlAntifreezePercentInput" ToolTip="Percentage of glycol by volume (0–60%)" />
                                 </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Available head / pump duty" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Name="PlAvailableHeadPsiInput" ToolTip="Available head or boost pressure in psi" Width="130" />
+                                        <TextBlock Text="psi" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Available head / pump duty" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Name="PlAvailableHeadFtInput" ToolTip="Available head or pump duty in feet of head" Width="130" />
+                                        <TextBlock Text="ft head" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
                             </UniformGrid>
     
                             <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
@@ -700,14 +714,14 @@
                                 <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
                                 <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
                                 <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
-                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, ψ, Re, and density." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, pressure drop, Reynolds number, and density." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
                             </StackPanel>
     
                             <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="8">
                                 <StackPanel>
                                     <TextBlock Text="Input tips" FontWeight="Bold" />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
-                                               Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams ψ/100 ft follows IPC/UPC practice; Darcy-Weisbach uses ε from material and Re from flow." />
+                                               Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams pressure drop per 100 ft follows IPC/UPC practice; Darcy-Weisbach uses roughness from material and Re from flow." />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
                                                Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
@@ -717,7 +731,7 @@
     
                             <TextBlock Text="Results" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                       Text="After Calculate Loss, review the resolved ID, velocity, and friction from your flow, length, size, material, and fittings." />
+                                       Text="After Calculate Loss, review the resolved ID, velocity, and pressure drop from your flow, length, size, material, and fittings." />
                             <UniformGrid Columns="4" Margin="0,4">
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Resolved ID (in)" />
@@ -740,26 +754,26 @@
                                     <TextBox Name="PlFluidDensityOutput" IsReadOnly="True" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Kinematic ν (ft²/s)" />
+                                    <TextBlock Text="Kinematic viscosity (ft²/s)" />
                                     <TextBox Name="PlFluidNuOutput" IsReadOnly="True" />
                                 </StackPanel>
                             </UniformGrid>
     
                             <UniformGrid Columns="4" Margin="0,4">
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Hazen-Williams ψ/100 ft" />
+                                    <TextBlock Text="Hazen-Williams drop (psi/100 ft)" />
                                     <TextBox Name="PlHazenPsi100Output" IsReadOnly="True" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Hazen-Williams total ψ" />
+                                    <TextBlock Text="Hazen-Williams total drop (psi)" />
                                     <TextBox Name="PlHazenPsiTotalOutput" IsReadOnly="True" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Darcy-Weisbach ψ/100 ft" />
+                                    <TextBlock Text="Darcy-Weisbach drop (psi/100 ft)" />
                                     <TextBox Name="PlDarcyPsi100Output" IsReadOnly="True" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Darcy-Weisbach total ψ" />
+                                    <TextBlock Text="Darcy-Weisbach total drop (psi)" />
                                     <TextBox Name="PlDarcyPsiTotalOutput" IsReadOnly="True" />
                                 </StackPanel>
                             </UniformGrid>
@@ -773,24 +787,24 @@
                         <StackPanel>
                             <TextBlock Text="Target Friction" FontWeight="Bold" FontSize="14" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
-                                       Text="Step 1: Enter flow and target ψ/100 ft. Step 2: Solve the inside diameter. Step 3: Review the nearest nominal size." />
+                                       Text="Step 1: Enter flow and target pressure drop per 100 ft. Step 2: Solve the inside diameter. Step 3: Review the nearest nominal size." />
                             <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                       Text="Enter flow and a target ψ/100 ft, then Solve Diameter to get an inside diameter and the nearest nominal size." />
+                                       Text="Enter flow and a target pressure drop per 100 ft, then Solve Diameter to get an inside diameter and the nearest nominal size." />
                             <UniformGrid Columns="3" Margin="0,4">
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Flow (gpm)" />
                                     <TextBox Name="PlSizeGpmInput" ToolTip="Gallons per minute" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Target ψ/100 ft" />
+                                    <TextBlock Text="Target drop (psi/100 ft)" />
                                     <TextBox Name="PlTargetPsi100Input" ToolTip="Pressure drop target in psi per 100 ft" />
                                 </StackPanel>
                             </UniformGrid>
     
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
                                 <Button Content="Solve Diameter" Width="140" Click="BtnPlSize_Click" />
-                                <TextBlock Text="Needs flow + target ψ/100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                <TextBlock Text="Needs flow + target drop per 100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
                             </StackPanel>
     
                             <UniformGrid Columns="3" Margin="0,4">
