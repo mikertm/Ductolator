@@ -1237,7 +1237,7 @@ namespace RTM.Ductolator
         {
             double dfu = ParseBox(SanitaryDfuInput);
             double slope = ParseBox(SanitarySlopeInput);
-            double diameter = PlumbingCalculator.MinSanitaryDiameterFromDfu(dfu, slope);
+            double diameter = SanitaryVentCalculator.MinBranchDiameterFromDfu(dfu, slope);
 
             SetBox(SanitaryDiameterOutput, diameter, "0.##");
 
@@ -1245,14 +1245,64 @@ namespace RTM.Ductolator
             {
                 if (diameter <= 0)
                 {
-                    SanitaryNote.Text = "Demand exceeds the embedded IPC-style branch table for the given slope (ft/ft). " +
+                    SanitaryNote.Text = "Demand exceeds SanitaryVentCalculator.MinBranchDiameterFromDfu() IPC/UPC branch caps. " +
                                         "Example: 0.0208 = 1/4 in per ft.";
                 }
                 else
                 {
-                    SanitaryNote.Text = "Uses IPC/UPC DFU branch capacities; verify stack and trap arm separately. " +
+                    SanitaryNote.Text = "Uses SanitaryVentCalculator.MinBranchDiameterFromDfu() IPC/UPC branch DFU capacities; verify stack and trap arm separately. " +
                                         "Enter slope in ft/ft (e.g., 0.0208 = 1/4 in per ft).";
                 }
+            }
+        }
+
+        private void BtnSanitaryAllowable_Click(object sender, RoutedEventArgs e)
+        {
+            double diameter = ParseBox(SanitaryCheckDiameterInput);
+            double slope = ParseBox(SanitaryCheckSlopeInput);
+            double allowable = SanitaryVentCalculator.AllowableFixtureUnits(diameter, slope);
+
+            SetBox(SanitaryAllowableOutput, allowable, "0.#");
+
+            if (SanitaryNote != null)
+            {
+                SanitaryNote.Text = allowable > 0
+                    ? "Allowable DFU from SanitaryVentCalculator.AllowableFixtureUnits() using IPC/UPC branch tables."
+                    : "Diameter/slope not found in IPC/UPC branch DFU tables.";
+            }
+        }
+
+        private void BtnVentSize_Click(object sender, RoutedEventArgs e)
+        {
+            double ventDfu = ParseBox(VentDfuInput);
+            double ventLength = ParseBox(VentLengthInput);
+            double diameter = SanitaryVentCalculator.VentStackMinDiameter(ventDfu, ventLength);
+            SetBox(VentDiameterOutput, diameter, "0.##");
+
+            double allowableForCheck = SanitaryVentCalculator.VentStackAllowableFixtureUnits(diameter, ventLength);
+            if (VentAllowableOutput != null)
+                SetBox(VentAllowableOutput, allowableForCheck, "0.#");
+
+            if (SanitaryNote != null)
+            {
+                SanitaryNote.Text = diameter > 0
+                    ? "Vent stack sized with SanitaryVentCalculator.VentStackMinDiameter(); capacities per IPC/UPC vent stack tables."
+                    : "Vented DFU exceeds SanitaryVentCalculator.VentStackMinDiameter() table.";
+            }
+        }
+
+        private void BtnVentAllowable_Click(object sender, RoutedEventArgs e)
+        {
+            double diameter = ParseBox(VentDiameterCheckInput);
+            double length = ParseBox(VentLengthCheckInput);
+            double allowable = SanitaryVentCalculator.VentStackAllowableFixtureUnits(diameter, length);
+            SetBox(VentAllowableOutput, allowable, "0.#");
+
+            if (SanitaryNote != null)
+            {
+                SanitaryNote.Text = allowable > 0
+                    ? "Vent stack capacity from SanitaryVentCalculator.VentStackAllowableFixtureUnits()."
+                    : "No matching vent stack entry for that diameter.";
             }
         }
 
@@ -1265,15 +1315,58 @@ namespace RTM.Ductolator
 
             if (n <= 0) n = 0.012; // smooth pipe default
 
-            double flow = PlumbingCalculator.StormFlowGpm(area, intensity);
-            double diameter = PlumbingCalculator.StormDiameterFromFlow(flow, slope > 0 ? slope : 0.01, n);
+            double flow = StormDrainageCalculator.FlowFromRainfall(area, intensity);
+            double diameter = StormDrainageCalculator.FullFlowDiameterFromGpm(flow, slope > 0 ? slope : 0.01, n);
 
             SetBox(StormFlowOutput, flow, "0.0");
             SetBox(StormDiameterOutput, diameter, "0.##");
 
             if (StormNote != null)
             {
-                StormNote.Text = "Full-pipe Manning sizing; check ponding/leader capacity per local storm code.";
+                StormNote.Text = "Full-pipe Manning sizing via StormDrainageCalculator.FullFlowDiameterFromGpm(); check ponding/leader capacity per local storm code.";
+            }
+        }
+
+        private void BtnStormPartialSize_Click(object sender, RoutedEventArgs e)
+        {
+            double area = ParseBox(StormAreaInput);
+            double intensity = ParseBox(StormRainfallInput);
+            double slope = ParseBox(StormSlopeInput);
+            double n = ParseBox(StormRoughnessInput);
+            double depthRatio = ParseBox(StormDepthRatioInput);
+
+            if (n <= 0) n = 0.012;
+            if (depthRatio <= 0) depthRatio = 0.5;
+
+            double flow = StormDrainageCalculator.FlowFromRainfall(area, intensity);
+            double diameter = StormDrainageCalculator.PartialFlowDiameterFromGpm(flow, slope > 0 ? slope : 0.01, depthRatio, n);
+
+            SetBox(StormFlowOutput, flow, "0.0");
+            SetBox(StormPartialDiameterOutput, diameter, "0.##");
+
+            if (StormNote != null)
+            {
+                StormNote.Text = "Partial flow sizing with StormDrainageCalculator.PartialFlowDiameterFromGpm(); depth ratio clamps to 0.05–0.99.";
+            }
+        }
+
+        private void BtnStormLeaderCheck_Click(object sender, RoutedEventArgs e)
+        {
+            double leaderFlow = ParseBox(StormLeaderFlowInput);
+            double leaderDiameter = ParseBox(StormLeaderDiameterInput);
+            double n = ParseBox(StormRoughnessInput);
+
+            if (n <= 0) n = 0.012;
+
+            double capacity = StormDrainageCalculator.VerticalLeaderMaxFlow(leaderDiameter, n);
+            double sizedDia = StormDrainageCalculator.VerticalLeaderDiameter(leaderFlow, n);
+
+            SetBox(StormLeaderCapacityOutput, capacity, "0.0");
+            SetBox(StormLeaderSizedOutput, sizedDia, "0.##");
+
+            if (StormNote != null)
+            {
+                StormNote.Text = "Leader check uses StormDrainageCalculator.VerticalLeaderMaxFlow() and VerticalLeaderDiameter(); assumes slope ~1.0.";
             }
         }
 
@@ -1419,8 +1512,11 @@ namespace RTM.Ductolator
                 PlSizeGpmInput, PlTargetPsi100Input, PlSizedDiameterOutput, PlSizedNominalOutput,
                 FixtureUnitsInput, FixtureDemandOutput,
                 SanitaryDfuInput, SanitarySlopeInput, SanitaryDiameterOutput,
+                SanitaryCheckDiameterInput, SanitaryCheckSlopeInput, SanitaryAllowableOutput,
+                VentDfuInput, VentLengthInput, VentDiameterOutput, VentDiameterCheckInput, VentLengthCheckInput, VentAllowableOutput,
                 StormAreaInput, StormRainfallInput, StormSlopeInput, StormRoughnessInput,
-                StormFlowOutput, StormDiameterOutput,
+                StormFlowOutput, StormDiameterOutput, StormDepthRatioInput, StormPartialDiameterOutput,
+                StormLeaderFlowInput, StormLeaderDiameterInput, StormLeaderCapacityOutput, StormLeaderSizedOutput,
                 GasLoadInput, GasLengthInput, GasPressureDropInput, GasSpecificGravityInput,
                 GasBasePressureInput, GasDiameterOutput, GasFlowOutput, GasVelocityOutput,
                 RecircVolumeInput, RecircTurnoverInput, RecircHeatLossInput, RecircDeltaTInput,
@@ -1428,7 +1524,6 @@ namespace RTM.Ductolator
                 RecircFlowOutput, RecircHeadOutput, RecircHeadPsiOutput,
                 HammerVelocityInput, HammerLengthInput, HammerClosureInput, HammerStaticInput,
                 HammerWaveSpeedOutput, HammerSurgeOutput, HammerTotalOutput
-                GasBasePressureInput, GasDiameterOutput, GasFlowOutput, GasVelocityOutput
             })
             {
                 if (tb != null) tb.Text = string.Empty;

@@ -569,6 +569,60 @@
                                 <TextBox Name="SanitaryDiameterOutput" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Check DFU @ Dia" />
+                                <TextBox Name="SanitaryCheckDiameterInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Slope (ft/ft)" />
+                                <TextBox Name="SanitaryCheckSlopeInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Allowable DFU" Width="140" Click="BtnSanitaryAllowable_Click" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Allowable DFU" />
+                                <TextBox Name="SanitaryAllowableOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Vented DFU" />
+                                <TextBox Name="VentDfuInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Vent Length (ft)" />
+                                <TextBox Name="VentLengthInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Size Vent Stack" Width="140" Click="BtnVentSize_Click" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Vent Dia (in)" />
+                                <TextBox Name="VentDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="4" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Vent Dia Check (in)" />
+                                <TextBox Name="VentDiameterCheckInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Vent Length (ft)" />
+                                <TextBox Name="VentLengthCheckInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Vent Allowable" Width="140" Click="BtnVentAllowable_Click" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Allowable DFU" />
+                                <TextBox Name="VentAllowableOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
                         <TextBlock Name="SanitaryNote" Margin="4,0" TextWrapping="Wrap" />
 
                         <Separator Margin="0,8" />
@@ -594,6 +648,7 @@
                         </UniformGrid>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <Button Content="Calc Storm Size" Width="160" Click="BtnStormSize_Click" />
+                            <Button Content="Partial Flow Size" Width="160" Margin="8,0,0,0" Click="BtnStormPartialSize_Click" />
                         </StackPanel>
                         <UniformGrid Columns="3" Margin="0,4">
                             <StackPanel Margin="4">
@@ -603,6 +658,40 @@
                             <StackPanel Margin="4">
                                 <TextBlock Text="Required Diameter (in)" />
                                 <TextBox Name="StormDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Partial Depth Ratio (y/D)" />
+                                <TextBox Name="StormDepthRatioInput" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Partial-Flow Dia (in)" />
+                                <TextBox Name="StormPartialDiameterOutput" IsReadOnly="True" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Leader Flow (gpm)" />
+                                <TextBox Name="StormLeaderFlowInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Leader Dia (in)" />
+                                <TextBox Name="StormLeaderDiameterInput" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <Button Content="Check Leader" Width="140" Click="BtnStormLeaderCheck_Click" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <UniformGrid Columns="3" Margin="0,4">
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Leader Capacity (gpm)" />
+                                <TextBox Name="StormLeaderCapacityOutput" IsReadOnly="True" />
+                            </StackPanel>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="Sized Leader Dia (in)" />
+                                <TextBox Name="StormLeaderSizedOutput" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
                         <TextBlock Name="StormNote" Margin="4,0" TextWrapping="Wrap" />
