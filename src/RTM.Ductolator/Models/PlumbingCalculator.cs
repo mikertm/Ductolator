@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static RTM.Ductolator.Models.DuctCalculator;
 
 namespace RTM.Ductolator.Models
 {
@@ -32,6 +33,34 @@ namespace RTM.Ductolator.Models
             EthyleneGlycol,
             PropyleneGlycol
         }
+
+        public readonly record struct FluidPropertyTableEntry(
+            FluidType Fluid,
+            double TemperatureF,
+            double PercentGlycol,
+            double DensityLbmPerFt3,
+            double KinematicViscosityFt2PerS,
+            double HazenWilliamsMultiplier,
+            double RoughnessMultiplier);
+
+        private static readonly IReadOnlyList<FluidPropertyTableEntry> FluidPropertyData = new List<FluidPropertyTableEntry>
+        {
+            // Water (reference)
+            new(FluidType.Water, 60, 0, WaterDensity_LbmPerFt3, WaterNu60F_Ft2PerS, 1.0, 1.0),
+            new(FluidType.Water, 100, 0, 62.0, 1.24e-5, 1.0, 1.0),
+
+            // Ethylene glycol mixtures (approximate ASHRAE data)
+            new(FluidType.EthyleneGlycol, 60, 30, 66.1, 2.30e-5, 0.85, 1.20),
+            new(FluidType.EthyleneGlycol, 120, 30, 64.4, 1.40e-5, 0.88, 1.15),
+            new(FluidType.EthyleneGlycol, 60, 50, 68.7, 4.10e-5, 0.75, 1.35),
+            new(FluidType.EthyleneGlycol, 120, 50, 66.2, 2.10e-5, 0.78, 1.30),
+
+            // Propylene glycol mixtures (approximate ASHRAE data)
+            new(FluidType.PropyleneGlycol, 60, 30, 64.8, 2.70e-5, 0.85, 1.20),
+            new(FluidType.PropyleneGlycol, 120, 30, 63.1, 1.60e-5, 0.88, 1.15),
+            new(FluidType.PropyleneGlycol, 60, 50, 66.9, 5.00e-5, 0.75, 1.35),
+            new(FluidType.PropyleneGlycol, 120, 50, 64.5, 2.50e-5, 0.78, 1.30)
+        };
 
         public record FluidProperties(
             double DensityLbmPerFt3,

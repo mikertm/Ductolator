@@ -11,6 +11,11 @@ using System.Windows.Media;
 using Microsoft.Win32;
 using RTM.Ductolator.Models;
 using WinForms = System.Windows.Forms;
+using Brushes = System.Windows.Media.Brushes;
+using Button = System.Windows.Controls.Button;
+using MessageBox = System.Windows.MessageBox;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace RTM.Ductolator
 {
