@@ -67,6 +67,8 @@ namespace RTM.Ductolator.Models
     {
         private static readonly JsonSerializerOptions CatalogJsonOptions = new()
         {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             PropertyNameCaseInsensitive = true
         };
 
