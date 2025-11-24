@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
@@ -21,6 +24,100 @@ namespace RTM.Ductolator
 {
     public partial class MainWindow : Window
     {
+        public record FixtureType(string Name, double FixtureUnits)
+        {
+            public override string ToString() => $"{Name} ({FixtureUnits:0.###} FU)";
+        }
+
+        public class FixtureRow : INotifyPropertyChanged
+        {
+            private FixtureType _fixtureType;
+            private string _quantityText = "1";
+            private string _overrideText = string.Empty;
+            private double _defaultFixtureUnits;
+
+            public FixtureRow(FixtureType fixtureType)
+            {
+                _fixtureType = fixtureType;
+                _defaultFixtureUnits = fixtureType.FixtureUnits;
+            }
+
+            public FixtureType FixtureType
+            {
+                get => _fixtureType;
+                set
+                {
+                    if (_fixtureType == value || value == null) return;
+                    _fixtureType = value;
+                    DefaultFixtureUnits = value.FixtureUnits;
+                    OnPropertyChanged(nameof(FixtureType));
+                    OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+            }
+
+            public string QuantityText
+            {
+                get => _quantityText;
+                set
+                {
+                    if (_quantityText == value) return;
+                    _quantityText = value;
+                    OnPropertyChanged(nameof(QuantityText));
+                    OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+            }
+
+            public string OverrideText
+            {
+                get => _overrideText;
+                set
+                {
+                    if (_overrideText == value) return;
+                    _overrideText = value;
+                    OnPropertyChanged(nameof(OverrideText));
+                    OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+            }
+
+            public double DefaultFixtureUnits
+            {
+                get => _defaultFixtureUnits;
+                private set
+                {
+                    if (Math.Abs(_defaultFixtureUnits - value) < 0.0001) return;
+                    _defaultFixtureUnits = value;
+                    OnPropertyChanged(nameof(DefaultFixtureUnits));
+                    OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+            }
+
+            public double ResolvedFixtureUnits
+            {
+                get
+                {
+                    double quantity = ParseInvariantDouble(_quantityText);
+                    if (quantity < 0) quantity = 0;
+                    double overrideFu = ParseInvariantDouble(_overrideText);
+                    double perFixture = overrideFu > 0 ? overrideFu : DefaultFixtureUnits;
+                    return perFixture * quantity;
+                }
+            }
+
+            private static double ParseInvariantDouble(string? text)
+            {
+                return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+                    ? value
+                    : 0;
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
         private record DuctExportRow(
             double FlowCfm,
             double VelocityFpm,
@@ -96,10 +193,33 @@ namespace RTM.Ductolator
         private List<DuctFittingSelection> _lastDuctFittingSnapshot = new();
         private List<PipeFittingSelection> _lastPlumbingFittingSnapshot = new();
         private CatalogLoadReport _catalogReport = RuntimeCatalogs.LastReport;
+        private readonly List<FixtureType> _fixtureCatalog = new()
+        {
+            new FixtureType("Lavatory (private)", 1.0),
+            new FixtureType("Lavatory (public)", 2.0),
+            new FixtureType("Water closet (flush tank)", 2.5),
+            new FixtureType("Water closet (flushometer valve)", 10.0),
+            new FixtureType("Urinal (flush tank)", 5.0),
+            new FixtureType("Urinal (flushometer valve)", 10.0),
+            new FixtureType("Shower head", 2.0),
+            new FixtureType("Bathtub or tub/shower", 4.0),
+            new FixtureType("Kitchen sink (residential)", 2.0),
+            new FixtureType("Dishwasher (residential)", 1.5),
+            new FixtureType("Clothes washer (laundry)", 2.5),
+            new FixtureType("Hose bibb / sillcock", 2.5),
+            new FixtureType("Service or mop sink", 3.0)
+        };
+
+        private readonly ObservableCollection<FixtureRow> _fixtureRows = new();
+
+        public IEnumerable<FixtureType> FixtureCatalog => _fixtureCatalog;
+
+        public ObservableCollection<FixtureRow> FixtureRows => _fixtureRows;
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
             var defaultFolder = ConfigurationManager.AppSettings["CustomCatalogFolder"] ?? string.Empty;
             if (CatalogFolderText != null)
                 CatalogFolderText.Text = defaultFolder;
@@ -107,6 +227,7 @@ namespace RTM.Ductolator
             LoadCatalogs(defaultFolder);
             PopulateFluids();
             PopulateCodeProfiles();
+            InitializeFixtureRows();
 
             UpdateDuctFittingSummary(0, 0);
             UpdatePlumbingFittingSummary(0, 0);
@@ -1419,6 +1540,92 @@ namespace RTM.Ductolator
             double fu = ParseBox(FixtureUnitsInput);
             double demand = PlumbingCalculator.HunterDemandGpm(fu);
             SetBox(FixtureDemandOutput, demand, "0.00");
+        }
+
+        private void InitializeFixtureRows()
+        {
+            _fixtureRows.CollectionChanged += FixtureRows_CollectionChanged;
+            if (_fixtureCatalog.Any())
+            {
+                AddFixtureRow(_fixtureCatalog[0]);
+            }
+            else
+            {
+                AddFixtureRow(new FixtureType("Fixture", 1.0));
+            }
+        }
+
+        private void FixtureRows_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (FixtureRow row in e.NewItems)
+                {
+                    row.PropertyChanged += FixtureRow_PropertyChanged;
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (FixtureRow row in e.OldItems)
+                {
+                    row.PropertyChanged -= FixtureRow_PropertyChanged;
+                }
+            }
+
+            UpdateFixtureTotals();
+        }
+
+        private void FixtureRow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(FixtureRow.ResolvedFixtureUnits) ||
+                e.PropertyName == nameof(FixtureRow.QuantityText) ||
+                e.PropertyName == nameof(FixtureRow.OverrideText) ||
+                e.PropertyName == nameof(FixtureRow.FixtureType))
+            {
+                UpdateFixtureTotals();
+            }
+        }
+
+        private void AddFixtureRow(FixtureType? type)
+        {
+            var fixtureType = type ?? _fixtureCatalog.FirstOrDefault() ?? new FixtureType("Fixture", 1.0);
+            var row = new FixtureRow(fixtureType);
+            _fixtureRows.Add(row);
+        }
+
+        private void UpdateFixtureTotals()
+        {
+            double totalFu = _fixtureRows.Sum(r => r.ResolvedFixtureUnits);
+            SetBox(FixtureUnitsInput, totalFu, "0.##");
+            double demand = PlumbingCalculator.HunterDemandGpm(totalFu);
+            SetBox(FixtureDemandOutput, demand, "0.00");
+        }
+
+        private void AddFixtureRow_Click(object sender, RoutedEventArgs e)
+        {
+            AddFixtureRow(_fixtureCatalog.FirstOrDefault());
+        }
+
+        private void RemoveFixtureRow_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is FixtureRow row)
+            {
+                _fixtureRows.Remove(row);
+                if (!_fixtureRows.Any())
+                {
+                    AddFixtureRow(_fixtureCatalog.FirstOrDefault());
+                }
+            }
+        }
+
+        private void FixtureType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox cb && cb.DataContext is FixtureRow row && cb.SelectedItem is FixtureType fixtureType)
+            {
+                row.FixtureType = fixtureType;
+                UpdateFixtureTotals();
+            }
         }
 
         private void BtnSanitarySize_Click(object sender, RoutedEventArgs e)
