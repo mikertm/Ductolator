@@ -131,19 +131,15 @@ namespace RTM.Ductolator.Models
         public static (double AreaFt2, double PerimeterFt, double HydraulicDiameterFt)
             FlatOvalGeometry(double aminorIn, double amajorIn)
         {
-            if (aminorIn <= 0 || amajorIn <= 0)
+            if (!FlatOvalAreaAndPerimeterInches(aminorIn, amajorIn,
+                                                out double areaIn2,
+                                                out double perimeterIn))
+            {
                 return (0, 0, 0);
+            }
 
-            // Area and perimeter in inches:
-            // A = π a^2 / 4 + a (A - a)
-            double A_in2 = Pi * aminorIn * aminorIn / 4.0 +
-                           aminorIn * (amajorIn - aminorIn);
-
-            // P = π a + 2 (A - a)
-            double P_in = Pi * aminorIn + 2.0 * (amajorIn - aminorIn);
-
-            double areaFt2 = A_in2 / (InPerFt * InPerFt);
-            double perimeterFt = P_in / InPerFt;
+            double areaFt2 = areaIn2 / (InPerFt * InPerFt);
+            double perimeterFt = perimeterIn / InPerFt;
 
             double dhFt = perimeterFt > 0 ? 4.0 * areaFt2 / perimeterFt : 0;
 
@@ -174,13 +170,53 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double EquivalentRound_FlatOval(double aminorIn, double amajorIn)
         {
-            if (aminorIn <= 0 || amajorIn <= 0) return 0;
+            if (!FlatOvalAreaAndPerimeterInches(aminorIn, amajorIn,
+                                                out double areaIn2,
+                                                out double perimeterIn))
+            {
+                return 0;
+            }
 
-            double A = Pi * aminorIn * aminorIn / 4.0 +
-                       aminorIn * (amajorIn - aminorIn);
-            double P = Pi * aminorIn + 2.0 * (amajorIn - aminorIn);
+            return 1.55 * Math.Pow(areaIn2, 0.625) / Math.Pow(perimeterIn, 0.25);
+        }
 
-            return 1.55 * Math.Pow(A, 0.625) / Math.Pow(P, 0.25);
+        /// <summary>
+        /// Common SMACNA/ASHRAE flat-oval geometry helper returning area (in²) and perimeter (in),
+        /// while normalizing amajor/aminor so callers cannot break the relationship.
+        /// </summary>
+        private static bool FlatOvalAreaAndPerimeterInches(double aminorIn,
+                                                           double amajorIn,
+                                                           out double areaIn2,
+                                                           out double perimeterIn)
+        {
+            areaIn2 = 0;
+            perimeterIn = 0;
+
+            if (aminorIn <= 0 || amajorIn <= 0)
+                return false;
+
+            // Ensure the major axis is always the longer dimension so the
+            // SMACNA/ASHRAE area & perimeter formulas remain valid even if
+            // the caller reverses the inputs.
+            if (amajorIn < aminorIn)
+            {
+                (aminorIn, amajorIn) = (amajorIn, aminorIn);
+            }
+
+            // SMACNA treats flat-oval as two semicircular ends with diameter = a and
+            // two straight sections whose combined length is 2(A - a).  Working in
+            // radii makes the geometry explicit and avoids subtle negative lengths if
+            // amajor ≈ aminor after normalization.
+            double radius = aminorIn / 2.0;
+            double straightIn = Math.Max(0.0, amajorIn - 2.0 * radius);
+
+            // A = π r^2 + 2 r straight
+            areaIn2 = Pi * radius * radius + 2.0 * radius * straightIn;
+
+            // P = 2(π r) + 2 straight = π a + 2(A - a)
+            perimeterIn = 2.0 * Pi * radius + 2.0 * straightIn;
+
+            return true;
         }
 
         /// <summary>
