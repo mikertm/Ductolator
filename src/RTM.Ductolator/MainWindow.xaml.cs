@@ -490,9 +490,14 @@ namespace RTM.Ductolator
 
         private void UpdateDuctFittingSummary(double sumK, double eqLen)
         {
+            int count = _ductFittings.Sum(f => f.Quantity);
+            string badgeText = $"{count} fitting{(count == 1 ? string.Empty : "s")} · ΣK={sumK:0.###} · Eq. L={eqLen:0.#} ft";
+
+            if (DuctFittingBadgeText != null)
+                DuctFittingBadgeText.Text = badgeText;
+
             if (DuctFittingSummaryText == null) return;
 
-            int count = _ductFittings.Sum(f => f.Quantity);
             if (count == 0)
             {
                 DuctFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the duct pressure drop.";
@@ -504,9 +509,14 @@ namespace RTM.Ductolator
 
         private void UpdatePlumbingFittingSummary(double sumK, double eqLen)
         {
+            int count = _plumbingFittings.Sum(f => f.Quantity);
+            string badgeText = $"{count} fitting{(count == 1 ? string.Empty : "s")} · ΣK={sumK:0.###} · Eq. L={eqLen:0.#} ft";
+
+            if (PlFittingBadgeText != null)
+                PlFittingBadgeText.Text = badgeText;
+
             if (PlFittingSummaryText == null) return;
 
-            int count = _plumbingFittings.Sum(f => f.Quantity);
             if (count == 0)
             {
                 PlFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the plumbing run.";
