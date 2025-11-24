@@ -182,9 +182,7 @@ namespace RTM.Ductolator
             if (PlMaterialCombo == null)
                 return;
 
-            PlMaterialCombo.ItemsSource = Enum.GetValues(typeof(PlumbingCalculator.PipeMaterial))
-                                               .Cast<PlumbingCalculator.PipeMaterial>()
-                                               .ToList();
+            PlMaterialCombo.ItemsSource = PlumbingCalculator.MaterialOptions;
             PlMaterialCombo.SelectedIndex = 0;
         }
 
@@ -267,8 +265,8 @@ namespace RTM.Ductolator
 
         private PlumbingCalculator.PipeMaterial? SelectedMaterial()
         {
-            if (PlMaterialCombo?.SelectedItem is PlumbingCalculator.PipeMaterial mat)
-                return mat;
+            if (PlMaterialCombo?.SelectedItem is PlumbingCalculator.PipeMaterialOption option)
+                return option.Material;
             return null;
         }
 

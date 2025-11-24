@@ -50,8 +50,39 @@ namespace RTM.Ductolator.Models
             SteelSchedule40,
             PvcSchedule40,
             CpvcSchedule80,
-            PexTubing
+            PexTubing,
+            CastIronNoHub,
+            DuctileIronCementLined,
+            PvcSdr35,
+            PvcSdr26,
+            StainlessSteelSch10S
         }
+
+        /// <summary>
+        /// UI helper for surfacing material names with service notes.
+        /// </summary>
+        public record PipeMaterialOption(PipeMaterial Material, string DisplayName, string ServiceNote)
+        {
+            public override string ToString() => string.IsNullOrWhiteSpace(ServiceNote)
+                ? DisplayName
+                : $"{DisplayName} — {ServiceNote}";
+        }
+
+        public static readonly IReadOnlyList<PipeMaterialOption> MaterialOptions = new List<PipeMaterialOption>
+        {
+            new(PipeMaterial.CopperTypeK, "Copper Type K", "domestic water / heating"),
+            new(PipeMaterial.CopperTypeL, "Copper Type L", "domestic water / heating"),
+            new(PipeMaterial.CopperTypeM, "Copper Type M", "low-pressure water"),
+            new(PipeMaterial.SteelSchedule40, "Steel Sch 40", "process / hydronic / fire"),
+            new(PipeMaterial.StainlessSteelSch10S, "Stainless Sch 10S", "process / RO / gray water"),
+            new(PipeMaterial.CpvcSchedule80, "CPVC Sch 80", "hot water / corrosive compatible"),
+            new(PipeMaterial.PvcSchedule40, "PVC Sch 40", "cold water / condensate"),
+            new(PipeMaterial.PvcSdr26, "PVC SDR-26", "reclaimed / utility / effluent"),
+            new(PipeMaterial.PvcSdr35, "PVC SDR-35", "sanitary / storm sewer"),
+            new(PipeMaterial.PexTubing, "PEX Tubing", "hot/cold distribution"),
+            new(PipeMaterial.CastIronNoHub, "Cast Iron (NH) DWV", "sanitary / storm drainage"),
+            new(PipeMaterial.DuctileIronCementLined, "Ductile Iron CL", "process / gray water / fire")
+        };
 
         /// <summary>
         /// Collates roughness, Hazen-Williams C (new/aged), and velocity guidance.
@@ -67,9 +98,14 @@ namespace RTM.Ductolator.Models
             { PipeMaterial.CopperTypeL, new MaterialHydraulics(1.5e-6, 150, 135, 8.0, 5.0) },
             { PipeMaterial.CopperTypeM, new MaterialHydraulics(1.5e-6, 150, 130, 8.0, 5.0) },
             { PipeMaterial.SteelSchedule40, new MaterialHydraulics(0.00015, 120, 100, 6.0, 5.0) },
+            { PipeMaterial.StainlessSteelSch10S, new MaterialHydraulics(0.000006, 145, 140, 8.0, 6.0) },
             { PipeMaterial.PvcSchedule40, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
+            { PipeMaterial.PvcSdr26, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
+            { PipeMaterial.PvcSdr35, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
             { PipeMaterial.CpvcSchedule80, new MaterialHydraulics(0.000005, 150, 140, 8.0, 8.0) },
-            { PipeMaterial.PexTubing, new MaterialHydraulics(0.0001, 150, 140, 8.0, 5.0) }
+            { PipeMaterial.PexTubing, new MaterialHydraulics(0.0001, 150, 140, 8.0, 5.0) },
+            { PipeMaterial.CastIronNoHub, new MaterialHydraulics(0.00085, 110, 90, 10.0, 8.0) },
+            { PipeMaterial.DuctileIronCementLined, new MaterialHydraulics(0.00085, 140, 125, 12.0, 10.0) }
         };
 
         private static readonly Dictionary<PipeMaterial, double> WaveSpeed_FtPerS = new()
@@ -78,9 +114,14 @@ namespace RTM.Ductolator.Models
             { PipeMaterial.CopperTypeL, 4000 },
             { PipeMaterial.CopperTypeM, 4000 },
             { PipeMaterial.SteelSchedule40, 4000 },
+            { PipeMaterial.StainlessSteelSch10S, 3700 },
             { PipeMaterial.PvcSchedule40, 1400 },
+            { PipeMaterial.PvcSdr26, 1400 },
+            { PipeMaterial.PvcSdr35, 1400 },
             { PipeMaterial.CpvcSchedule80, 1500 },
-            { PipeMaterial.PexTubing, 1500 }
+            { PipeMaterial.PexTubing, 1500 },
+            { PipeMaterial.CastIronNoHub, 3000 },
+            { PipeMaterial.DuctileIronCementLined, 3500 }
         };
 
         /// <summary>
@@ -150,6 +191,18 @@ namespace RTM.Ductolator.Models
                 }
             },
             {
+                PipeMaterial.StainlessSteelSch10S,
+                new Dictionary<double, double>
+                {
+                    { 1.0, 1.097 },
+                    { 1.5, 1.610 },
+                    { 2.0, 2.157 },
+                    { 3.0, 3.260 },
+                    { 4.0, 4.334 },
+                    { 6.0, 6.065 }
+                }
+            },
+            {
                 PipeMaterial.PvcSchedule40,
                 new Dictionary<double, double>
                 {
@@ -162,6 +215,28 @@ namespace RTM.Ductolator.Models
                     { 2.5, 2.445 },
                     { 3.0, 3.042 },
                     { 4.0, 4.026 }
+                }
+            },
+            {
+                PipeMaterial.PvcSdr35,
+                new Dictionary<double, double>
+                {
+                    { 4.0, 3.974 },
+                    { 6.0, 5.914 },
+                    { 8.0, 7.920 },
+                    { 10.0, 9.900 },
+                    { 12.0, 11.786 }
+                }
+            },
+            {
+                PipeMaterial.PvcSdr26,
+                new Dictionary<double, double>
+                {
+                    { 4.0, 3.891 },
+                    { 6.0, 5.792 },
+                    { 8.0, 7.754 },
+                    { 10.0, 9.692 },
+                    { 12.0, 11.538 }
                 }
             },
             {
@@ -189,6 +264,28 @@ namespace RTM.Ductolator.Models
                     { 1.25, 1.054 },
                     { 1.5, 1.220 },
                     { 2.0, 1.572 }
+                }
+            },
+            {
+                PipeMaterial.CastIronNoHub,
+                new Dictionary<double, double>
+                {
+                    { 1.5, 1.71 },
+                    { 2.0, 2.16 },
+                    { 3.0, 3.03 },
+                    { 4.0, 3.78 },
+                    { 5.0, 4.76 },
+                    { 6.0, 5.74 }
+                }
+            },
+            {
+                PipeMaterial.DuctileIronCementLined,
+                new Dictionary<double, double>
+                {
+                    { 3.0, 3.28 },
+                    { 4.0, 4.26 },
+                    { 6.0, 6.28 },
+                    { 8.0, 8.30 }
                 }
             }
         };
