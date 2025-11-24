@@ -1629,6 +1629,14 @@ namespace RTM.Ductolator
             return available.Key;
         }
 
+        private void NavigateToCard_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: FrameworkElement target })
+            {
+                target.BringIntoView();
+            }
+        }
+
         private void BtnPlClear_Click(object sender, RoutedEventArgs e)
         {
             foreach (var tb in new[]

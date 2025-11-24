@@ -490,593 +490,625 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Plumbing">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8" Orientation="Vertical">
-                        <Border Margin="4" Padding="8" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="How to use" FontWeight="Bold" />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                           Text="1) Enter flow, length, and nominal size (or explicit ID) plus material. Toggle aged C or hot-water checks as needed." />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                           Text="2) Pick a code region to show local velocity/FU guidance." />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                           Text="3) Use Calculate Loss for friction, Solve Diameter for target ψ/100 ft, or the specialized buttons for fixtures, storm, gas, recirc, and hammer. Export saves the latest result to CSV." />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Margin="0,0,0,8" Padding="6" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1">
-                            <Expander IsExpanded="True">
-                                <Expander.Header>
-                                    <StackPanel>
-                                        <TextBlock Text="Loss" FontWeight="Bold" />
-                                        <TextBlock Text="UPC max velocity 8 ft/s hot water, 10 ft/s cold; ASPE Hazen-Williams/Darcy checks" FontSize="12" Foreground="#4b5563" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel>
-                                    <TextBlock Text="Pipe Conditions" FontWeight="Bold" />
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Flow (gpm)" />
-                                            <TextBox Name="PlGpmInput" ToolTip="Gallons per minute" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Length (ft)" />
-                                            <TextBox Name="PlLengthInput" ToolTip="Straight length for friction in feet" TextChanged="PlLengthInput_TextChanged" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Nominal Size (in)" />
-                                            <TextBox Name="PlNominalInput" ToolTip="Nominal trade size in inches" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Explicit ID (in)" />
-                                            <TextBox Name="PlExplicitIdInput" ToolTip="Override with an inside diameter in inches" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Material" />
-                                            <ComboBox Name="PlMaterialCombo" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <CheckBox Name="PlUseAgedC" Content="Use aged C-factor" />
-                                            <CheckBox Name="PlIsHotWater" Content="Hot water (velocity check)" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Fluid" />
-                                            <ComboBox Name="PlAntifreezeTypeCombo" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Fluid Temp (°F)" />
-                                            <TextBox Name="PlFluidTempInput" ToolTip="Temperature of the fluid stream in °F" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Antifreeze %" />
-                                            <TextBox Name="PlAntifreezePercentInput" ToolTip="Percentage of glycol by volume (0–60%)" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                        <ComboBox Name="PlRegionCombo" Width="260" />
-                                    </StackPanel>
-
-                                    <Border Margin="4" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1">
-                                        <StackPanel>
-                                            <TextBlock Text="Fittings (ASPE/UPC)" FontWeight="Bold" />
-                                            <UniformGrid Columns="3" Margin="0,4">
-                                                <StackPanel Margin="4">
-                                                    <TextBlock Text="Fitting" />
-                                                    <ComboBox Name="PlFittingCombo" DisplayMemberPath="Name" />
-                                                </StackPanel>
-                                                <StackPanel Margin="4">
-                                                    <TextBlock Text="Quantity" />
-                                                    <TextBox Name="PlFittingQty" Text="1" />
-                                                </StackPanel>
-                                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left">
-                                                    <Button Content="Add" Width="60" Click="AddPlumbingFitting_Click" Margin="0,0,6,0" />
-                                                    <Button Content="Remove" Width="70" Click="RemovePlumbingFitting_Click" Margin="0,0,6,0" />
-                                                    <Button Content="Clear" Width="60" Click="ClearPlumbingFittings_Click" />
-                                                </StackPanel>
-                                            </UniformGrid>
-                                            <TextBlock Text="Select a fitting, enter quantity, then Add; totals refresh below"
-                                                       Margin="4,0,4,2" FontSize="12" Foreground="#6b7280" />
-                                            <TextBlock Text="Needs fitting + qty; outputs ΣK and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="#4b5563" />
-                                            <Grid Margin="4,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <ListBox Name="PlFittingRunList" Height="120" Grid.Column="0" />
-                                                <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
-                                                    <TextBlock Name="PlFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
-                                                </Border>
-                                            </Grid>
-                                            <UniformGrid Columns="3" Margin="0,4">
-                                                <StackPanel Margin="4">
-                                                    <TextBlock Text="ΣK from fittings" />
-                                                    <TextBox Name="PlFittingSumKOutput" IsReadOnly="True" />
-                                                </StackPanel>
-                                                <StackPanel Margin="4">
-                                                    <TextBlock Text="Equivalent length (ft)" />
-                                                    <TextBox Name="PlFittingEquivalentLengthOutput" IsReadOnly="True" />
-                                                </StackPanel>
-                                                <StackPanel Margin="4">
-                                                    <TextBlock Text="Total run length (ft)" />
-                                                    <TextBox Name="PlTotalRunLengthOutput" IsReadOnly="True" />
-                                                </StackPanel>
-                                            </UniformGrid>
-                                            <TextBlock Name="PlFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
-                                        <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
-                                        <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
-                                        <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
-                                        <TextBlock Text="Needs flow, length, size/material; outputs velocity, ψ, Re, and density." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                    </StackPanel>
-
-                                    <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1">
-                                        <StackPanel>
-                                            <TextBlock Text="Input tips" FontWeight="Bold" />
-                                            <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                       Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams ψ/100 ft follows IPC/UPC practice; Darcy-Weisbach uses ε from material and Re from flow." />
-                                            <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                       Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
-                                            <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                       Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes." />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <TextBlock Text="Results" FontWeight="Bold" />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                               Text="After Calculate Loss, review the resolved ID, velocity, and friction from your flow, length, size, material, and fittings." />
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Resolved ID (in)" />
-                                            <TextBox Name="PlResolvedIdOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Velocity (ft/s)" />
-                                            <TextBox Name="PlVelocityOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Reynolds Number" />
-                                            <TextBox Name="PlReOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Darcy f" />
-                                            <TextBox Name="PlFrictionOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Fluid Density (lb/ft³)" />
-                                            <TextBox Name="PlFluidDensityOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Kinematic ν (ft²/s)" />
-                                            <TextBox Name="PlFluidNuOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Hazen-Williams ψ/100 ft" />
-                                            <TextBox Name="PlHazenPsi100Output" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Hazen-Williams total ψ" />
-                                            <TextBox Name="PlHazenPsiTotalOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Darcy-Weisbach ψ/100 ft" />
-                                            <TextBox Name="PlDarcyPsi100Output" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Darcy-Weisbach total ψ" />
-                                            <TextBox Name="PlDarcyPsiTotalOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <TextBlock Name="PlVelocityNote" Margin="4,0" TextWrapping="Wrap" />
-                                    <TextBlock Name="PlStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="DarkRed" />
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-
-                        <Border Margin="0,0,0,8" Padding="6" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1">
-                            <Expander IsExpanded="False">
-                                <Expander.Header>
-                                    <StackPanel>
-                                        <TextBlock Text="Target Friction" FontWeight="Bold" />
-                                        <TextBlock Text="ASPE recommends 2–8 ft/s with ψ/100 ft goals for IPC/UPC sizing" FontSize="12" Foreground="#4b5563" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel>
-                                    <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                               Text="Enter flow and a target ψ/100 ft, then Solve Diameter to get an inside diameter and the nearest nominal size." />
-                                    <UniformGrid Columns="3" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Flow (gpm)" />
-                                            <TextBox Name="PlSizeGpmInput" ToolTip="Gallons per minute" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Target ψ/100 ft" />
-                                            <TextBox Name="PlTargetPsi100Input" ToolTip="Pressure drop target in psi per 100 ft" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
-                                        <Button Content="Solve Diameter" Width="140" Click="BtnPlSize_Click" />
-                                        <TextBlock Text="Needs flow + target ψ/100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                    </StackPanel>
-
-                                    <UniformGrid Columns="3" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Solved ID (in)" />
-                                            <TextBox Name="PlSizedDiameterOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Nearest Nominal (in)" />
-                                            <TextBox Name="PlSizedNominalOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <TextBlock Name="PlSizeNote" Margin="4,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-
-                        <Border Margin="0,0,0,8" Padding="6" Background="#f1f3f9" BorderBrush="#d3d8e8" BorderThickness="1">
-                            <Expander IsExpanded="False">
-                                <Expander.Header>
-                                    <StackPanel>
-                                        <TextBlock Text="Fixture Units" FontWeight="Bold" />
-                                        <TextBlock Text="IPC/UPC Hunter curves convert FU to demand for branch sizing" FontSize="12" Foreground="#4b5563" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel>
-                                    <TextBlock Text="Fixture Units & Drainage" FontWeight="Bold" />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                               Text="Provide total fixture units to get probable demand, then use sanitary DFU and slope inputs to size or check drainage lines." />
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Total Fixture Units" />
-                                            <TextBox Name="FixtureUnitsInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                            <Button Content="Calc Hunter Demand" Width="160" Click="BtnFixtureDemand_Click" />
-                                            <TextBlock Text="Needs total FU; outputs probable demand." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Probable Demand (gpm)" />
-                                            <TextBox Name="FixtureDemandOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-
-                        <Border Margin="0,0,0,8" Padding="6" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1">
-                            <Expander IsExpanded="False">
-                                <Expander.Header>
-                                    <StackPanel>
-                                        <TextBlock Text="Sanitary" FontWeight="Bold" />
-                                        <TextBlock Text="IPC/UPC gravity sizing uses DFU with slope tables per ASPE guidance" FontSize="12" Foreground="#4b5563" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel>
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                               Text="Enter DFU and slope, then Size Sanitary to get a minimum diameter or check allowable DFU at a chosen size." />
-
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Sanitary DFU" />
-                                            <TextBox Name="SanitaryDfuInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Slope (ft/ft)" />
-                                            <TextBox Name="SanitarySlopeInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                            <Button Content="Size Sanitary" Width="140" Click="BtnSanitarySize_Click" />
-                                            <TextBlock Text="Needs DFU + slope; outputs minimum diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Min Diameter (in)" />
-                                            <TextBox Name="SanitaryDiameterOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Check DFU @ Dia" />
-                                            <TextBox Name="SanitaryCheckDiameterInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Slope (ft/ft)" />
-                                            <TextBox Name="SanitaryCheckSlopeInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                            <Button Content="Allowable DFU" Width="140" Click="BtnSanitaryAllowable_Click" />
-                                            <TextBlock Text="Needs diameter + slope; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Allowable DFU" />
-                                            <TextBox Name="SanitaryAllowableOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                               Text="Enter vented DFU and developed length, then Size Vent Stack; use the lower inputs to confirm allowable DFU for an existing vent diameter." />
-
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Vented DFU" />
-                                            <TextBox Name="VentDfuInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Vent Length (ft)" />
-                                            <TextBox Name="VentLengthInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                            <Button Content="Size Vent Stack" Width="140" Click="BtnVentStackSize_Click" />
-                                            <TextBlock Text="Needs vent DFU + length; outputs vent diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Vent Diameter (in)" />
-                                            <TextBox Name="VentDiameterOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-                                    <UniformGrid Columns="4" Margin="0,4">
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Check Vent Dia (in)" />
-                                            <TextBox Name="VentCheckDiameterInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Developed Length (ft)" />
-                                            <TextBox Name="VentCheckLengthInput" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                            <Button Content="Allowable DFU" Width="140" Click="BtnVentAllowable_Click" />
-                                            <TextBlock Text="Needs vent size + length; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Margin="4">
-                                            <TextBlock Text="Allowable DFU" />
-                                            <TextBox Name="VentAllowableOutput" IsReadOnly="True" />
-                                        </StackPanel>
-                                    </UniformGrid>
-
-                                    <TextBlock Name="SanitaryNote" Margin="4,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-
-                        <TextBlock Text="Storm Drainage" FontWeight="Bold" />
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                   Text="Enter roof area, rainfall, slope, and Manning n, then run the storm calculations to size drains, partial-flow segments, and leaders." />
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Roof/Area (ft²)" />
-                                <TextBox Name="StormAreaInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Rainfall Intensity (in/hr)" />
-                                <TextBox Name="StormRainfallInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Slope (ft/ft)" />
-                                <TextBox Name="StormSlopeInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Manning n" />
-                                <TextBox Name="StormRoughnessInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <Button Content="Calc Storm Size" Width="160" Click="BtnStormSize_Click" />
-                            <Button Content="Partial Flow Size" Width="160" Margin="8,0,0,0" Click="BtnStormPartialSize_Click" />
-                        </StackPanel>
-                        <UniformGrid Columns="3" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Storm Flow (gpm)" />
-                                <TextBox Name="StormFlowOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Required Diameter (in)" />
-                                <TextBox Name="StormDiameterOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Partial Depth Ratio (y/D)" />
-                                <TextBox Name="StormDepthRatioInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <UniformGrid Columns="3" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Partial-Flow Dia (in)" />
-                                <TextBox Name="StormPartialDiameterOutput" IsReadOnly="True" />
-                            </StackPanel>
-                        </UniformGrid>
-
-                        <UniformGrid Columns="3" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Leader Flow (gpm)" />
-                                <TextBox Name="StormLeaderFlowInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Leader Dia (in)" />
-                                <TextBox Name="StormLeaderDiameterInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Button Content="Check Leader" Width="140" Click="BtnStormLeaderCheck_Click" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <UniformGrid Columns="3" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Leader Capacity (gpm)" />
-                                <TextBox Name="StormLeaderCapacityOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Sized Leader Dia (in)" />
-                                <TextBox Name="StormLeaderSizedOutput" IsReadOnly="True" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <TextBlock Name="StormNote" Margin="4,0" TextWrapping="Wrap" />
-
-                        <Separator Margin="0,8" />
-
-                        <TextBlock Text="Natural Gas (IFGC/NFPA 54)" FontWeight="Bold" />
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                   Text="Supply load, length, pressure drop limit, and gas properties, then Size Gas to get diameter, flow, and velocity." />
-                        <UniformGrid Columns="5" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Load (MBH)" />
-                                <TextBox Name="GasLoadInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Length (ft)" />
-                                <TextBox Name="GasLengthInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="ΔP (in. w.c.)" />
-                                <TextBox Name="GasPressureDropInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Specific Gravity" />
-                                <TextBox Name="GasSpecificGravityInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Base Pressure (psi)" />
-                                <TextBox Name="GasBasePressureInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <Button Content="Size Gas" Width="140" Click="BtnGasSize_Click" />
-                        </StackPanel>
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Required Dia (in)" />
-                                <TextBox Name="GasDiameterOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Flow (scfh)" />
-                                <TextBox Name="GasFlowOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Velocity (ft/s)" />
-                                <TextBox Name="GasVelocityOutput" IsReadOnly="True" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <TextBlock Name="GasNote" Margin="4,0" TextWrapping="Wrap" />
-
-                        <Separator Margin="0,8" />
-
-                        <TextBlock Text="DHW Recirculation" FontWeight="Bold" />
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                   Text="Enter loop volume, turnover, heat loss, temperature drop, and pipe details, then Calc Recirc to size the line and compute flow/head." />
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Loop Volume (gal)" />
-                                <TextBox Name="RecircVolumeInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Turnover (min)" />
-                                <TextBox Name="RecircTurnoverInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Heat Loss (Btuh)" />
-                                <TextBox Name="RecircHeatLossInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Allowed ΔT (°F)" />
-                                <TextBox Name="RecircDeltaTInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Recirc Dia (in)" />
-                                <TextBox Name="RecircDiaInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="C-factor" />
-                                <TextBox Name="RecircCInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Run Length (ft)" />
-                                <TextBox Name="RecircLengthInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Fitting Eq. Length (ft)" />
-                                <TextBox Name="RecircEqLengthInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <Button Content="Calc Recirc" Width="140" Click="BtnRecircCalc_Click" />
-                        </StackPanel>
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Recirc Flow (gpm)" />
-                                <TextBox Name="RecircFlowOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Recirc Head (ft)" />
-                                <TextBox Name="RecircHeadOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Recirc Head (psi)" />
-                                <TextBox Name="RecircHeadPsiOutput" IsReadOnly="True" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <TextBlock Name="RecircNote" Margin="4,0" TextWrapping="Wrap" />
-
-                        <Separator Margin="0,8" />
-
-                        <TextBlock Text="Water Hammer Check" FontWeight="Bold" />
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
-                                   Text="Enter line velocity, length, closure time, and static pressure, then Check Hammer to estimate surge and total pressure." />
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Line Velocity (ft/s)" />
-                                <TextBox Name="HammerVelocityInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Line Length (ft)" />
-                                <TextBox Name="HammerLengthInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Closure Time (s)" />
-                                <TextBox Name="HammerClosureInput" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Static Pressure (psi)" />
-                                <TextBox Name="HammerStaticInput" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <Button Content="Check Hammer" Width="140" Click="BtnHammerCalc_Click" />
-                        </StackPanel>
-                        <UniformGrid Columns="4" Margin="0,4">
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Wave Speed (ft/s)" />
-                                <TextBox Name="HammerWaveSpeedOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Surge (psi)" />
-                                <TextBox Name="HammerSurgeOutput" IsReadOnly="True" />
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <TextBlock Text="Total Pressure (psi)" />
-                                <TextBox Name="HammerTotalOutput" IsReadOnly="True" />
-                            </StackPanel>
-                        </UniformGrid>
-                        <TextBlock Name="HammerNote" Margin="4,0" TextWrapping="Wrap" />
+                <TabItem Header="Plumbing">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+    
+            <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
+                <StackPanel>
+                    <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
+                               Text="Jump between cards and follow the quick steps in each section." />
+                    <StackPanel>
+                        <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Target Friction" Tag="{x:Reference TargetFrictionCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Fixture Units" Tag="{x:Reference FixtureUnitsCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Sanitary" Tag="{x:Reference SanitaryCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Stormwater" Tag="{x:Reference StormwaterCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Natural Gas" Tag="{x:Reference GasCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="DHW Recirc" Tag="{x:Reference RecircCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                        <Button Content="Water Hammer" Tag="{x:Reference HammerCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
                     </StackPanel>
-                </ScrollViewer>
-            </TabItem>
+                </StackPanel>
+            </Border>
+    
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="8" Orientation="Vertical">
+                    <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Plumbing overview" FontWeight="Bold" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
+                                       Text="Use the cards below to size supply, drainage, and specialty piping. Each card lists the quick steps to stay on track." />
+                            <WrapPanel>
+                                <Border Style="{StaticResource ChipBorderStyle}">
+                                    <TextBlock Text="UPC: ≤10 ft/s cold, ≤8 ft/s hot" FontSize="11" />
+                                </Border>
+                                <Border Style="{StaticResource ChipBorderStyle}">
+                                    <TextBlock Text="ASPE: target 2–8 ft/s" FontSize="11" />
+                                </Border>
+                                <Border Style="{StaticResource ChipBorderStyle}">
+                                    <TextBlock Text="Fixture-unit guardrails per IPC/UPC tables" FontSize="11" />
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="LossCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Loss" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter flow, length, and nominal size or explicit ID with material and fluid details. Step 2: Pick a region and add fittings. Step 3: Calculate loss, clear, or export." />
+                            <TextBlock Text="Pipe Conditions" FontWeight="Bold" />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Flow (gpm)" />
+                                    <TextBox Name="PlGpmInput" ToolTip="Gallons per minute" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Length (ft)" />
+                                    <TextBox Name="PlLengthInput" ToolTip="Straight length for friction in feet" TextChanged="PlLengthInput_TextChanged" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Nominal Size (in)" />
+                                    <TextBox Name="PlNominalInput" ToolTip="Nominal trade size in inches" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Explicit ID (in)" />
+                                    <TextBox Name="PlExplicitIdInput" ToolTip="Override with an inside diameter in inches" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Material" />
+                                    <ComboBox Name="PlMaterialCombo" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <CheckBox Name="PlUseAgedC" Content="Use aged C-factor" />
+                                    <CheckBox Name="PlIsHotWater" Content="Hot water (velocity check)" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Fluid" />
+                                    <ComboBox Name="PlAntifreezeTypeCombo" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Fluid Temp (°F)" />
+                                    <TextBox Name="PlFluidTempInput" ToolTip="Temperature of the fluid stream in °F" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Antifreeze %" />
+                                    <TextBox Name="PlAntifreezePercentInput" ToolTip="Percentage of glycol by volume (0–60%)" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <StackPanel Orientation="Horizontal" Margin="4,4,4,0" VerticalAlignment="Center">
+                                <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ComboBox Name="PlRegionCombo" Width="260" />
+                            </StackPanel>
+    
+                            <Border Margin="4" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                <StackPanel>
+                                    <TextBlock Text="Fittings (ASPE/UPC)" FontWeight="Bold" />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,6"
+                                               Text="Step 2 helper: select a fitting, add quantities, and review equivalent lengths." />
+                                    <UniformGrid Columns="3" Margin="0,4">
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="Fitting" />
+                                            <ComboBox Name="PlFittingCombo" DisplayMemberPath="Name" />
+                                        </StackPanel>
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="Qty" />
+                                            <TextBox Name="PlFittingQty" />
+                                        </StackPanel>
+                                        <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                            <Button Content="Add" Width="60" Click="AddPlumbingFitting_Click" Margin="0,0,6,0" />
+                                            <Button Content="Remove" Width="70" Click="RemovePlumbingFitting_Click" Margin="0,0,6,0" />
+                                            <Button Content="Clear" Width="60" Click="ClearPlumbingFittings_Click" />
+                                        </StackPanel>
+                                    </UniformGrid>
+                                    <TextBlock Text="Fittings use ASPE K factors and UPC equivalent length guidance." Margin="4,0,4,2" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="Needs fitting + qty; outputs ΣK and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="#4b5563" />
+                                    <Grid Margin="4,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ListBox Name="PlFittingRunList" Height="120" Grid.Column="0" />
+                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                            <TextBlock Name="PlFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Grid>
+                                    <UniformGrid Columns="3" Margin="0,4">
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="ΣK from fittings" />
+                                            <TextBox Name="PlFittingSumKOutput" IsReadOnly="True" />
+                                        </StackPanel>
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="Equivalent length (ft)" />
+                                            <TextBox Name="PlFittingEquivalentLengthOutput" IsReadOnly="True" />
+                                        </StackPanel>
+                                        <StackPanel Margin="4">
+                                            <TextBlock Text="Total run length (ft)" />
+                                            <TextBox Name="PlTotalRunLengthOutput" IsReadOnly="True" />
+                                        </StackPanel>
+                                    </UniformGrid>
+                                    <TextBlock Name="PlFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+    
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
+                                <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
+                                <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
+                                <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
+                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, ψ, Re, and density." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                            </StackPanel>
+    
+                            <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="8">
+                                <StackPanel>
+                                    <TextBlock Text="Input tips" FontWeight="Bold" />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                               Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams ψ/100 ft follows IPC/UPC practice; Darcy-Weisbach uses ε from material and Re from flow." />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                               Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                               Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes." />
+                                </StackPanel>
+                            </Border>
+    
+                            <TextBlock Text="Results" FontWeight="Bold" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="After Calculate Loss, review the resolved ID, velocity, and friction from your flow, length, size, material, and fittings." />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Resolved ID (in)" />
+                                    <TextBox Name="PlResolvedIdOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Velocity (ft/s)" />
+                                    <TextBox Name="PlVelocityOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Reynolds Number" />
+                                    <TextBox Name="PlReOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Darcy f" />
+                                    <TextBox Name="PlFrictionOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Fluid Density (lb/ft³)" />
+                                    <TextBox Name="PlFluidDensityOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Kinematic ν (ft²/s)" />
+                                    <TextBox Name="PlFluidNuOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Hazen-Williams ψ/100 ft" />
+                                    <TextBox Name="PlHazenPsi100Output" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Hazen-Williams total ψ" />
+                                    <TextBox Name="PlHazenPsiTotalOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Darcy-Weisbach ψ/100 ft" />
+                                    <TextBox Name="PlDarcyPsi100Output" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Darcy-Weisbach total ψ" />
+                                    <TextBox Name="PlDarcyPsiTotalOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <TextBlock Name="PlVelocityNote" Margin="4,0" TextWrapping="Wrap" />
+                            <TextBlock Name="PlStatusNote" Margin="4,0,4,0" TextWrapping="Wrap" Foreground="DarkRed" />
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="TargetFrictionCard" Margin="0,0,0,10" Padding="12" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Target Friction" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter flow and target ψ/100 ft. Step 2: Solve the inside diameter. Step 3: Review the nearest nominal size." />
+                            <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Enter flow and a target ψ/100 ft, then Solve Diameter to get an inside diameter and the nearest nominal size." />
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Flow (gpm)" />
+                                    <TextBox Name="PlSizeGpmInput" ToolTip="Gallons per minute" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Target ψ/100 ft" />
+                                    <TextBox Name="PlTargetPsi100Input" ToolTip="Pressure drop target in psi per 100 ft" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
+                                <Button Content="Solve Diameter" Width="140" Click="BtnPlSize_Click" />
+                                <TextBlock Text="Needs flow + target ψ/100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                            </StackPanel>
+    
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Solved ID (in)" />
+                                    <TextBox Name="PlSizedDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Nearest Nominal (in)" />
+                                    <TextBox Name="PlSizedNominalOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <TextBlock Name="PlSizeNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="FixtureUnitsCard" Margin="0,0,0,10" Padding="12" Background="#f1f3f9" BorderBrush="#d3d8e8" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Fixture Units" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter total fixture units. Step 2: Calculate Hunter probable demand. Step 3: Use the demand to size branches and mains." />
+                            <TextBlock Text="Fixture Units & Drainage" FontWeight="Bold" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Provide total fixture units to get probable demand, then use sanitary DFU and slope inputs to size or check drainage lines." />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Total Fixture Units" />
+                                    <TextBox Name="FixtureUnitsInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Calc Hunter Demand" Width="160" Click="BtnFixtureDemand_Click" />
+                                    <TextBlock Text="Needs total FU; outputs probable demand." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Probable Demand (gpm)" />
+                                    <TextBox Name="FixtureDemandOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="SanitaryCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Sanitary" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter DFU and slope. Step 2: Size for minimum diameter. Step 3: Check allowable DFU for existing sizes." />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Enter DFU and slope, then Size Sanitary to get a minimum diameter or check allowable DFU at a chosen size." />
+
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Sanitary DFU" />
+                                    <TextBox Name="SanitaryDfuInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Slope (ft/ft)" />
+                                    <TextBox Name="SanitarySlopeInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Size Sanitary" Width="140" Click="BtnSanitarySize_Click" />
+                                    <TextBlock Text="Needs DFU + slope; outputs minimum diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Min Diameter (in)" />
+                                    <TextBox Name="SanitaryDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Check DFU @ Dia" />
+                                    <TextBox Name="SanitaryCheckDiameterInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Slope (ft/ft)" />
+                                    <TextBox Name="SanitaryCheckSlopeInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Allowable DFU" Width="140" Click="BtnSanitaryAllowable_Click" />
+                                    <TextBlock Text="Needs diameter + slope; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Allowable DFU" />
+                                    <TextBox Name="SanitaryAllowableOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <TextBlock Name="SanitaryNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="VentStackCard" Margin="0,0,0,10" Padding="12" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Vent Stack" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter vented DFU and developed length, then size the vent stack. Step 2: Check allowable DFU for an existing vent size." />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Enter vented DFU and developed length to size a vent stack, or check allowable DFU at a given vent diameter and length." />
+
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vented DFU" />
+                                    <TextBox Name="VentDfuInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vent Length (ft)" />
+                                    <TextBox Name="VentLengthInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Size Vent Stack" Width="140" Click="BtnVentSize_Click" />
+                                    <TextBlock Text="Needs vent DFU + length; outputs vent diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vent Diameter (in)" />
+                                    <TextBox Name="VentDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Check Vent Dia (in)" />
+                                    <TextBox Name="VentDiameterCheckInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Developed Length (ft)" />
+                                    <TextBox Name="VentLengthCheckInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Allowable DFU" Width="140" Click="BtnVentAllowable_Click" />
+                                    <TextBlock Text="Needs vent size + length; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Allowable DFU" />
+                                    <TextBox Name="VentAllowableOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="StormwaterCard" Margin="0,0,0,10" Padding="12" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Stormwater" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter roof area, rainfall, slope, and roughness. Step 2: Run storm sizing and partial-flow checks. Step 3: Check leaders." />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Enter roof area, rainfall, slope, and Manning n, then run the storm calculations to size drains, partial-flow segments, and leaders." />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Roof/Area (ft²)" />
+                                    <TextBox Name="StormAreaInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Rainfall Intensity (in/hr)" />
+                                    <TextBox Name="StormRainfallInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Slope (ft/ft)" />
+                                    <TextBox Name="StormSlopeInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Manning n" />
+                                    <TextBox Name="StormRoughnessInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                                <Button Content="Calc Storm Size" Width="160" Click="BtnStormSize_Click" />
+                                <Button Content="Partial Flow Size" Width="160" Margin="8,0,0,0" Click="BtnStormPartialSize_Click" />
+                            </StackPanel>
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Storm Flow (gpm)" />
+                                    <TextBox Name="StormFlowOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Required Diameter (in)" />
+                                    <TextBox Name="StormDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Partial Depth Ratio (y/D)" />
+                                    <TextBox Name="StormDepthRatioInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Partial-Flow Dia (in)" />
+                                    <TextBox Name="StormPartialDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+    
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Leader Flow (gpm)" />
+                                    <TextBox Name="StormLeaderFlowInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Leader Dia (in)" />
+                                    <TextBox Name="StormLeaderDiameterInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <Button Content="Check Leader" Width="140" Click="BtnStormLeaderCheck_Click" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="3" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Leader Capacity (gpm)" />
+                                    <TextBox Name="StormLeaderCapacityOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Sized Leader Dia (in)" />
+                                    <TextBox Name="StormLeaderSizedOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <TextBlock Name="StormNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="GasCard" Margin="0,0,0,10" Padding="12" Background="#fefaf5" BorderBrush="#e8d8c3" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Natural Gas (IFGC/NFPA 54)" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter load, length, pressure drop, and properties. Step 2: Size gas. Step 3: Review diameter, flow, and velocity." />
+                            <UniformGrid Columns="5" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Load (MBH)" />
+                                    <TextBox Name="GasLoadInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Length (ft)" />
+                                    <TextBox Name="GasLengthInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="ΔP (in. w.c.)" />
+                                    <TextBox Name="GasPressureDropInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Specific Gravity" />
+                                    <TextBox Name="GasSpecificGravityInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Base Pressure (psi)" />
+                                    <TextBox Name="GasBasePressureInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                                <Button Content="Size Gas" Width="140" Click="BtnGasSize_Click" />
+                            </StackPanel>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Required Dia (in)" />
+                                    <TextBox Name="GasDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Flow (scfh)" />
+                                    <TextBox Name="GasFlowOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Velocity (ft/s)" />
+                                    <TextBox Name="GasVelocityOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <TextBlock Name="GasNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="RecircCard" Margin="0,0,0,10" Padding="12" Background="#f1f5f9" BorderBrush="#d2deed" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="DHW Recirculation" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter loop volume, turnover, and heat loss. Step 2: Add pipe and fitting lengths. Step 3: Calculate recirculation flow and head." />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Loop Volume (gal)" />
+                                    <TextBox Name="RecircVolumeInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Turnover (min)" />
+                                    <TextBox Name="RecircTurnoverInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Heat Loss (Btuh)" />
+                                    <TextBox Name="RecircHeatLossInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Allowed ΔT (°F)" />
+                                    <TextBox Name="RecircDeltaTInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Recirc Dia (in)" />
+                                    <TextBox Name="RecircDiaInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="C-factor" />
+                                    <TextBox Name="RecircCInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Run Length (ft)" />
+                                    <TextBox Name="RecircLengthInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Fitting Eq. Length (ft)" />
+                                    <TextBox Name="RecircEqLengthInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                                <Button Content="Calc Recirc" Width="140" Click="BtnRecircCalc_Click" />
+                            </StackPanel>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Recirc Flow (gpm)" />
+                                    <TextBox Name="RecircFlowOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Recirc Head (ft)" />
+                                    <TextBox Name="RecircHeadOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Recirc Head (psi)" />
+                                    <TextBox Name="RecircHeadPsiOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <TextBlock Name="RecircNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+    
+                    <Border x:Name="HammerCard" Margin="0,0,0,10" Padding="12" Background="#fff7ed" BorderBrush="#f3d1a6" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Water Hammer Check" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter line velocity and length. Step 2: Add closure time and static pressure. Step 3: Check surge and total pressure." />
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Line Velocity (ft/s)" />
+                                    <TextBox Name="HammerVelocityInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Line Length (ft)" />
+                                    <TextBox Name="HammerLengthInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Closure Time (s)" />
+                                    <TextBox Name="HammerClosureInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Static Pressure (psi)" />
+                                    <TextBox Name="HammerStaticInput" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                                <Button Content="Check Hammer" Width="140" Click="BtnHammerCalc_Click" />
+                            </StackPanel>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Wave Speed (ft/s)" />
+                                    <TextBox Name="HammerWaveSpeedOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Surge (psi)" />
+                                    <TextBox Name="HammerSurgeOutput" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Total Pressure (psi)" />
+                                    <TextBox Name="HammerTotalOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <TextBlock Name="HammerNote" Margin="4,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </TabItem>
+
         </TabControl>
     </Grid>
 </Window>
