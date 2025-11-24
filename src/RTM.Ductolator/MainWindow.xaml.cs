@@ -161,7 +161,19 @@ namespace RTM.Ductolator
             if (result != true)
                 return false;
 
-            File.WriteAllText(dialog.FileName, content, Encoding.UTF8);
+            try
+            {
+                File.WriteAllText(dialog.FileName, content, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to save CSV: {ex.Message}",
+                    "Export failed",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return false;
+            }
             return true;
         }
 
