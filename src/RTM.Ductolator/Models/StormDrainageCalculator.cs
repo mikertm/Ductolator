@@ -10,6 +10,8 @@ namespace RTM.Ductolator.Models
     public static class StormDrainageCalculator
     {
         private const double InPerFt = 12.0;
+        private const double ManningCoefficient = 1.486; // US customary Manning constant
+        private const double CfsToGpm = 448.831;
 
         /// <summary>
         /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
@@ -23,7 +25,7 @@ namespace RTM.Ductolator.Models
 
         /// <summary>
         /// Solve full-flow circular pipe diameter (in) for a storm flow using Manning's equation.
-        /// Q (gpm) = 449 * (1/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
+        /// Q (gpm) = 448.831 * (1.486/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
         /// </summary>
         public static double FullFlowDiameterFromGpm(double flowGpm, double slopeFtPerFt, double roughnessN = 0.012,
                                                      double minDiameterIn = 2.0, double maxDiameterIn = 60.0)
@@ -34,9 +36,10 @@ namespace RTM.Ductolator.Models
             {
                 double dFt = dIn / InPerFt;
                 double area = Math.PI * dFt * dFt / 4.0;
-                double radius = dFt / 4.0; // hydraulic radius for full pipe
-                double qCfs = (1.49 / roughnessN) * area * Math.Pow(radius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * 448.831; // to gpm
+                double wettedPerimeter = Math.PI * dFt;
+                double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
+                double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                return qCfs * CfsToGpm; // to gpm
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
@@ -60,8 +63,8 @@ namespace RTM.Ductolator.Models
                 double wettedPerimeter = PartiallyFullWettedPerimeter(dFt, depthRatio);
                 if (wettedPerimeter <= 0 || area <= 0) return 0;
                 double hydraulicRadius = area / wettedPerimeter;
-                double qCfs = (1.49 / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * 448.831; // to gpm
+                double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                return qCfs * CfsToGpm; // to gpm
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
@@ -139,9 +142,10 @@ namespace RTM.Ductolator.Models
         {
             double dFt = diameterIn / InPerFt;
             double area = Math.PI * dFt * dFt / 4.0;
-            double radius = dFt / 4.0;
-            double qCfs = (1.49 / roughnessN) * area * Math.Pow(radius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-            return qCfs * 448.831;
+            double wettedPerimeter = Math.PI * dFt;
+            double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
+            double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+            return qCfs * CfsToGpm;
         }
     }
 }
