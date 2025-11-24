@@ -102,6 +102,9 @@ namespace RTM.Ductolator
             LoadCatalogs(defaultFolder);
             PopulateFluids();
             PopulateCodeProfiles();
+
+            UpdateDuctFittingSummary(0, 0);
+            UpdatePlumbingFittingSummary(0, 0);
         }
 
         private void LoadCatalogs(string? folder)
@@ -435,6 +438,8 @@ namespace RTM.Ductolator
             double baseLength = ParseBox(InLength);
             double totalLength = baseLength + eqLen;
             SetBox(DuctTotalRunLengthOutput, totalLength, "0.#");
+
+            UpdateDuctFittingSummary(sumK, eqLen);
         }
 
         private void UpdatePlumbingFittingTotals()
@@ -446,6 +451,36 @@ namespace RTM.Ductolator
             double baseLength = ParseBox(PlLengthInput);
             double totalLength = baseLength + eqLen;
             SetBox(PlTotalRunLengthOutput, totalLength, "0.#");
+
+            UpdatePlumbingFittingSummary(sumK, eqLen);
+        }
+
+        private void UpdateDuctFittingSummary(double sumK, double eqLen)
+        {
+            if (DuctFittingSummaryText == null) return;
+
+            int count = _ductFittings.Sum(f => f.Quantity);
+            if (count == 0)
+            {
+                DuctFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the duct pressure drop.";
+                return;
+            }
+
+            DuctFittingSummaryText.Text = $"{count} fittings added (ΣK {sumK:0.###}, Leq {eqLen:0.#} ft)";
+        }
+
+        private void UpdatePlumbingFittingSummary(double sumK, double eqLen)
+        {
+            if (PlFittingSummaryText == null) return;
+
+            int count = _plumbingFittings.Sum(f => f.Quantity);
+            if (count == 0)
+            {
+                PlFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the plumbing run.";
+                return;
+            }
+
+            PlFittingSummaryText.Text = $"{count} fittings added (ΣK {sumK:0.###}, Leq {eqLen:0.#} ft)";
         }
 
         private static string FittingListSummary(IEnumerable<DuctFittingSelection> run)

@@ -205,6 +205,7 @@
                                         <TextBox Name="DuctTotalRunLengthOutput" IsReadOnly="True" />
                                     </StackPanel>
                                 </UniformGrid>
+                                <TextBlock Name="DuctFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
 
@@ -473,6 +474,7 @@
                                         <TextBox Name="PlTotalRunLengthOutput" IsReadOnly="True" />
                                     </StackPanel>
                                 </UniformGrid>
+                                <TextBlock Name="PlFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
 
