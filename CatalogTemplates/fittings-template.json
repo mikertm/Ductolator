@@ -1,0 +1,16 @@
+[
+  { "type": "duct", "category": "Elbow", "name": "SMACNA long-radius elbow (R/D=1.5)", "k": 0.15, "equivalentLengthFt": 10 },
+  { "type": "duct", "category": "Elbow", "name": "Rectangular mitered elbow w/ vanes", "k": 0.45, "equivalentLengthFt": 25 },
+  { "type": "duct", "category": "Transition", "name": "Bellmouth / square-to-round", "k": 0.04, "equivalentLengthFt": 4 },
+  { "type": "duct", "category": "Branch/Tee", "name": "45° side takeoff", "k": 0.4, "equivalentLengthFt": 18 },
+  { "type": "duct", "category": "Branch/Tee", "name": "90° branch takeoff", "k": 1.0, "equivalentLengthFt": 40 },
+  { "type": "pipe", "category": "Valve", "name": "Resilient-seated gate valve (open)", "k": 0.19, "equivalentLengthFt": 8 },
+  { "type": "pipe", "category": "Valve", "name": "Full-port ball valve", "k": 0.05, "equivalentLengthFt": 3 },
+  { "type": "pipe", "category": "Valve", "name": "Gas cock valve (quarter turn)", "k": 0.45, "equivalentLengthFt": 10 },
+  { "type": "pipe", "category": "Elbow", "name": "Long-radius 90° elbow", "k": 0.75, "equivalentLengthFt": 30 },
+  { "type": "pipe", "category": "Elbow", "name": "Standard 90° elbow", "k": 1.5, "equivalentLengthFt": 50 },
+  { "type": "pipe", "category": "Branch/Tee", "name": "Through run of tee", "k": 0.6, "equivalentLengthFt": 20 },
+  { "type": "pipe", "category": "Branch/Tee", "name": "Branch side of tee", "k": 1.8, "equivalentLengthFt": 60 },
+  { "type": "pipe", "category": "Wye", "name": "45° wye / cleanout", "k": 0.75, "equivalentLengthFt": 25 },
+  { "type": "pipe", "category": "Cleanout", "name": "DWV cleanout plug", "k": 2.5, "equivalentLengthFt": 60 }
+]

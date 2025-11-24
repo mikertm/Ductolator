@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Win32;
 using RTM.Ductolator.Models;
+using WinForms = System.Windows.Forms;
 
 namespace RTM.Ductolator
 {
@@ -87,14 +90,66 @@ namespace RTM.Ductolator
         private readonly List<PipeFittingSelection> _plumbingFittings = new();
         private List<DuctFittingSelection> _lastDuctFittingSnapshot = new();
         private List<PipeFittingSelection> _lastPlumbingFittingSnapshot = new();
+        private CatalogLoadReport _catalogReport = RuntimeCatalogs.LastReport;
 
         public MainWindow()
         {
             InitializeComponent();
-            PopulatePlumbingMaterials();
+            var defaultFolder = ConfigurationManager.AppSettings["CustomCatalogFolder"] ?? string.Empty;
+            if (CatalogFolderText != null)
+                CatalogFolderText.Text = defaultFolder;
+
+            LoadCatalogs(defaultFolder);
             PopulateFluids();
             PopulateCodeProfiles();
+        }
+
+        private void LoadCatalogs(string? folder)
+        {
+            _catalogReport = RuntimeCatalogs.ReloadFromFolder(folder);
+            PopulatePlumbingMaterials();
             PopulateFittingLibraries();
+            UpdateCatalogStatus();
+        }
+
+        private void UpdateCatalogStatus()
+        {
+            if (CatalogStatusNote == null)
+                return;
+
+            var parts = new List<string>();
+            string folderNote = string.IsNullOrWhiteSpace(_catalogReport.Folder)
+                ? "Using built-in catalogs."
+                : $"Loaded from '{_catalogReport.Folder}'.";
+            parts.Add(folderNote);
+            parts.Add($"Materials: {_catalogReport.MaterialCount}, duct fittings: {_catalogReport.DuctFittingCount}, pipe fittings: {_catalogReport.PipeFittingCount}.");
+            if (_catalogReport.Warnings.Any())
+                parts.Add(string.Join(" ", _catalogReport.Warnings));
+            if (_catalogReport.Errors.Any())
+                parts.Add(string.Join(" ", _catalogReport.Errors));
+
+            CatalogStatusNote.Text = string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+            CatalogStatusNote.Foreground = _catalogReport.Errors.Any() ? Brushes.DarkRed : Brushes.DarkGreen;
+        }
+
+        private void BrowseCatalogFolder_Click(object sender, RoutedEventArgs e)
+        {
+            using var dialog = new WinForms.FolderBrowserDialog
+            {
+                Description = "Select a folder that contains materials.json/materials.csv and fittings.json/fittings.csv"
+            };
+
+            if (dialog.ShowDialog() == WinForms.DialogResult.OK)
+            {
+                if (CatalogFolderText != null)
+                    CatalogFolderText.Text = dialog.SelectedPath;
+                LoadCatalogs(dialog.SelectedPath);
+            }
+        }
+
+        private void ReloadCatalogs_Click(object sender, RoutedEventArgs e)
+        {
+            LoadCatalogs(CatalogFolderText?.Text);
         }
 
         private record DuctFittingSelection(DuctFitting Fitting, int Quantity)
@@ -182,7 +237,7 @@ namespace RTM.Ductolator
             if (PlMaterialCombo == null)
                 return;
 
-            PlMaterialCombo.ItemsSource = PlumbingCalculator.MaterialOptions;
+            PlMaterialCombo.ItemsSource = RuntimeCatalogs.Materials;
             PlMaterialCombo.SelectedIndex = 0;
         }
 
@@ -201,13 +256,13 @@ namespace RTM.Ductolator
         {
             if (DuctFittingCombo != null)
             {
-                DuctFittingCombo.ItemsSource = FittingLibrary.DuctFittings;
+                DuctFittingCombo.ItemsSource = RuntimeCatalogs.DuctFittings;
                 DuctFittingCombo.SelectedIndex = 0;
             }
 
             if (PlFittingCombo != null)
             {
-                PlFittingCombo.ItemsSource = FittingLibrary.PipeFittings;
+                PlFittingCombo.ItemsSource = RuntimeCatalogs.PipeFittings;
                 PlFittingCombo.SelectedIndex = 0;
             }
         }
@@ -263,11 +318,9 @@ namespace RTM.Ductolator
             }
         }
 
-        private PlumbingCalculator.PipeMaterial? SelectedMaterial()
+        private PipeMaterialProfile? SelectedMaterial()
         {
-            if (PlMaterialCombo?.SelectedItem is PlumbingCalculator.PipeMaterialOption option)
-                return option.Material;
-            return null;
+            return PlMaterialCombo?.SelectedItem as PipeMaterialProfile;
         }
 
         private PlumbingCalculator.FluidType SelectedFluid()
@@ -997,7 +1050,7 @@ namespace RTM.Ductolator
 
             double idIn = explicitId > 0
                 ? explicitId
-                : PlumbingCalculator.GetInnerDiameterIn(material.Value, nominal);
+                : PlumbingCalculator.GetInnerDiameterIn(material, nominal);
 
             if (idIn <= 0)
             {
@@ -1008,7 +1061,7 @@ namespace RTM.Ductolator
                 return;
             }
 
-            var matData = PlumbingCalculator.GetMaterialData(material.Value);
+            var matData = PlumbingCalculator.GetMaterialData(material);
             bool useAgedC = PlUseAgedC?.IsChecked ?? false;
             var fluidProps = PlumbingCalculator.ResolveFluidProperties(fluidType, fluidTempF, antifreezePercent);
             double psiPerFtHead = PlumbingCalculator.PsiPerFtHeadFromDensity(fluidProps.DensityLbmPerFt3);
@@ -1074,14 +1127,14 @@ namespace RTM.Ductolator
                 PlStatusNote.Text = string.Join(" ", new[] { frictionNote, reynoldsNote }.Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
-            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material.Value);
+            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material);
             _lastPlumbingFittingSnapshot = _plumbingFittings.Select(f => f with { }).ToList();
             _lastPlumbingExport = new PlumbingExportRow(
                 FlowGpm: gpm,
                 LengthFt: lengthFt,
                 EquivalentLengthFt: plFittingEqLength,
                 TotalRunLengthFt: totalRunLengthFt,
-                Material: material.Value.ToString(),
+                Material: material.DisplayName,
                 NominalIn: nominal,
                 ResolvedIdIn: idIn,
                 UsedAgedC: useAgedC,
@@ -1198,7 +1251,7 @@ namespace RTM.Ductolator
                 return;
             }
 
-            var matData = PlumbingCalculator.GetMaterialData(material.Value);
+            var matData = PlumbingCalculator.GetMaterialData(material);
             bool useAgedC = PlUseAgedC?.IsChecked ?? false;
             var fluidProps = PlumbingCalculator.ResolveFluidProperties(fluidType, fluidTempF, antifreezePercent);
             double psiPerFtHead = PlumbingCalculator.PsiPerFtHeadFromDensity(fluidProps.DensityLbmPerFt3);
@@ -1207,7 +1260,7 @@ namespace RTM.Ductolator
             double solvedDiameterIn = PlumbingCalculator.SolveDiameterFromHazenWilliams(gpm, targetPsi100, cFactor, psiPerFtHead);
             SetBox(PlSizedDiameterOutput, solvedDiameterIn, "0.###");
 
-            double nearestNominal = FindNearestNominal(material.Value, solvedDiameterIn);
+            double nearestNominal = FindNearestNominal(material, solvedDiameterIn);
             SetBox(PlSizedNominalOutput, nearestNominal, nearestNominal >= 1 ? "0.##" : "0.###");
 
             if (PlSizeNote != null)
@@ -1218,7 +1271,7 @@ namespace RTM.Ductolator
                 }
                 else
                 {
-                    double availableId = PlumbingCalculator.GetInnerDiameterIn(material.Value, nearestNominal);
+                    double availableId = PlumbingCalculator.GetInnerDiameterIn(material, nearestNominal);
                     PlSizeNote.Text = $"Select nominal {nearestNominal}" + " in (ID " + availableId.ToString("0.###", CultureInfo.InvariantCulture) + " in).";
                 }
             }
@@ -1403,7 +1456,7 @@ namespace RTM.Ductolator
                 return;
             }
 
-            var matData = PlumbingCalculator.GetMaterialData(material.Value);
+            var matData = PlumbingCalculator.GetMaterialData(material);
 
             double volumeGal = ParseBox(RecircVolumeInput);
             double turnoverMin = ParseBox(RecircTurnoverInput);
@@ -1467,8 +1520,8 @@ namespace RTM.Ductolator
                 return;
             }
 
-            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material.Value);
-            double surgePsi = PlumbingCalculator.SurgePressureWithClosure(velocityFps, lengthFt, closureS, material.Value);
+            double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material);
+            double surgePsi = PlumbingCalculator.SurgePressureWithClosure(velocityFps, lengthFt, closureS, material);
             double totalPsi = staticPsi > 0 ? staticPsi + surgePsi : surgePsi;
 
             SetBox(HammerWaveSpeedOutput, waveSpeed, "0");
@@ -1487,7 +1540,7 @@ namespace RTM.Ductolator
             }
         }
 
-        private static double FindNearestNominal(PlumbingCalculator.PipeMaterial material, double requiredIdIn)
+        private static double FindNearestNominal(PipeMaterialProfile material, double requiredIdIn)
         {
             if (requiredIdIn <= 0) return 0;
 

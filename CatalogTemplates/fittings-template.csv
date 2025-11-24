@@ -1,0 +1,17 @@
+Type,Category,Name,K,EquivalentLengthFt
+duct,Elbow,SMACNA long-radius elbow (R/D=1.5),0.15,10
+duct,Elbow,Rectangular mitered elbow w/ vanes,0.45,25
+duct,Transition,Bellmouth / square-to-round,0.04,4
+duct,Branch/Tee,45° side takeoff,0.4,18
+duct,Branch/Tee,90° branch takeoff,1,40
+pipe,Valve,Resilient-seated gate valve (open),0.19,8
+pipe,Valve,Full-port ball valve,0.05,3
+pipe,Valve,Gas cock valve (quarter turn),0.45,10
+pipe,Elbow,Long-radius 90° elbow,0.75,30
+pipe,Elbow,Standard 90° elbow,1.5,50
+pipe,Branch/Tee,Through run of tee,0.6,20
+pipe,Branch/Tee,Branch side of tee,1.8,60
+pipe,Wye,45° wye / cleanout,0.75,25
+pipe,Cleanout,DWV cleanout plug,2.5,60
+pipe,Valve,Swing check valve,2.5,85
+pipe,Valve,Globe valve (open),10,340

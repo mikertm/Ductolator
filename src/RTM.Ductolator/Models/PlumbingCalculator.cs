@@ -39,329 +39,20 @@ namespace RTM.Ductolator.Models
             double HazenWilliamsCFactorMultiplier,
             double RoughnessMultiplier);
 
-        /// <summary>
-        /// Nominal pipe families that share internal diameter tables and C/ε defaults.
-        /// </summary>
-        public enum PipeMaterial
+        // Pipe materials are supplied at runtime via RuntimeCatalogs.
+
+        public static double GetInnerDiameterIn(PipeMaterialProfile material, double nominalSizeIn)
         {
-            CopperTypeL,
-            CopperTypeK,
-            CopperTypeM,
-            SteelSchedule40,
-            PvcSchedule40,
-            CpvcSchedule80,
-            PexTubing,
-            CastIronNoHub,
-            DuctileIronCementLined,
-            PvcSdr35,
-            PvcSdr26,
-            StainlessSteelSch10S
+            if (material == null)
+                return 0;
+
+            return material.TryGetInnerDiameter(nominalSizeIn, out double id) ? id : 0;
         }
 
-        /// <summary>
-        /// UI helper for surfacing material names with service notes.
-        /// </summary>
-        public record PipeMaterialOption(PipeMaterial Material, string DisplayName, string ServiceNote)
-        {
-            public override string ToString() => string.IsNullOrWhiteSpace(ServiceNote)
-                ? DisplayName
-                : $"{DisplayName} — {ServiceNote}";
-        }
+        public static IReadOnlyDictionary<double, double> GetAvailableNominalIds(PipeMaterialProfile material)
+            => material?.NominalIdIn ?? new Dictionary<double, double>();
 
-        public static readonly IReadOnlyList<PipeMaterialOption> MaterialOptions = new List<PipeMaterialOption>
-        {
-            new(PipeMaterial.CopperTypeK, "Copper Type K", "domestic water / heating"),
-            new(PipeMaterial.CopperTypeL, "Copper Type L", "domestic water / heating"),
-            new(PipeMaterial.CopperTypeM, "Copper Type M", "low-pressure water"),
-            new(PipeMaterial.SteelSchedule40, "Steel Sch 40", "process / hydronic / fire"),
-            new(PipeMaterial.StainlessSteelSch10S, "Stainless Sch 10S", "process / RO / gray water"),
-            new(PipeMaterial.CpvcSchedule80, "CPVC Sch 80", "hot water / corrosive compatible"),
-            new(PipeMaterial.PvcSchedule40, "PVC Sch 40", "cold water / condensate"),
-            new(PipeMaterial.PvcSdr26, "PVC SDR-26", "reclaimed / utility / effluent"),
-            new(PipeMaterial.PvcSdr35, "PVC SDR-35", "sanitary / storm sewer"),
-            new(PipeMaterial.PexTubing, "PEX Tubing", "hot/cold distribution"),
-            new(PipeMaterial.CastIronNoHub, "Cast Iron (NH) DWV", "sanitary / storm drainage"),
-            new(PipeMaterial.DuctileIronCementLined, "Ductile Iron CL", "process / gray water / fire")
-        };
-
-        /// <summary>
-        /// Collates roughness, Hazen-Williams C (new/aged), and velocity guidance.
-        /// Values follow ASHRAE/ASPE/IPC tables for common domestic water materials.
-        /// </summary>
-        public record MaterialHydraulics(double RoughnessFt, double C_New, double C_Aged, double MaxColdFps, double MaxHotFps);
-
-        // Reference C factors and roughness for typical U.S. plumbing materials (ASPE/ASME B31).
-        private static readonly Dictionary<PipeMaterial, MaterialHydraulics> MaterialData = new()
-        {
-            // C factors per ASHRAE/ASPE; max velocities from common design guidance (UPC/IPC, ASPE Data Book)
-            { PipeMaterial.CopperTypeK, new MaterialHydraulics(1.5e-6, 150, 135, 8.0, 5.0) },
-            { PipeMaterial.CopperTypeL, new MaterialHydraulics(1.5e-6, 150, 135, 8.0, 5.0) },
-            { PipeMaterial.CopperTypeM, new MaterialHydraulics(1.5e-6, 150, 130, 8.0, 5.0) },
-            { PipeMaterial.SteelSchedule40, new MaterialHydraulics(0.00015, 120, 100, 6.0, 5.0) },
-            { PipeMaterial.StainlessSteelSch10S, new MaterialHydraulics(0.000006, 145, 140, 8.0, 6.0) },
-            { PipeMaterial.PvcSchedule40, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
-            { PipeMaterial.PvcSdr26, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
-            { PipeMaterial.PvcSdr35, new MaterialHydraulics(0.000005, 150, 140, 10.0, 8.0) },
-            { PipeMaterial.CpvcSchedule80, new MaterialHydraulics(0.000005, 150, 140, 8.0, 8.0) },
-            { PipeMaterial.PexTubing, new MaterialHydraulics(0.0001, 150, 140, 8.0, 5.0) },
-            { PipeMaterial.CastIronNoHub, new MaterialHydraulics(0.00085, 110, 90, 10.0, 8.0) },
-            { PipeMaterial.DuctileIronCementLined, new MaterialHydraulics(0.00085, 140, 125, 12.0, 10.0) }
-        };
-
-        private static readonly Dictionary<PipeMaterial, double> WaveSpeed_FtPerS = new()
-        {
-            { PipeMaterial.CopperTypeK, 4000 },
-            { PipeMaterial.CopperTypeL, 4000 },
-            { PipeMaterial.CopperTypeM, 4000 },
-            { PipeMaterial.SteelSchedule40, 4000 },
-            { PipeMaterial.StainlessSteelSch10S, 3700 },
-            { PipeMaterial.PvcSchedule40, 1400 },
-            { PipeMaterial.PvcSdr26, 1400 },
-            { PipeMaterial.PvcSdr35, 1400 },
-            { PipeMaterial.CpvcSchedule80, 1500 },
-            { PipeMaterial.PexTubing, 1500 },
-            { PipeMaterial.CastIronNoHub, 3000 },
-            { PipeMaterial.DuctileIronCementLined, 3500 }
-        };
-
-        /// <summary>
-        /// Internal diameters (in) by nominal size for select materials.
-        /// Values are typical manufacturers' data (ASTM B88, ASTM D1785/D2846, ASTM F876/877).
-        /// </summary>
-        private static readonly Dictionary<PipeMaterial, Dictionary<double, double>> NominalToIdIn = new()
-        {
-            {
-                PipeMaterial.CopperTypeL,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.545 },
-                    { 0.75, 0.785 },
-                    { 1.0, 1.025 },
-                    { 1.25, 1.265 },
-                    { 1.5, 1.505 },
-                    { 2.0, 1.949 },
-                    { 2.5, 2.445 },
-                    { 3.0, 2.907 },
-                    { 4.0, 3.826 }
-                }
-            },
-            {
-                PipeMaterial.CopperTypeK,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.527 },
-                    { 0.75, 0.745 },
-                    { 1.0, 0.995 },
-                    { 1.25, 1.235 },
-                    { 1.5, 1.473 },
-                    { 2.0, 1.913 },
-                    { 2.5, 2.401 },
-                    { 3.0, 2.889 },
-                    { 4.0, 3.826 }
-                }
-            },
-            {
-                PipeMaterial.CopperTypeM,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.569 },
-                    { 0.75, 0.811 },
-                    { 1.0, 1.055 },
-                    { 1.25, 1.291 },
-                    { 1.5, 1.527 },
-                    { 2.0, 1.959 },
-                    { 2.5, 2.445 },
-                    { 3.0, 2.907 },
-                    { 4.0, 3.826 }
-                }
-            },
-            {
-                PipeMaterial.SteelSchedule40,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.622 },
-                    { 0.75, 0.824 },
-                    { 1.0, 1.049 },
-                    { 1.25, 1.380 },
-                    { 1.5, 1.610 },
-                    { 2.0, 2.067 },
-                    { 2.5, 2.469 },
-                    { 3.0, 3.068 },
-                    { 4.0, 4.026 }
-                }
-            },
-            {
-                PipeMaterial.StainlessSteelSch10S,
-                new Dictionary<double, double>
-                {
-                    { 1.0, 1.097 },
-                    { 1.5, 1.610 },
-                    { 2.0, 2.157 },
-                    { 3.0, 3.260 },
-                    { 4.0, 4.334 },
-                    { 6.0, 6.065 }
-                }
-            },
-            {
-                PipeMaterial.PvcSchedule40,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.602 },
-                    { 0.75, 0.804 },
-                    { 1.0, 1.029 },
-                    { 1.25, 1.360 },
-                    { 1.5, 1.590 },
-                    { 2.0, 2.047 },
-                    { 2.5, 2.445 },
-                    { 3.0, 3.042 },
-                    { 4.0, 4.026 }
-                }
-            },
-            {
-                PipeMaterial.PvcSdr35,
-                new Dictionary<double, double>
-                {
-                    { 4.0, 3.974 },
-                    { 6.0, 5.914 },
-                    { 8.0, 7.920 },
-                    { 10.0, 9.900 },
-                    { 12.0, 11.786 }
-                }
-            },
-            {
-                PipeMaterial.PvcSdr26,
-                new Dictionary<double, double>
-                {
-                    { 4.0, 3.891 },
-                    { 6.0, 5.792 },
-                    { 8.0, 7.754 },
-                    { 10.0, 9.692 },
-                    { 12.0, 11.538 }
-                }
-            },
-            {
-                PipeMaterial.CpvcSchedule80,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.526 },
-                    { 0.75, 0.722 },
-                    { 1.0, 0.936 },
-                    { 1.25, 1.255 },
-                    { 1.5, 1.476 },
-                    { 2.0, 1.913 },
-                    { 2.5, 2.290 },
-                    { 3.0, 2.864 },
-                    { 4.0, 3.786 }
-                }
-            },
-            {
-                PipeMaterial.PexTubing,
-                new Dictionary<double, double>
-                {
-                    { 0.5, 0.475 },
-                    { 0.75, 0.671 },
-                    { 1.0, 0.875 },
-                    { 1.25, 1.054 },
-                    { 1.5, 1.220 },
-                    { 2.0, 1.572 }
-                }
-            },
-            {
-                PipeMaterial.CastIronNoHub,
-                new Dictionary<double, double>
-                {
-                    { 1.5, 1.71 },
-                    { 2.0, 2.16 },
-                    { 3.0, 3.03 },
-                    { 4.0, 3.78 },
-                    { 5.0, 4.76 },
-                    { 6.0, 5.74 }
-                }
-            },
-            {
-                PipeMaterial.DuctileIronCementLined,
-                new Dictionary<double, double>
-                {
-                    { 3.0, 3.28 },
-                    { 4.0, 4.26 },
-                    { 6.0, 6.28 },
-                    { 8.0, 8.30 }
-                }
-            }
-        };
-
-        // Typical absolute roughness (ft) values for U.S. plumbing materials
-        public const double Roughness_Copper_Ft = 1.5e-6;     // Type L copper (new)
-        public const double Roughness_Steel_Ft = 0.00015;     // Schedule 40 steel (aged)
-        public const double Roughness_PVC_Ft = 0.000005;      // PVC / CPVC smooth
-
-        private record FluidPropertyTableEntry(
-            FluidType Fluid,
-            double TemperatureF,
-            double PercentGlycol,
-            double DensityLbmPerFt3,
-            double KinematicViscosityFt2PerS,
-            double HazenWilliamsMultiplier,
-            double RoughnessMultiplier);
-
-        // Limited table of temperature- and mixture-dependent properties for water and common glycol blends (approximate)
-        // Density and viscosity values compiled from ASHRAE/ASHRAE Fundamentals and manufacturer curves.
-        private static readonly List<FluidPropertyTableEntry> FluidPropertyData = new()
-        {
-            // Water only
-            new FluidPropertyTableEntry(FluidType.Water, 40, 0, 62.99, 1.62e-5, 1.0, 1.0),
-            new FluidPropertyTableEntry(FluidType.Water, 60, 0, 62.37, 1.13e-5, 1.0, 1.0),
-            new FluidPropertyTableEntry(FluidType.Water, 80, 0, 61.93, 8.59e-6, 1.0, 1.0),
-            new FluidPropertyTableEntry(FluidType.Water, 120, 0, 60.74, 5.41e-6, 1.0, 1.0),
-
-            // Ethylene glycol 30%
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 30, 64.7, 2.20e-5, 0.95, 1.05),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 30, 63.6, 1.50e-5, 0.95, 1.05),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 30, 62.4, 1.10e-5, 0.95, 1.05),
-
-            // Ethylene glycol 40%
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 40, 65.3, 2.90e-5, 0.9, 1.08),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 40, 64.0, 1.90e-5, 0.9, 1.08),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 40, 62.7, 1.30e-5, 0.9, 1.08),
-
-            // Ethylene glycol 50%
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 60, 50, 66.1, 3.90e-5, 0.85, 1.12),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 100, 50, 64.6, 2.60e-5, 0.85, 1.12),
-            new FluidPropertyTableEntry(FluidType.EthyleneGlycol, 140, 50, 63.1, 1.70e-5, 0.85, 1.12),
-
-            // Propylene glycol 30%
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 30, 64.0, 2.70e-5, 0.93, 1.05),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 30, 62.8, 1.70e-5, 0.93, 1.05),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 30, 61.5, 1.20e-5, 0.93, 1.05),
-
-            // Propylene glycol 40%
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 40, 64.6, 3.70e-5, 0.88, 1.08),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 40, 63.2, 2.40e-5, 0.88, 1.08),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 40, 61.8, 1.60e-5, 0.88, 1.08),
-
-            // Propylene glycol 50%
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 60, 50, 65.4, 5.10e-5, 0.83, 1.12),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 100, 50, 63.8, 3.20e-5, 0.83, 1.12),
-            new FluidPropertyTableEntry(FluidType.PropyleneGlycol, 140, 50, 62.2, 2.10e-5, 0.83, 1.12)
-        };
-
-        // === Geometry ===
-
-        /// <summary>
-        /// Circular pipe cross-sectional area (ft²) from diameter (in).
-        /// </summary>
-        public static double Area_Round_Ft2(double diameterIn)
-        {
-            if (diameterIn <= 0) return 0;
-
-            double dFt = diameterIn / InPerFt;
-            return Math.PI * dFt * dFt / 4.0;
-        }
-
-        /// <summary>
-        /// Returns the material data set (roughness, C values, velocity caps) for a given pipe material.
-        /// </summary>
-        public static MaterialHydraulics GetMaterialData(PipeMaterial material) => MaterialData[material];
+        public static MaterialHydraulics GetMaterialData(PipeMaterialProfile material) => material.Hydraulics;
 
         /// <summary>
         /// Convert a static head (ft) to psi for a given fluid density.
@@ -449,29 +140,6 @@ namespace RTM.Ductolator.Models
             double roughMult = Interpolate(lowerPercent, upperPercent, lower.RoughnessMultiplier, upper.RoughnessMultiplier, clampedPercent);
 
             return new FluidProperties(density, viscosity, hazenMult, roughMult);
-        }
-
-        /// <summary>
-        /// Returns the internal diameter (in) for a nominal size (in) and material family.
-        /// Values are 0 if the nominal size is not available in the embedded table.
-        /// </summary>
-        public static double GetInnerDiameterIn(PipeMaterial material, double nominalSizeIn)
-        {
-            if (!NominalToIdIn.TryGetValue(material, out var table)) return 0;
-            return table.TryGetValue(nominalSizeIn, out var id) ? id : 0;
-        }
-
-        /// <summary>
-        /// Returns the available nominal sizes and inside diameters for a material.
-        /// </summary>
-        public static IReadOnlyDictionary<double, double> GetAvailableNominalIds(PipeMaterial material)
-        {
-            if (NominalToIdIn.TryGetValue(material, out var table))
-            {
-                return table;
-            }
-
-            return new Dictionary<double, double>();
         }
 
         /// <summary>
@@ -766,9 +434,9 @@ namespace RTM.Ductolator.Models
         /// Convenience helper: check if velocity is within common design guidance
         /// based on material and hot/cold service.
         /// </summary>
-        public static bool IsVelocityWithinGuidance(double velocityFps, PipeMaterial material, bool isHotWater)
+        public static bool IsVelocityWithinGuidance(double velocityFps, PipeMaterialProfile material, bool isHotWater)
         {
-            if (velocityFps <= 0) return false;
+            if (velocityFps <= 0 || material == null) return false;
             var data = GetMaterialData(material);
             double limit = isHotWater ? data.MaxHotFps : data.MaxColdFps;
             return velocityFps <= limit;
@@ -1048,12 +716,12 @@ namespace RTM.Ductolator.Models
 
         // === Water hammer ===
 
-        public static double GetWaveSpeedFps(PipeMaterial material)
+        public static double GetWaveSpeedFps(PipeMaterialProfile material)
         {
-            return WaveSpeed_FtPerS.TryGetValue(material, out double a) ? a : 4000.0;
+            return material?.WaveSpeedFps > 0 ? material.WaveSpeedFps : 4000.0;
         }
 
-        public static double SurgePressurePsi(double velocityChangeFps, PipeMaterial material)
+        public static double SurgePressurePsi(double velocityChangeFps, PipeMaterialProfile material)
         {
             if (velocityChangeFps <= 0) return 0;
 
@@ -1063,7 +731,7 @@ namespace RTM.Ductolator.Models
             return deltaPLbPerFt2 / 144.0;
         }
 
-        public static double SurgePressureWithClosure(double flowVelocityFps, double pipeLengthFt, double closureTimeSeconds, PipeMaterial material)
+        public static double SurgePressureWithClosure(double flowVelocityFps, double pipeLengthFt, double closureTimeSeconds, PipeMaterialProfile material)
         {
             if (flowVelocityFps <= 0) return 0;
 
