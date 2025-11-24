@@ -381,17 +381,6 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4" Padding="10" Background="#f2edff" BorderBrush="#d2c8f5" BorderThickness="1" CornerRadius="12">
-                                        <StackPanel>
-                                            <TextBlock Text="Pressure Class" FontWeight="Bold" />
-                                            <TextBox Name="OutPressureClass" IsReadOnly="True" Margin="0,4,0,2" />
-                                            <WrapPanel>
-                                                <Border Style="{StaticResource ChipBorderStyle}">
-                                                    <TextBlock Text="SMACNA class" FontSize="11" />
-                                                </Border>
-                                            </WrapPanel>
-                                        </StackPanel>
-                                    </Border>
                                 </UniformGrid>
 
                                 <UniformGrid Columns="2" Margin="0,0,0,6">

@@ -65,11 +65,6 @@ namespace RTM.Ductolator.Models
 
     public static class RuntimeCatalogs
     {
-        private static readonly JsonSerializerOptions CatalogJsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public static IReadOnlyList<PipeMaterialProfile> Materials { get; private set; } = BuiltInMaterials();
         public static IReadOnlyList<DuctFitting> DuctFittings { get; private set; } = BuiltInDuctFittings();
         public static IReadOnlyList<PipeFitting> PipeFittings { get; private set; } = BuiltInPipeFittings();
@@ -388,6 +383,11 @@ namespace RTM.Ductolator.Models
 
     internal static class CatalogLoader
     {
+        private static readonly JsonSerializerOptions CatalogJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public static CatalogSet Load(string? folder,
                                       IReadOnlyList<PipeMaterialProfile> defaults,
                                       IReadOnlyList<DuctFitting> defaultDuct,
