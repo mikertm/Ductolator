@@ -497,6 +497,8 @@
                         </Border>
 
                         <TextBlock Text="Results" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="After Calculate Loss, review the resolved ID, velocity, and friction from your flow, length, size, material, and fittings." />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Resolved ID (in)" />
@@ -549,6 +551,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter flow and a target ψ/100 ft, then Solve Diameter to get an inside diameter and the nearest nominal size." />
                         <UniformGrid Columns="3" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Flow (gpm)" />
@@ -580,6 +584,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="Fixture Units & Drainage" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Provide total fixture units to get probable demand, then use sanitary DFU and slope inputs to size or check drainage lines." />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Total Fixture Units" />
@@ -593,6 +599,9 @@
                                 <TextBox Name="FixtureDemandOutput" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
+
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter DFU and slope, then Size Sanitary to get a minimum diameter or check allowable DFU at a chosen size." />
 
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
@@ -628,6 +637,9 @@
                                 <TextBox Name="SanitaryAllowableOutput" IsReadOnly="True" />
                             </StackPanel>
                         </UniformGrid>
+
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter vented DFU and developed length, then Size Vent Stack; use the lower inputs to confirm allowable DFU for an existing vent diameter." />
 
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
@@ -670,6 +682,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="Storm Drainage" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter roof area, rainfall, slope, and Manning n, then run the storm calculations to size drains, partial-flow segments, and leaders." />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Roof/Area (ft²)" />
@@ -741,6 +755,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="Natural Gas (IFGC/NFPA 54)" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Supply load, length, pressure drop limit, and gas properties, then Size Gas to get diameter, flow, and velocity." />
                         <UniformGrid Columns="5" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Load (MBH)" />
@@ -785,6 +801,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="DHW Recirculation" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter loop volume, turnover, heat loss, temperature drop, and pipe details, then Calc Recirc to size the line and compute flow/head." />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Loop Volume (gal)" />
@@ -843,6 +861,8 @@
                         <Separator Margin="0,8" />
 
                         <TextBlock Text="Water Hammer Check" FontWeight="Bold" />
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                   Text="Enter line velocity, length, closure time, and static pressure, then Check Hammer to estimate surge and total pressure." />
                         <UniformGrid Columns="4" Margin="0,4">
                             <StackPanel Margin="4">
                                 <TextBlock Text="Line Velocity (ft/s)" />
