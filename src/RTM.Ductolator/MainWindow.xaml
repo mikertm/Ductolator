@@ -287,7 +287,18 @@
                                             <Button Content="Clear" Width="60" Click="ClearDuctFittings_Click" />
                                         </StackPanel>
                                     </UniformGrid>
-                                    <ListBox Name="DuctFittingRunList" Height="120" Margin="4,0" />
+                                    <TextBlock Text="Select a fitting, enter quantity, then Add; totals refresh below"
+                                               Margin="4,0,4,6" FontSize="12" Foreground="#6b7280" />
+                                    <Grid Margin="4,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ListBox Name="DuctFittingRunList" Height="120" Grid.Column="0" />
+                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                            <TextBlock Name="DuctFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Grid>
                                     <UniformGrid Columns="3" Margin="0,4">
                                         <StackPanel Margin="4">
                                             <TextBlock Text="ΣK from fittings" />
@@ -563,7 +574,18 @@
                                         <Button Content="Clear" Width="60" Click="ClearPlumbingFittings_Click" />
                                     </StackPanel>
                                 </UniformGrid>
-                                <ListBox Name="PlFittingRunList" Height="120" Margin="4,0" />
+                                <TextBlock Text="Select a fitting, enter quantity, then Add; totals refresh below"
+                                           Margin="4,0,4,6" FontSize="12" Foreground="#6b7280" />
+                                <Grid Margin="4,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ListBox Name="PlFittingRunList" Height="120" Grid.Column="0" />
+                                    <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                        <TextBlock Name="PlFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    </Border>
+                                </Grid>
                                 <UniformGrid Columns="3" Margin="0,4">
                                     <StackPanel Margin="4">
                                         <TextBlock Text="ΣK from fittings" />
