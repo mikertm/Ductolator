@@ -337,152 +337,217 @@
                             <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="DarkRed" />
                         </StackPanel>
 
-                        <Border Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" Padding="10" Background="#f5f7fb" BorderBrush="#d7deef" BorderThickness="1">
+                        <Border Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" Padding="12" Background="#f5f7fb" BorderBrush="#d7deef" BorderThickness="1">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,4" />
+                                <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,6" />
 
-                                <TextBlock Text="Air Data" FontWeight="Bold" />
-                                <UniformGrid Columns="3" Rows="3" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Reynolds Number" />
-                                        <TextBox Name="OutRe" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Darcy f" />
-                                        <TextBox Name="OutF" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="dP / 100 ft (in. w.g.)" />
-                                        <TextBox Name="OutDp100" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Calculated Flow (CFM)" />
-                                        <TextBox Name="OutCfm" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Calculated Velocity (FPM)" />
-                                        <TextBox Name="OutVel" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Velocity Pressure (in. w.g.)" />
-                                        <TextBox Name="OutVp" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Air Density (lb/ft³)" />
-                                        <TextBox Name="OutAirDensity" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Kinematic ν (ft²/s)" />
-                                        <TextBox Name="OutAirNu" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Total ΔP (in. w.g.)" />
-                                        <TextBox Name="OutTotalDp" IsReadOnly="True" />
-                                    </StackPanel>
+                                <UniformGrid Columns="4" Margin="0,0,0,10">
+                                    <Border Margin="4" Padding="10" Background="#edf7ff" BorderBrush="#c5dcf5" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Velocity" FontWeight="Bold" />
+                                            <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
+                                            <WrapPanel>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="Code caps via region" FontSize="11" />
+                                                </Border>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="Supply 800–1800" FontSize="11" />
+                                                </Border>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Margin="4" Padding="10" Background="#f3f7ed" BorderBrush="#d4e6b3" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Friction" FontWeight="Bold" />
+                                            <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
+                                            <WrapPanel>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="Equal-friction 0.05–0.10" FontSize="11" />
+                                                </Border>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="Quiet ≤0.08" FontSize="11" />
+                                                </Border>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Margin="4" Padding="10" Background="#fff4ed" BorderBrush="#f0c9a7" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Total ΔP" FontWeight="Bold" />
+                                            <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
+                                            <WrapPanel>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="Includes fittings" FontSize="11" />
+                                                </Border>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Margin="4" Padding="10" Background="#f2edff" BorderBrush="#d2c8f5" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Pressure Class" FontWeight="Bold" />
+                                            <TextBox Name="OutPressureClass" IsReadOnly="True" Margin="0,4,0,2" />
+                                            <WrapPanel>
+                                                <Border Style="{StaticResource ChipBorderStyle}">
+                                                    <TextBlock Text="SMACNA class" FontSize="11" />
+                                                </Border>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
                                 </UniformGrid>
 
-                                <TextBlock Text="Pressure Class / Leakage / Fan" FontWeight="Bold" />
-                                <UniformGrid Columns="2" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Pressure Class (in. w.g.)" />
-                                        <TextBox Name="OutPressureClass" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Leakage (cfm)" />
-                                        <TextBox Name="OutLeakage" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Fan BHP" />
-                                        <TextBox Name="OutFanBhp" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Velocity Pressure (in. w.g.)" />
-                                        <TextBox Name="OutVpEcho" IsReadOnly="True" />
-                                    </StackPanel>
-                                </UniformGrid>
+                                <UniformGrid Columns="2" Margin="0,0,0,6">
+                                    <Border Margin="4" Padding="10" Background="#f0f7ff" BorderBrush="#c5dcf5" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Air Data" FontWeight="Bold" />
+                                            <UniformGrid Columns="2" Margin="0,6,0,0">
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="CFM (ft³/min)" />
+                                                    <TextBox Name="OutCfm" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Reynolds (Re)" />
+                                                    <TextBox Name="OutRe" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Friction Factor (f)" />
+                                                    <TextBox Name="OutF" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Velocity Pressure (in. w.g.)" />
+                                                    <TextBox Name="OutVp" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Density (lbm/ft³)" />
+                                                    <TextBox Name="OutAirDensity" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Kinematic Viscosity (ft²/s)" />
+                                                    <TextBox Name="OutAirNu" IsReadOnly="True" />
+                                                </StackPanel>
+                                            </UniformGrid>
+                                        </StackPanel>
+                                    </Border>
 
-                                <TextBlock Text="Heat Gain/Loss & Insulation" FontWeight="Bold" />
-                                <UniformGrid Columns="2" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Heat Transfer (Btuh)" />
-                                        <TextBox Name="OutHeatTransfer" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Supply ΔT (°F)" />
-                                        <TextBox Name="OutDeltaT" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Needed Insul R" />
-                                        <TextBox Name="OutRequiredR" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Est. Thickness (in)" />
-                                        <TextBox Name="OutInsulThk" IsReadOnly="True" />
-                                    </StackPanel>
-                                </UniformGrid>
+                                    <Border Margin="4" Padding="10" Background="#fef6ed" BorderBrush="#f0c9a7" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Pressure / Leakage / Fan" FontWeight="Bold" />
+                                            <UniformGrid Columns="2" Margin="0,6,0,0">
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Pressure Class (in. w.g.)" />
+                                                    <TextBox Name="OutPressureClass" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Leakage (cfm)" />
+                                                    <TextBox Name="OutLeakage" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Fan BHP" />
+                                                    <TextBox Name="OutFanBhp" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Vel. Pressure echo" />
+                                                    <TextBox Name="OutVpEcho" IsReadOnly="True" />
+                                                </StackPanel>
+                                            </UniformGrid>
+                                        </StackPanel>
+                                    </Border>
 
-                                <TextBlock Text="Round Geometry" FontWeight="Bold" />
-                                <UniformGrid Columns="3" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Round Dia (in)" />
-                                        <TextBox Name="OutDia" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Area (ft²)" />
-                                        <TextBox Name="OutAreaRound" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Circumference (ft)" />
-                                        <TextBox Name="OutCircRound" IsReadOnly="True" />
-                                    </StackPanel>
-                                </UniformGrid>
+                                    <Border Margin="4" Padding="10" Background="#f4fbf3" BorderBrush="#c9e7c2" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Heat / Insulation" FontWeight="Bold" />
+                                            <UniformGrid Columns="2" Margin="0,6,0,0">
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Heat Transfer (Btuh)" />
+                                                    <TextBox Name="OutHeatTransfer" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Supply ΔT (°F)" />
+                                                    <TextBox Name="OutDeltaT" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Needed Insul R" />
+                                                    <TextBox Name="OutRequiredR" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Est. Thickness (in)" />
+                                                    <TextBox Name="OutInsulThk" IsReadOnly="True" />
+                                                </StackPanel>
+                                            </UniformGrid>
+                                        </StackPanel>
+                                    </Border>
 
-                                <TextBlock Text="Rectangular Equivalent" FontWeight="Bold" />
-                                <UniformGrid Columns="3" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Side 1 (in)" />
-                                        <TextBox Name="OutRS1" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Side 2 (in)" />
-                                        <TextBox Name="OutRS2" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Aspect Ratio" />
-                                        <TextBox Name="OutRAR" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Area (ft²)" />
-                                        <TextBox Name="OutRArea" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Perimeter (ft)" />
-                                        <TextBox Name="OutRPerim" IsReadOnly="True" />
-                                    </StackPanel>
-                                </UniformGrid>
-
-                                <TextBlock Text="Flat Oval Equivalent" FontWeight="Bold" />
-                                <UniformGrid Columns="3" Margin="0,4">
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Major (in)" />
-                                        <TextBox Name="OutOS1" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Minor (in)" />
-                                        <TextBox Name="OutOS2" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Aspect Ratio" />
-                                        <TextBox Name="OutOAR" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Area (ft²)" />
-                                        <TextBox Name="OutOArea" IsReadOnly="True" />
-                                    </StackPanel>
-                                    <StackPanel Margin="4">
-                                        <TextBlock Text="Perimeter (ft)" />
-                                        <TextBox Name="OutOPerim" IsReadOnly="True" />
-                                    </StackPanel>
+                                    <Border Margin="4" Padding="10" Background="#f2f0f7" BorderBrush="#d3cde8" BorderThickness="1" CornerRadius="12">
+                                        <StackPanel>
+                                            <TextBlock Text="Geometry" FontWeight="Bold" />
+                                            <UniformGrid Columns="3" Margin="0,6,0,0">
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Round Dia (in)" />
+                                                    <TextBox Name="OutDia" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Rect Side 1 (in)" />
+                                                    <TextBox Name="OutRS1" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Rect Side 2 (in)" />
+                                                    <TextBox Name="OutRS2" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Oval Major (in)" />
+                                                    <TextBox Name="OutOS1" IsReadOnly="True" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4">
+                                                    <TextBlock Text="Oval Minor (in)" />
+                                                    <TextBox Name="OutOS2" IsReadOnly="True" />
+                                                </StackPanel>
+                                            </UniformGrid>
+                                            <StackPanel Margin="0,6,0,0">
+                                                <Expander Header="Round details" Margin="0,4,0,0">
+                                                    <UniformGrid Columns="2" Margin="0,6,0,0">
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Area (ft²)" />
+                                                            <TextBox Name="OutAreaRound" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Circumference (ft)" />
+                                                            <TextBox Name="OutCircRound" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                </Expander>
+                                                <Expander Header="Rectangular details" Margin="0,4,0,0">
+                                                    <UniformGrid Columns="3" Margin="0,6,0,0">
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Aspect Ratio" />
+                                                            <TextBox Name="OutRAR" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Area (ft²)" />
+                                                            <TextBox Name="OutRArea" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Perimeter (ft)" />
+                                                            <TextBox Name="OutRPerim" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                </Expander>
+                                                <Expander Header="Flat oval details" Margin="0,4,0,0">
+                                                    <UniformGrid Columns="3" Margin="0,6,0,0">
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Aspect Ratio" />
+                                                            <TextBox Name="OutOAR" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Area (ft²)" />
+                                                            <TextBox Name="OutOArea" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                        <StackPanel Margin="4">
+                                                            <TextBlock Text="Perimeter (ft)" />
+                                                            <TextBox Name="OutOPerim" IsReadOnly="True" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                </Expander>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
                                 </UniformGrid>
                             </StackPanel>
                         </Border>
@@ -490,51 +555,51 @@
                 </ScrollViewer>
             </TabItem>
 
-                <TabItem Header="Plumbing">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-    
-            <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
-                <StackPanel>
-                    <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
-                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
-                               Text="Jump between cards and follow the quick steps in each section." />
-                    <StackPanel>
-                        <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Target Friction" Tag="{x:Reference TargetFrictionCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Fixture Units" Tag="{x:Reference FixtureUnitsCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Sanitary" Tag="{x:Reference SanitaryCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Stormwater" Tag="{x:Reference StormwaterCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Natural Gas" Tag="{x:Reference GasCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="DHW Recirc" Tag="{x:Reference RecircCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Water Hammer" Tag="{x:Reference HammerCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-    
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="8" Orientation="Vertical">
-                    <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+            <TabItem Header="Plumbing">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
-                            <TextBlock Text="Plumbing overview" FontWeight="Bold" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
-                                       Text="Use the cards below to size supply, drainage, and specialty piping. Each card lists the quick steps to stay on track." />
-                            <WrapPanel>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="UPC: ≤10 ft/s cold, ≤8 ft/s hot" FontSize="11" />
-                                </Border>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="ASPE: target 2–8 ft/s" FontSize="11" />
-                                </Border>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="Fixture-unit guardrails per IPC/UPC tables" FontSize="11" />
-                                </Border>
-                            </WrapPanel>
+                            <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
+                                       Text="Jump between cards and follow the quick steps in each section." />
+                            <StackPanel>
+                                <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Target Friction" Tag="{x:Reference TargetFrictionCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Fixture Units" Tag="{x:Reference FixtureUnitsCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Sanitary" Tag="{x:Reference SanitaryCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Stormwater" Tag="{x:Reference StormwaterCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Natural Gas" Tag="{x:Reference GasCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="DHW Recirc" Tag="{x:Reference RecircCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Water Hammer" Tag="{x:Reference HammerCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="8" Orientation="Vertical">
+                            <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="Plumbing overview" FontWeight="Bold" />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
+                                               Text="Use the cards below to size supply, drainage, and specialty piping. Each card lists the quick steps to stay on track." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="UPC: ≤10 ft/s cold, ≤8 ft/s hot" FontSize="11" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="ASPE: target 2–8 ft/s" FontSize="11" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="Fixture-unit guardrails per IPC/UPC tables" FontSize="11" />
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
     
                     <Border x:Name="LossCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
