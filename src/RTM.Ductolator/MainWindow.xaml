@@ -604,7 +604,7 @@
                                         </StackPanel>
                                         <StackPanel Margin="4">
                                             <TextBlock Text="Qty" />
-                                            <TextBox Name="PlFittingQtyInput" />
+                                            <TextBox Name="PlFittingQty" />
                                         </StackPanel>
                                         <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                             <Button Content="Add" Width="60" Click="AddPlumbingFitting_Click" Margin="0,0,6,0" />
@@ -786,7 +786,7 @@
                                        Text="Step 1: Enter DFU and slope. Step 2: Size for minimum diameter. Step 3: Check allowable DFU for existing sizes." />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
                                        Text="Enter DFU and slope, then Size Sanitary to get a minimum diameter or check allowable DFU at a chosen size." />
-    
+
                             <UniformGrid Columns="4" Margin="0,4">
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Sanitary DFU" />
@@ -826,7 +826,54 @@
                             <TextBlock Name="SanitaryNote" Margin="4,0" TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-    
+
+                    <Border x:Name="VentStackCard" Margin="0,0,0,10" Padding="12" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                        <StackPanel>
+                            <TextBlock Text="Vent Stack" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                                       Text="Step 1: Enter vented DFU and developed length, then size the vent stack. Step 2: Check allowable DFU for an existing vent size." />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                       Text="Enter vented DFU and developed length to size a vent stack, or check allowable DFU at a given vent diameter and length." />
+
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vented DFU" />
+                                    <TextBox Name="VentDfuInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vent Length (ft)" />
+                                    <TextBox Name="VentLengthInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Size Vent Stack" Width="140" Click="BtnVentSize_Click" />
+                                    <TextBlock Text="Needs vent DFU + length; outputs vent diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Vent Diameter (in)" />
+                                    <TextBox Name="VentDiameterOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                            <UniformGrid Columns="4" Margin="0,4">
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Check Vent Dia (in)" />
+                                    <TextBox Name="VentDiameterCheckInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Developed Length (ft)" />
+                                    <TextBox Name="VentLengthCheckInput" />
+                                </StackPanel>
+                                <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Content="Allowable DFU" Width="140" Click="BtnVentAllowable_Click" />
+                                    <TextBlock Text="Needs vent size + length; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="Allowable DFU" />
+                                    <TextBox Name="VentAllowableOutput" IsReadOnly="True" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+
                     <Border x:Name="StormwaterCard" Margin="0,0,0,10" Padding="12" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Stormwater" FontWeight="Bold" FontSize="14" />
