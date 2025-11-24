@@ -859,18 +859,18 @@ namespace RTM.Ductolator
                 : 1.0 / (interiorFilmR + exteriorFilmR);
 
             double heatTransfer = DuctCalculator.HeatTransfer_Btuh(uValue, ductSurfaceArea, supplyToAmbientDelta);
-            double deltaTAir = DuctCalculator.AirTemperatureChangeFromHeat(heatTransfer, cfm, air);
-            double requiredR = (maxDeltaTF > 0 && Math.Abs(supplyToAmbientDelta) > 0 && ductSurfaceArea > 0 && cfm > 0)
+            double deltaTAirCalc = DuctCalculator.AirTemperatureChangeFromHeat(heatTransfer, cfm, air);
+            double requiredRCalc = (maxDeltaTF > 0 && Math.Abs(supplyToAmbientDelta) > 0 && ductSurfaceArea > 0 && cfm > 0)
                 ? DuctCalculator.RequiredInsulationR(maxDeltaTF, ductSurfaceArea, supplyToAmbientDelta, cfm, air)
                 : 0;
-            double insulThickness = DuctCalculator.InsulationThicknessInFromR(requiredR);
+            double insulThickness = DuctCalculator.InsulationThicknessInFromR(requiredRCalc);
 
             SetBox(OutPressureClass, pressureClass, "0.0#");
             SetBox(OutLeakage, leakageCfm, "0.##");
             SetBox(OutFanBhp, fanBhp, "0.00");
             SetBox(OutHeatTransfer, heatTransfer, "0");
-            SetBox(OutDeltaT, deltaTAir, "0.00");
-            SetBox(OutRequiredR, requiredR, "0.00");
+            SetBox(OutDeltaT, deltaTAirCalc, "0.00");
+            SetBox(OutRequiredR, requiredRCalc, "0.00");
             SetBox(OutInsulThk, insulThickness, "0.00");
 
             if (DuctCodeNote != null)
@@ -945,13 +945,13 @@ namespace RTM.Ductolator
                     double rectS2 = rectEq.Side2In;
 
                     var rectGeom = DuctCalculator.RectGeometry(rectS1, rectS2);
-                    double rectArea = rectGeom.AreaFt2;
+                    double rectAreaEq = rectGeom.AreaFt2;
                     double rectPerim = rectGeom.PerimeterFt;
 
                     SetBox(OutRS1, rectS1, "0.##");
                     SetBox(OutRS2, rectS2, "0.##");
                     SetBox(OutRAR, rectS1 / rectS2, "0.000");
-                    SetBox(OutRArea, rectArea, "0.000");
+                    SetBox(OutRArea, rectAreaEq, "0.000");
                     SetBox(OutRPerim, rectPerim, "0.000");
                 }
 
@@ -1039,7 +1039,7 @@ namespace RTM.Ductolator
                 return;
             }
 
-            var d = _lastDuctExport.Value;
+            var d = _lastDuctExport!;
             var sb = new StringBuilder();
             sb.AppendLine("Flow (cfm),Velocity (fpm),Friction (in.w.g./100 ft),Velocity Pressure (in.w.g.),Total Drop (in.w.g.),Straight Length (ft),Fitting Equivalent Length (ft),Total Run Length (ft),Sum K,Fitting Drop (in.w.g.),Supply Static (in.w.g.),Return Static (in.w.g.),Pressure Class (in.w.g.),Leakage (cfm),Fan BHP,Air Temp (F),Altitude (ft),Air Density (lbm/ft^3),Air Kinematic Nu (ft^2/s),Round Dia (in),Rect Side 1 (in),Rect Side 2 (in),Rect Area (ft^2),Rect Perimeter (ft),Rect AR,Oval Major (in),Oval Minor (in),Oval Area (ft^2),Oval Perimeter (ft),Oval AR,Existing Insulation R,Heat Transfer (Btuh),Supply DeltaT (F),Required Insulation R,Estimated Thickness (in),Fittings");
             sb.AppendLine(string.Join(",", new[]
@@ -1251,7 +1251,7 @@ namespace RTM.Ductolator
                 return;
             }
 
-            var p = _lastPlumbingExport.Value;
+            var p = _lastPlumbingExport!;
             var sb = new StringBuilder();
             sb.AppendLine("Flow (gpm),Length (ft),Fitting Equivalent Length (ft),Total Run Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Fluid,Fluid Temp (F),Antifreeze %,Fluid Density (lb/ft3),Fluid Kinematic Nu (ft2/s),Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s),Sum K,Fitting Minor Loss (psi),Fittings");
             sb.AppendLine(string.Join(",", new[]
