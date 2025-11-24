@@ -65,6 +65,11 @@ namespace RTM.Ductolator.Models
 
     public static class RuntimeCatalogs
     {
+        private static readonly JsonSerializerOptions CatalogJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public static IReadOnlyList<PipeMaterialProfile> Materials { get; private set; } = BuiltInMaterials();
         public static IReadOnlyList<DuctFitting> DuctFittings { get; private set; } = BuiltInDuctFittings();
         public static IReadOnlyList<PipeFitting> PipeFittings { get; private set; } = BuiltInPipeFittings();
@@ -439,7 +444,7 @@ namespace RTM.Ductolator.Models
             {
                 try
                 {
-                    var jsonMaterials = JsonSerializer.Deserialize<List<MaterialJsonModel>>(File.ReadAllText(jsonPath));
+                    var jsonMaterials = JsonSerializer.Deserialize<List<MaterialJsonModel>>(File.ReadAllText(jsonPath), CatalogJsonOptions);
                     if (jsonMaterials != null)
                     {
                         foreach (var mat in jsonMaterials)
@@ -533,7 +538,7 @@ namespace RTM.Ductolator.Models
             {
                 try
                 {
-                    var fittingModels = JsonSerializer.Deserialize<List<FittingJsonModel>>(File.ReadAllText(jsonPath));
+                    var fittingModels = JsonSerializer.Deserialize<List<FittingJsonModel>>(File.ReadAllText(jsonPath), CatalogJsonOptions);
                     if (fittingModels != null)
                     {
                         foreach (var model in fittingModels)
