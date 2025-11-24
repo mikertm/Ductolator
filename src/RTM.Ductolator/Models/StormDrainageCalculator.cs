@@ -91,6 +91,13 @@ namespace RTM.Ductolator.Models
             double fLo = flowFromDiameter(lo) - targetFlow;
             double fHi = flowFromDiameter(hi) - targetFlow;
 
+            if (Math.Abs(fLo) < 1e-3) return lo;
+            if (Math.Abs(fHi) < 1e-3) return hi;
+
+            // Clamp when the target flow is already achievable at the bounds to avoid runaway iterations.
+            if (fLo > 0 && fHi > 0) return lo; // target below minimum diameter capacity
+            if (fLo < 0 && fHi < 0) return hi; // target above maximum diameter capacity
+
             for (int i = 0; i < 50; i++)
             {
                 double mid = 0.5 * (lo + hi);
