@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -19,6 +20,8 @@ namespace RTM.Ductolator
             double VelocityPressureInWg,
             double TotalPressureDropInWg,
             double StraightLengthFt,
+            double FittingEquivalentLengthFt,
+            double TotalRunLengthFt,
             double SumK,
             double FittingLossInWg,
             double SupplyStaticInWg,
@@ -45,11 +48,14 @@ namespace RTM.Ductolator
             double HeatTransferBtuh,
             double SupplyDeltaTF,
             double RequiredInsulR,
-            double InsulationThicknessIn);
+            double InsulationThicknessIn,
+            string FittingsList);
 
         private record PlumbingExportRow(
             double FlowGpm,
             double LengthFt,
+            double EquivalentLengthFt,
+            double TotalRunLengthFt,
             string Material,
             double NominalIn,
             double ResolvedIdIn,
@@ -70,10 +76,17 @@ namespace RTM.Ductolator
             double DarcyPsiTotal,
             double HazenCFactor,
             double RoughnessFt,
-            double WaveSpeedFps);
+            double WaveSpeedFps,
+            double SumK,
+            double FittingPsi,
+            string FittingsList);
 
         private DuctExportRow? _lastDuctExport;
         private PlumbingExportRow? _lastPlumbingExport;
+        private readonly List<DuctFittingSelection> _ductFittings = new();
+        private readonly List<PipeFittingSelection> _plumbingFittings = new();
+        private List<DuctFittingSelection> _lastDuctFittingSnapshot = new();
+        private List<PipeFittingSelection> _lastPlumbingFittingSnapshot = new();
 
         public MainWindow()
         {
@@ -81,6 +94,19 @@ namespace RTM.Ductolator
             PopulatePlumbingMaterials();
             PopulateFluids();
             PopulateCodeProfiles();
+            PopulateFittingLibraries();
+        }
+
+        private record DuctFittingSelection(DuctFitting Fitting, int Quantity)
+        {
+            public override string ToString() =>
+                $"{Quantity}× {Fitting.Name} (K={Fitting.KCoefficient:0.###}, Leq={Fitting.EquivalentLengthFt:0.#} ft each)";
+        }
+
+        private record PipeFittingSelection(PipeFitting Fitting, int Quantity)
+        {
+            public override string ToString() =>
+                $"{Quantity}× {Fitting.Name} (K={Fitting.KCoefficient:0.###}, Leq={Fitting.EquivalentLengthFt:0.#} ft each)";
         }
 
         // --- Helpers ---
@@ -161,6 +187,57 @@ namespace RTM.Ductolator
             PlAntifreezeTypeCombo.SelectedItem = PlumbingCalculator.FluidType.Water;
         }
 
+        private void PopulateFittingLibraries()
+        {
+            if (DuctFittingCombo != null)
+            {
+                DuctFittingCombo.ItemsSource = FittingLibrary.DuctFittings;
+                DuctFittingCombo.SelectedIndex = 0;
+            }
+
+            if (PlFittingCombo != null)
+            {
+                PlFittingCombo.ItemsSource = FittingLibrary.PipeFittings;
+                PlFittingCombo.SelectedIndex = 0;
+            }
+        }
+
+        private void RefreshDuctFittingList()
+        {
+            if (DuctFittingRunList == null) return;
+            DuctFittingRunList.ItemsSource = null;
+            DuctFittingRunList.ItemsSource = _ductFittings;
+        }
+
+        private void RefreshPlumbingFittingList()
+        {
+            if (PlFittingRunList == null) return;
+            PlFittingRunList.ItemsSource = null;
+            PlFittingRunList.ItemsSource = _plumbingFittings;
+        }
+
+        private (double sumK, double equivalentLength) CurrentDuctFittingTotals()
+        {
+            double sumK = _ductFittings.Sum(f => f.Fitting.KCoefficient * f.Quantity);
+            double eqLen = _ductFittings.Sum(f => f.Fitting.EquivalentLengthFt * f.Quantity);
+            return (sumK, eqLen);
+        }
+
+        private (double sumK, double equivalentLength) CurrentPlumbingFittingTotals()
+        {
+            double sumK = _plumbingFittings.Sum(f => f.Fitting.KCoefficient * f.Quantity);
+            double eqLen = _plumbingFittings.Sum(f => f.Fitting.EquivalentLengthFt * f.Quantity);
+            return (sumK, eqLen);
+        }
+
+        private static int ParseQuantity(TextBox? tb)
+        {
+            if (tb == null) return 0;
+            return int.TryParse(tb.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int qty) && qty > 0
+                ? qty
+                : 0;
+        }
+
         private void PopulateCodeProfiles()
         {
             if (DuctRegionCombo != null)
@@ -194,6 +271,132 @@ namespace RTM.Ductolator
         private string SelectedDuctRegionKey() => DuctRegionCombo?.SelectedItem as string ?? CodeGuidance.AllDuctRegions.First();
         private string SelectedPlumbingRegionKey() => PlRegionCombo?.SelectedItem as string ?? CodeGuidance.AllPlumbingRegions.First();
 
+        private void AddDuctFitting_Click(object sender, RoutedEventArgs e)
+        {
+            if (DuctFittingCombo?.SelectedItem is not DuctFitting fit)
+                return;
+
+            int qty = ParseQuantity(DuctFittingQty);
+            if (qty <= 0) return;
+
+            var existing = _ductFittings.FirstOrDefault(f => f.Fitting.Name == fit.Name);
+            if (existing != null)
+            {
+                int idx = _ductFittings.IndexOf(existing);
+                _ductFittings[idx] = existing with { Quantity = existing.Quantity + qty };
+            }
+            else
+            {
+                _ductFittings.Add(new DuctFittingSelection(fit, qty));
+            }
+
+            RefreshDuctFittingList();
+            UpdateDuctFittingTotals();
+        }
+
+        private void RemoveDuctFitting_Click(object sender, RoutedEventArgs e)
+        {
+            if (DuctFittingRunList?.SelectedItem is not DuctFittingSelection sel)
+                return;
+
+            _ductFittings.Remove(sel);
+            RefreshDuctFittingList();
+            UpdateDuctFittingTotals();
+        }
+
+        private void ClearDuctFittings_Click(object sender, RoutedEventArgs e)
+        {
+            _ductFittings.Clear();
+            RefreshDuctFittingList();
+            UpdateDuctFittingTotals();
+        }
+
+        private void AddPlumbingFitting_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlFittingCombo?.SelectedItem is not PipeFitting fit)
+                return;
+
+            int qty = ParseQuantity(PlFittingQty);
+            if (qty <= 0) return;
+
+            var existing = _plumbingFittings.FirstOrDefault(f => f.Fitting.Name == fit.Name);
+            if (existing != null)
+            {
+                int idx = _plumbingFittings.IndexOf(existing);
+                _plumbingFittings[idx] = existing with { Quantity = existing.Quantity + qty };
+            }
+            else
+            {
+                _plumbingFittings.Add(new PipeFittingSelection(fit, qty));
+            }
+
+            RefreshPlumbingFittingList();
+            UpdatePlumbingFittingTotals();
+        }
+
+        private void RemovePlumbingFitting_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlFittingRunList?.SelectedItem is not PipeFittingSelection sel)
+                return;
+
+            _plumbingFittings.Remove(sel);
+            RefreshPlumbingFittingList();
+            UpdatePlumbingFittingTotals();
+        }
+
+        private void ClearPlumbingFittings_Click(object sender, RoutedEventArgs e)
+        {
+            _plumbingFittings.Clear();
+            RefreshPlumbingFittingList();
+            UpdatePlumbingFittingTotals();
+        }
+
+        private void InLength_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateDuctFittingTotals();
+        }
+
+        private void PlLengthInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdatePlumbingFittingTotals();
+        }
+
+        private void UpdateDuctFittingTotals()
+        {
+            var (sumK, eqLen) = CurrentDuctFittingTotals();
+            SetBox(DuctFittingSumKOutput, sumK, "0.###");
+            SetBox(DuctFittingEquivalentLengthOutput, eqLen, "0.#");
+            if (_ductFittings.Any())
+                SetBox(InLossCoeff, sumK, "0.###");
+
+            double baseLength = ParseBox(InLength);
+            double totalLength = baseLength + eqLen;
+            SetBox(DuctTotalRunLengthOutput, totalLength, "0.#");
+        }
+
+        private void UpdatePlumbingFittingTotals()
+        {
+            var (sumK, eqLen) = CurrentPlumbingFittingTotals();
+            SetBox(PlFittingSumKOutput, sumK, "0.###");
+            SetBox(PlFittingEquivalentLengthOutput, eqLen, "0.#");
+
+            double baseLength = ParseBox(PlLengthInput);
+            double totalLength = baseLength + eqLen;
+            SetBox(PlTotalRunLengthOutput, totalLength, "0.#");
+        }
+
+        private static string FittingListSummary(IEnumerable<DuctFittingSelection> run)
+        {
+            return string.Join("; ", run.Select(f =>
+                $"{f.Quantity}× {f.Fitting.Name} (K={f.Fitting.KCoefficient:0.###}, Leq={f.Fitting.EquivalentLengthFt:0.#} ft)"));
+        }
+
+        private static string FittingListSummary(IEnumerable<PipeFittingSelection> run)
+        {
+            return string.Join("; ", run.Select(f =>
+                $"{f.Quantity}× {f.Fitting.Name} (K={f.Fitting.KCoefficient:0.###}, Leq={f.Fitting.EquivalentLengthFt:0.#} ft)"));
+        }
+
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
             foreach (var ctrl in new TextBox[]
@@ -202,6 +405,7 @@ namespace RTM.Ductolator
                 InAirTemp, InAltitude, InLength, InLossCoeff,
                 InSupplyStatic, InReturnStatic, InLeakageClass, InLeakTestPressure,
                 InFanEff, InAmbientTemp, InMaxDeltaT, InExistingInsulR,
+                DuctFittingSumKOutput, DuctFittingEquivalentLengthOutput, DuctTotalRunLengthOutput,
                 OutRe, OutF, OutCfm, OutVel, OutDp100, OutVp, OutVpEcho, OutTotalDp,
                 OutPressureClass, OutLeakage, OutFanBhp,
                 OutHeatTransfer, OutDeltaT, OutRequiredR, OutInsulThk,
@@ -216,6 +420,10 @@ namespace RTM.Ductolator
             {
                 ctrl.Text = string.Empty;
             }
+
+            _ductFittings.Clear();
+            RefreshDuctFittingList();
+            UpdateDuctFittingTotals();
 
             if (DuctCodeNote != null)
                 DuctCodeNote.Text = string.Empty;
@@ -261,6 +469,15 @@ namespace RTM.Ductolator
                 DuctStatusNote.Text = string.Empty;
 
             double targetAR = arInput > 0 ? arInput : 2.0;
+
+            var (fittingSumK, fittingEquivalentLength) = CurrentDuctFittingTotals();
+            if (fittingSumK > 0)
+            {
+                sumLossCoeff = fittingSumK;
+                SetBox(InLossCoeff, sumLossCoeff, "0.###");
+            }
+            double totalRunLengthFt = straightLengthFt + fittingEquivalentLength;
+            SetBox(DuctTotalRunLengthOutput, totalRunLengthFt, "0.#");
 
             // Working variables
             double areaFt2 = 0;
@@ -463,7 +680,14 @@ namespace RTM.Ductolator
             double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
-            double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, straightLengthFt, sumLossCoeff, usedVelFpm, air);
+            // When fitting equivalent length is included in the total run length, avoid
+            // also charging the K-based minor loss term to prevent double-counting.
+            double totalDp = DuctCalculator.TotalPressureDrop_InWG(
+                dpPer100,
+                totalRunLengthFt,
+                fittingEquivalentLength > 0 ? 0 : sumLossCoeff,
+                usedVelFpm,
+                air);
 
             SetBox(OutRe, re, "0");
             SetBox(OutF, f, "0.0000");
@@ -550,7 +774,7 @@ namespace RTM.Ductolator
                 }
 
                 string totalStatus = totalDp > 0.0
-                    ? $"Total drop (friction + fittings) over {straightLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
+                    ? $"Total drop (friction + fittings) over {totalRunLengthFt:0.#} ft: {totalDp:0.0000} in. w.g." : string.Empty;
 
                 string pressureStatus = pressureClass > 0
                     ? $"Pressure class {pressureClass:0.0} in. w.g.; leakage class {leakageClass:0.#} ≈ {leakageCfm:0.#} cfm over {straightLengthFt:0.#} ft."
@@ -620,6 +844,8 @@ namespace RTM.Ductolator
             double requiredR = ParseBox(OutRequiredR);
             double insulThk = ParseBox(OutInsulThk);
 
+            _lastDuctFittingSnapshot = _ductFittings.Select(f => f with { }).ToList();
+
             _lastDuctExport = new DuctExportRow(
                 FlowCfm: cfm,
                 VelocityFpm: usedVelFpm,
@@ -627,6 +853,8 @@ namespace RTM.Ductolator
                 VelocityPressureInWg: vp,
                 TotalPressureDropInWg: totalDp,
                 StraightLengthFt: straightLengthFt,
+                FittingEquivalentLengthFt: fittingEquivalentLength,
+                TotalRunLengthFt: totalRunLengthFt,
                 SumK: sumLossCoeff,
                 FittingLossInWg: fittingDrop,
                 SupplyStaticInWg: supplyStatic,
@@ -653,7 +881,8 @@ namespace RTM.Ductolator
                 HeatTransferBtuh: heatTransferBtuh,
                 SupplyDeltaTF: deltaTAir,
                 RequiredInsulR: requiredR,
-                InsulationThicknessIn: insulThk);
+                InsulationThicknessIn: insulThk,
+                FittingsList: FittingListSummary(_lastDuctFittingSnapshot));
         }
 
         private void BtnExportDuct_Click(object sender, RoutedEventArgs e)
@@ -666,7 +895,7 @@ namespace RTM.Ductolator
 
             var d = _lastDuctExport.Value;
             var sb = new StringBuilder();
-            sb.AppendLine("Flow (cfm),Velocity (fpm),Friction (in.w.g./100 ft),Velocity Pressure (in.w.g.),Total Drop (in.w.g.),Straight Length (ft),Sum K,Fitting Drop (in.w.g.),Supply Static (in.w.g.),Return Static (in.w.g.),Pressure Class (in.w.g.),Leakage (cfm),Fan BHP,Air Temp (F),Altitude (ft),Air Density (lbm/ft^3),Air Kinematic Nu (ft^2/s),Round Dia (in),Rect Side 1 (in),Rect Side 2 (in),Rect Area (ft^2),Rect Perimeter (ft),Rect AR,Oval Major (in),Oval Minor (in),Oval Area (ft^2),Oval Perimeter (ft),Oval AR,Existing Insulation R,Heat Transfer (Btuh),Supply DeltaT (F),Required Insulation R,Estimated Thickness (in)");
+            sb.AppendLine("Flow (cfm),Velocity (fpm),Friction (in.w.g./100 ft),Velocity Pressure (in.w.g.),Total Drop (in.w.g.),Straight Length (ft),Fitting Equivalent Length (ft),Total Run Length (ft),Sum K,Fitting Drop (in.w.g.),Supply Static (in.w.g.),Return Static (in.w.g.),Pressure Class (in.w.g.),Leakage (cfm),Fan BHP,Air Temp (F),Altitude (ft),Air Density (lbm/ft^3),Air Kinematic Nu (ft^2/s),Round Dia (in),Rect Side 1 (in),Rect Side 2 (in),Rect Area (ft^2),Rect Perimeter (ft),Rect AR,Oval Major (in),Oval Minor (in),Oval Area (ft^2),Oval Perimeter (ft),Oval AR,Existing Insulation R,Heat Transfer (Btuh),Supply DeltaT (F),Required Insulation R,Estimated Thickness (in),Fittings");
             sb.AppendLine(string.Join(",", new[]
             {
                 CsvEscape(d.FlowCfm),
@@ -675,6 +904,8 @@ namespace RTM.Ductolator
                 CsvEscape(d.VelocityPressureInWg),
                 CsvEscape(d.TotalPressureDropInWg),
                 CsvEscape(d.StraightLengthFt),
+                CsvEscape(d.FittingEquivalentLengthFt),
+                CsvEscape(d.TotalRunLengthFt),
                 CsvEscape(d.SumK),
                 CsvEscape(d.FittingLossInWg),
                 CsvEscape(d.SupplyStaticInWg),
@@ -701,8 +932,27 @@ namespace RTM.Ductolator
                 CsvEscape(d.HeatTransferBtuh),
                 CsvEscape(d.SupplyDeltaTF),
                 CsvEscape(d.RequiredInsulR),
-                CsvEscape(d.InsulationThicknessIn)
+                CsvEscape(d.InsulationThicknessIn),
+                CsvEscape(d.FittingsList)
             }));
+
+            if (_lastDuctFittingSnapshot.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("Fittings");
+                sb.AppendLine("Category,Name,Quantity,K,Equivalent Length (ft)");
+                foreach (var f in _lastDuctFittingSnapshot)
+                {
+                    sb.AppendLine(string.Join(",", new[]
+                    {
+                        CsvEscape(f.Fitting.Category),
+                        CsvEscape(f.Fitting.Name),
+                        CsvEscape(f.Quantity),
+                        CsvEscape(f.Fitting.KCoefficient),
+                        CsvEscape(f.Fitting.EquivalentLengthFt)
+                    }));
+                }
+            }
 
             if (SaveCsvToPath("duct-export.csv", sb.ToString()))
             {
@@ -731,6 +981,10 @@ namespace RTM.Ductolator
             double antifreezePercent = ParseBox(PlAntifreezePercentInput);
             var fluidType = SelectedFluid();
 
+            UpdatePlumbingFittingTotals();
+            var (plFittingSumK, plFittingEqLength) = CurrentPlumbingFittingTotals();
+            double totalRunLengthFt = lengthFt + plFittingEqLength;
+
             double idIn = explicitId > 0
                 ? explicitId
                 : PlumbingCalculator.GetInnerDiameterIn(material.Value, nominal);
@@ -754,12 +1008,17 @@ namespace RTM.Ductolator
 
             double velocityFps = gpm > 0 ? PlumbingCalculator.VelocityFpsFromGpm(gpm, idIn) : 0;
             double psiPer100Hw = (gpm > 0 && cFactor > 0) ? PlumbingCalculator.HazenWilliamsPsiPer100Ft(gpm, idIn, cFactor, psiPerFtHead) : 0;
-            double psiTotalHw = psiPer100Hw * (lengthFt > 0 ? lengthFt / 100.0 : 0);
+            double fittingPsi = velocityFps > 0 && plFittingSumK > 0
+                ? PlumbingCalculator.MinorLossPsi(velocityFps, plFittingSumK, fluidProps.DensityLbmPerFt3)
+                : 0;
+            double psiTotalHw = psiPer100Hw * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
+                + (plFittingEqLength > 0 ? 0 : fittingPsi);
 
             double reynolds = velocityFps > 0 ? PlumbingCalculator.Reynolds(velocityFps, idIn, fluidProps.KinematicViscosityFt2PerS) : 0;
             double darcyF = (reynolds > 0) ? PlumbingCalculator.FrictionFactor(reynolds, idIn, roughness) : 0;
             double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, psiPerFtHead) : 0;
-            double psiTotalDarcy = psiPer100Darcy * (lengthFt > 0 ? lengthFt / 100.0 : 0);
+            double psiTotalDarcy = psiPer100Darcy * (totalRunLengthFt > 0 ? totalRunLengthFt / 100.0 : 0)
+                + (plFittingEqLength > 0 ? 0 : fittingPsi);
 
             SetBox(PlResolvedIdOutput, idIn, "0.###");
             SetBox(PlVelocityOutput, velocityFps, "0.00");
@@ -806,9 +1065,12 @@ namespace RTM.Ductolator
             }
 
             double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material.Value);
+            _lastPlumbingFittingSnapshot = _plumbingFittings.Select(f => f with { }).ToList();
             _lastPlumbingExport = new PlumbingExportRow(
                 FlowGpm: gpm,
                 LengthFt: lengthFt,
+                EquivalentLengthFt: plFittingEqLength,
+                TotalRunLengthFt: totalRunLengthFt,
                 Material: material.Value.ToString(),
                 NominalIn: nominal,
                 ResolvedIdIn: idIn,
@@ -829,7 +1091,10 @@ namespace RTM.Ductolator
                 DarcyPsiTotal: psiTotalDarcy,
                 HazenCFactor: cFactor,
                 RoughnessFt: roughness,
-                WaveSpeedFps: waveSpeed);
+                WaveSpeedFps: waveSpeed,
+                SumK: plFittingSumK,
+                FittingPsi: fittingPsi,
+                FittingsList: FittingListSummary(_lastPlumbingFittingSnapshot));
         }
 
         private void BtnExportPlumbing_Click(object sender, RoutedEventArgs e)
@@ -842,11 +1107,13 @@ namespace RTM.Ductolator
 
             var p = _lastPlumbingExport.Value;
             var sb = new StringBuilder();
-            sb.AppendLine("Flow (gpm),Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Fluid,Fluid Temp (F),Antifreeze %,Fluid Density (lb/ft3),Fluid Kinematic Nu (ft2/s),Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s)");
+            sb.AppendLine("Flow (gpm),Length (ft),Fitting Equivalent Length (ft),Total Run Length (ft),Material,Nominal Size (in),Resolved ID (in),Used Aged C?,Hot Water?,Fluid,Fluid Temp (F),Antifreeze %,Fluid Density (lb/ft3),Fluid Kinematic Nu (ft2/s),Velocity (ft/s),Velocity Limit (ft/s),Reynolds,Darcy f,Hazen-Williams psi/100 ft,Hazen-Williams total psi,Darcy-Weisbach psi/100 ft,Darcy-Weisbach total psi,C-Factor,Roughness (ft),Wave Speed (ft/s),Sum K,Fitting Minor Loss (psi),Fittings");
             sb.AppendLine(string.Join(",", new[]
             {
                 CsvEscape(p.FlowGpm),
                 CsvEscape(p.LengthFt),
+                CsvEscape(p.EquivalentLengthFt),
+                CsvEscape(p.TotalRunLengthFt),
                 CsvEscape(p.Material),
                 CsvEscape(p.NominalIn),
                 CsvEscape(p.ResolvedIdIn),
@@ -867,8 +1134,29 @@ namespace RTM.Ductolator
                 CsvEscape(p.DarcyPsiTotal),
                 CsvEscape(p.HazenCFactor),
                 CsvEscape(p.RoughnessFt),
-                CsvEscape(p.WaveSpeedFps)
+                CsvEscape(p.WaveSpeedFps),
+                CsvEscape(p.SumK),
+                CsvEscape(p.FittingPsi),
+                CsvEscape(p.FittingsList)
             }));
+
+            if (_lastPlumbingFittingSnapshot.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("Fittings");
+                sb.AppendLine("Category,Name,Quantity,K,Equivalent Length (ft)");
+                foreach (var f in _lastPlumbingFittingSnapshot)
+                {
+                    sb.AppendLine(string.Join(",", new[]
+                    {
+                        CsvEscape(f.Fitting.Category),
+                        CsvEscape(f.Fitting.Name),
+                        CsvEscape(f.Quantity),
+                        CsvEscape(f.Fitting.KCoefficient),
+                        CsvEscape(f.Fitting.EquivalentLengthFt)
+                    }));
+                }
+            }
 
             if (SaveCsvToPath("plumbing-export.csv", sb.ToString()))
             {
@@ -1166,6 +1454,10 @@ namespace RTM.Ductolator
 
             if (PlAntifreezeTypeCombo != null)
                 PlAntifreezeTypeCombo.SelectedItem = PlumbingCalculator.FluidType.Water;
+
+            _plumbingFittings.Clear();
+            RefreshPlumbingFittingList();
+            UpdatePlumbingFittingTotals();
 
             _lastPlumbingExport = null;
         }
