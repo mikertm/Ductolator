@@ -551,51 +551,55 @@
                                 </UniformGrid>
                             </StackPanel>
                         </Border>
-                <TabItem Header="Plumbing">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-    
-            <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
-                <StackPanel>
-                    <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
-                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
-                               Text="Jump between cards and follow the quick steps in each section." />
-                    <StackPanel>
-                        <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Target Friction" Tag="{x:Reference TargetFrictionCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Fixture Units" Tag="{x:Reference FixtureUnitsCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Sanitary" Tag="{x:Reference SanitaryCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Stormwater" Tag="{x:Reference StormwaterCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Natural Gas" Tag="{x:Reference GasCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="DHW Recirc" Tag="{x:Reference RecircCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                        <Button Content="Water Hammer" Tag="{x:Reference HammerCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-    
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="8" Orientation="Vertical">
-                    <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Plumbing">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
-                            <TextBlock Text="Plumbing overview" FontWeight="Bold" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
-                                       Text="Use the cards below to size supply, drainage, and specialty piping. Each card lists the quick steps to stay on track." />
-                            <WrapPanel>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="UPC: ≤10 ft/s cold, ≤8 ft/s hot" FontSize="11" />
-                                </Border>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="ASPE: target 2–8 ft/s" FontSize="11" />
-                                </Border>
-                                <Border Style="{StaticResource ChipBorderStyle}">
-                                    <TextBlock Text="Fixture-unit guardrails per IPC/UPC tables" FontSize="11" />
-                                </Border>
-                            </WrapPanel>
+                            <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
+                                       Text="Jump between cards and follow the quick steps in each section." />
+                            <StackPanel>
+                                <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Target Friction" Tag="{x:Reference TargetFrictionCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Fixture Units" Tag="{x:Reference FixtureUnitsCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Sanitary" Tag="{x:Reference SanitaryCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Stormwater" Tag="{x:Reference StormwaterCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Natural Gas" Tag="{x:Reference GasCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="DHW Recirc" Tag="{x:Reference RecircCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                                <Button Content="Water Hammer" Tag="{x:Reference HammerCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="8" Orientation="Vertical">
+                            <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="Plumbing overview" FontWeight="Bold" />
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
+                                               Text="Use the cards below to size supply, drainage, and specialty piping. Each card lists the quick steps to stay on track." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="UPC: ≤10 ft/s cold, ≤8 ft/s hot" FontSize="11" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="ASPE: target 2–8 ft/s" FontSize="11" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}">
+                                            <TextBlock Text="Fixture-unit guardrails per IPC/UPC tables" FontSize="11" />
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
     
                     <Border x:Name="LossCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
