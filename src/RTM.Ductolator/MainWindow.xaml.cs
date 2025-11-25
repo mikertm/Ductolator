@@ -811,11 +811,11 @@ namespace RTM.Ductolator
 
             if (count == 0)
             {
-                DuctFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the duct pressure drop.";
+                DuctFittingSummaryText.Text = "Add fittings to include fitting loss sum (K) and equivalent length in the duct pressure drop. K factors express loss coefficients; equivalent length converts each fitting into a length of straight duct—use K to track loss coefficients and Leq when you need a length-based friction estimate.";
                 return;
             }
 
-            DuctFittingSummaryText.Text = $"{count} fittings added (ΣK {sumK:0.###}, Leq {eqLen:0.#} ft)";
+            DuctFittingSummaryText.Text = $"{count} fittings added (K {sumK:0.###}, Leq {eqLen:0.#} ft). K factors express loss coefficients, while equivalent length translates fittings into straight-run feet—use K with velocity pressure math and Leq for friction-per-100 ft checks.";
         }
 
         private void UpdatePlumbingFittingSummary(double sumK, double eqLen)
@@ -830,11 +830,11 @@ namespace RTM.Ductolator
 
             if (count == 0)
             {
-                PlFittingSummaryText.Text = "Add fittings to include ΣK and equivalent length in the plumbing run.";
+                PlFittingSummaryText.Text = "Add fittings to include fitting loss sum (K) and equivalent length in the plumbing run. K factors describe minor loss coefficients; equivalent length converts each fitting to straight pipe—use K for coefficient-based headloss and Leq when comparing to friction tables.";
                 return;
             }
 
-            PlFittingSummaryText.Text = $"{count} fittings added (ΣK {sumK:0.###}, Leq {eqLen:0.#} ft)";
+            PlFittingSummaryText.Text = $"{count} fittings added (K {sumK:0.###}, Leq {eqLen:0.#} ft). K factors track minor losses, while equivalent length shows the straight-pipe distance to use with friction charts—pick K for coefficient calculations and Leq for length substitutions.";
         }
 
         private static string FittingListSummary(IEnumerable<DuctFittingSelection> run)
