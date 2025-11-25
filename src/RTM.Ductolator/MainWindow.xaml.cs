@@ -307,6 +307,24 @@ namespace RTM.Ductolator
                 : 0;
         }
 
+        private static bool TryParseProvidedBox(TextBox tb, out double value, out bool provided)
+        {
+            value = 0;
+            provided = false;
+            if (tb == null)
+                return true;
+
+            string text = tb.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+                return true;
+
+            provided = true;
+            return double.TryParse(text,
+                                   NumberStyles.Float,
+                                   CultureInfo.InvariantCulture,
+                                   out value);
+        }
+
         private static void SetBox(TextBox tb, double value, string format)
         {
             if (tb == null)
@@ -1247,8 +1265,18 @@ namespace RTM.Ductolator
             double fluidTempF = ParseBox(PlFluidTempInput);
             double antifreezePercent = ParseBox(PlAntifreezePercentInput);
             var fluidType = SelectedFluid();
-            double availableHeadPsiInput = ParseBox(PlAvailableHeadPsiInput);
-            double availableHeadFtInput = ParseBox(PlAvailableHeadFtInput);
+
+            if (!TryParseProvidedBox(PlAvailableHeadPsiInput, out double availableHeadPsiInput, out bool headPsiProvided))
+            {
+                MessageBox.Show("Available head in psi must be a number.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!TryParseProvidedBox(PlAvailableHeadFtInput, out double availableHeadFtInput, out bool headFtProvided))
+            {
+                MessageBox.Show("Available head in feet must be a number.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             if (gpm <= 0)
             {
@@ -1313,6 +1341,27 @@ namespace RTM.Ductolator
                 : psiPer100Darcy * (plFittingEqLength > 0 ? plFittingEqLength / 100.0 : 0);
             double psiTotalDarcy = frictionPsiDarcy + fittingPsiDarcy;
 
+            bool hasAvailableHeadInput = headPsiProvided || headFtProvided;
+            bool hasAvailableHead = false;
+            double availableHeadPsi = 0;
+            if (availableHeadPsiInput > 0)
+            {
+                availableHeadPsi += availableHeadPsiInput;
+                hasAvailableHead = true;
+            }
+
+            if (availableHeadFtInput > 0 && psiPerFtHead > 0)
+            {
+                availableHeadPsi += availableHeadFtInput * psiPerFtHead;
+                hasAvailableHead = true;
+            }
+
+            if (hasAvailableHeadInput && !hasAvailableHead)
+            {
+                MessageBox.Show("Enter a positive available head value in psi or feet to compare against losses.", "Inputs Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             SetBox(PlResolvedIdOutput, idIn, "0.###");
             SetBox(PlVelocityOutput, velocityFps, "0.00");
             SetBox(PlHazenPsi100Output, psiPer100Hw, "0.000");
@@ -1354,15 +1403,16 @@ namespace RTM.Ductolator
                 string reynoldsNote = reynolds > 0 && reynolds < 4000
                     ? "Reynolds number indicates transitional/laminar flow—verify minor loss methods." : string.Empty;
 
-                double availableHeadPsi = 0;
-                if (availableHeadPsiInput > 0) availableHeadPsi += availableHeadPsiInput;
-                if (availableHeadFtInput > 0 && psiPerFtHead > 0) availableHeadPsi += availableHeadFtInput * psiPerFtHead;
                 double totalRunLossPsi = psiTotalHw > 0 ? psiTotalHw : psiTotalDarcy;
+                double totalRunLossFt = psiPerFtHead > 0 ? totalRunLossPsi / psiPerFtHead : 0;
+                double availableHeadFt = psiPerFtHead > 0 ? availableHeadPsi / psiPerFtHead : 0;
                 string marginNote;
 
-                if (availableHeadPsi <= 0)
+                if (!hasAvailableHead)
                 {
-                    marginNote = "Add available static/boost pressure or pump duty (psi or ft) to check remaining margin.";
+                    marginNote = hasAvailableHeadInput
+                        ? "Enter a positive available head value (psi or ft) to check remaining margin."
+                        : "Add available static/boost pressure or pump duty (psi or ft) to check remaining margin.";
                 }
                 else if (totalRunLossPsi <= 0)
                 {
@@ -1376,9 +1426,23 @@ namespace RTM.Ductolator
                     if (marginFt != 0)
                         marginMagnitude += $" ({Math.Abs(marginFt):0.#} ft head)";
 
-                    marginNote = marginPsi >= 0
-                        ? $"Available head covers total run loss with {marginMagnitude} to spare."
-                        : $"Run loss exceeds available head by {marginMagnitude}. Consider a pump or larger pipe.";
+                    string runLossDetail = $"Total run loss (friction + fittings): {totalRunLossPsi:0.###} psi";
+                    if (totalRunLossFt > 0)
+                        runLossDetail += $" ({totalRunLossFt:0.#} ft head).";
+                    else
+                        runLossDetail += ".";
+
+                    string availableDetail = $"Available head: {availableHeadPsi:0.###} psi";
+                    if (availableHeadFt > 0)
+                        availableDetail += $" ({availableHeadFt:0.#} ft head).";
+                    else
+                        availableDetail += ".";
+
+                    string marginDetail = marginPsi >= 0
+                        ? $"Remaining margin: {marginMagnitude}."
+                        : $"Exceeded by {marginMagnitude}. Consider a pump or larger pipe.";
+
+                    marginNote = string.Join(" ", new[] { runLossDetail, availableDetail, marginDetail });
                 }
 
                 PlStatusNote.Text = string.Join(" ", new[] { frictionNote, reynoldsNote, marginNote }.Where(s => !string.IsNullOrWhiteSpace(s)));

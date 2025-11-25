@@ -640,14 +640,14 @@
                                     <TextBox Name="PlAntifreezePercentInput" ToolTip="Percentage of glycol by volume (0–60%)" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Available head / pump duty" />
+                                    <TextBlock Text="Available head / pump duty (psi)" />
                                     <StackPanel Orientation="Horizontal">
                                         <TextBox Name="PlAvailableHeadPsiInput" ToolTip="Available head or boost pressure in psi" Width="130" />
                                         <TextBlock Text="psi" Margin="6,0,0,0" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </StackPanel>
                                 <StackPanel Margin="4">
-                                    <TextBlock Text="Available head / pump duty" />
+                                    <TextBlock Text="Available head / pump duty (ft head)" />
                                     <StackPanel Orientation="Horizontal">
                                         <TextBox Name="PlAvailableHeadFtInput" ToolTip="Available head or pump duty in feet of head" Width="130" />
                                         <TextBlock Text="ft head" Margin="6,0,0,0" VerticalAlignment="Center" />
