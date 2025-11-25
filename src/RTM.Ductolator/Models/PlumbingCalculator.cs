@@ -44,6 +44,8 @@ namespace RTM.Ductolator.Models
             double HazenWilliamsMultiplier,
             double RoughnessMultiplier);
 
+        // Expanded temperature coverage (≈ASHRAE data) to reduce interpolation error and
+        // allow more accurate correction across typical hydronic ranges.
         private static readonly IReadOnlyList<FluidPropertyTableEntry> FluidPropertyData = new List<FluidPropertyTableEntry>
         {
             // Water (reference)
@@ -51,16 +53,48 @@ namespace RTM.Ductolator.Models
             new(FluidType.Water, 100, 0, 62.0, 1.24e-5, 1.0, 1.0),
 
             // Ethylene glycol mixtures (approximate ASHRAE data)
+            new(FluidType.EthyleneGlycol, 40, 30, 67.0, 3.80e-5, 0.84, 1.22),
             new(FluidType.EthyleneGlycol, 60, 30, 66.1, 2.30e-5, 0.85, 1.20),
+            new(FluidType.EthyleneGlycol, 80, 30, 65.5, 1.75e-5, 0.86, 1.18),
             new(FluidType.EthyleneGlycol, 120, 30, 64.4, 1.40e-5, 0.88, 1.15),
+            new(FluidType.EthyleneGlycol, 160, 30, 63.3, 1.15e-5, 0.89, 1.12),
+            new(FluidType.EthyleneGlycol, 200, 30, 62.3, 1.00e-5, 0.90, 1.10),
+
+            new(FluidType.EthyleneGlycol, 40, 40, 68.2, 4.80e-5, 0.80, 1.27),
+            new(FluidType.EthyleneGlycol, 60, 40, 67.4, 3.20e-5, 0.82, 1.25),
+            new(FluidType.EthyleneGlycol, 80, 40, 66.4, 2.20e-5, 0.83, 1.23),
+            new(FluidType.EthyleneGlycol, 120, 40, 65.3, 1.60e-5, 0.84, 1.21),
+            new(FluidType.EthyleneGlycol, 160, 40, 64.0, 1.30e-5, 0.86, 1.18),
+            new(FluidType.EthyleneGlycol, 200, 40, 63.0, 1.15e-5, 0.87, 1.16),
+
+            new(FluidType.EthyleneGlycol, 40, 50, 69.5, 6.80e-5, 0.74, 1.38),
             new(FluidType.EthyleneGlycol, 60, 50, 68.7, 4.10e-5, 0.75, 1.35),
+            new(FluidType.EthyleneGlycol, 80, 50, 67.8, 3.00e-5, 0.76, 1.33),
             new(FluidType.EthyleneGlycol, 120, 50, 66.2, 2.10e-5, 0.78, 1.30),
+            new(FluidType.EthyleneGlycol, 160, 50, 64.5, 1.60e-5, 0.79, 1.27),
+            new(FluidType.EthyleneGlycol, 200, 50, 63.4, 1.35e-5, 0.80, 1.25),
 
             // Propylene glycol mixtures (approximate ASHRAE data)
+            new(FluidType.PropyleneGlycol, 40, 30, 65.4, 3.60e-5, 0.84, 1.22),
             new(FluidType.PropyleneGlycol, 60, 30, 64.8, 2.70e-5, 0.85, 1.20),
+            new(FluidType.PropyleneGlycol, 80, 30, 64.2, 2.10e-5, 0.86, 1.18),
             new(FluidType.PropyleneGlycol, 120, 30, 63.1, 1.60e-5, 0.88, 1.15),
+            new(FluidType.PropyleneGlycol, 160, 30, 62.0, 1.25e-5, 0.89, 1.12),
+            new(FluidType.PropyleneGlycol, 200, 30, 61.2, 1.05e-5, 0.90, 1.10),
+
+            new(FluidType.PropyleneGlycol, 40, 40, 66.4, 4.80e-5, 0.80, 1.27),
+            new(FluidType.PropyleneGlycol, 60, 40, 65.6, 3.40e-5, 0.82, 1.25),
+            new(FluidType.PropyleneGlycol, 80, 40, 64.8, 2.60e-5, 0.83, 1.23),
+            new(FluidType.PropyleneGlycol, 120, 40, 63.6, 1.90e-5, 0.84, 1.21),
+            new(FluidType.PropyleneGlycol, 160, 40, 62.5, 1.55e-5, 0.86, 1.18),
+            new(FluidType.PropyleneGlycol, 200, 40, 61.6, 1.35e-5, 0.87, 1.16),
+
+            new(FluidType.PropyleneGlycol, 40, 50, 67.2, 6.80e-5, 0.74, 1.38),
             new(FluidType.PropyleneGlycol, 60, 50, 66.9, 5.00e-5, 0.75, 1.35),
-            new(FluidType.PropyleneGlycol, 120, 50, 64.5, 2.50e-5, 0.78, 1.30)
+            new(FluidType.PropyleneGlycol, 80, 50, 66.0, 3.40e-5, 0.76, 1.33),
+            new(FluidType.PropyleneGlycol, 120, 50, 64.5, 2.50e-5, 0.78, 1.30),
+            new(FluidType.PropyleneGlycol, 160, 50, 63.3, 1.90e-5, 0.79, 1.27),
+            new(FluidType.PropyleneGlycol, 200, 50, 62.5, 1.60e-5, 0.80, 1.25)
         };
 
         public record FluidProperties(
@@ -130,7 +164,7 @@ namespace RTM.Ductolator.Models
         public static FluidProperties ResolveFluidProperties(FluidType fluid, double temperatureF, double percentGlycol)
         {
             double clampedPercent = Math.Max(0, Math.Min(60, percentGlycol));
-            double clampedTemp = Math.Max(40, Math.Min(180, temperatureF <= 0 ? 60 : temperatureF));
+            double clampedTemp = Math.Max(20, Math.Min(200, temperatureF <= 0 ? 60 : temperatureF));
 
             if (clampedPercent <= 0.0001)
             {
@@ -170,6 +204,58 @@ namespace RTM.Ductolator.Models
             double roughMult = Interpolate(lowerPercent, upperPercent, lower.RoughnessMultiplier, upper.RoughnessMultiplier, clampedPercent);
 
             return new FluidProperties(density, viscosity, hazenMult, roughMult);
+        }
+
+        public static double AdjustedHazenWilliamsCFactor(double baseCFactor, FluidProperties? fluidProperties)
+        {
+            if (baseCFactor <= 0) return 0;
+            double multiplier = fluidProperties?.HazenWilliamsCFactorMultiplier ?? 1.0;
+            if (multiplier <= 0) multiplier = 1.0;
+            return baseCFactor * multiplier;
+        }
+
+        public static double AdjustedRoughnessFt(double baseRoughnessFt, FluidProperties? fluidProperties)
+        {
+            if (baseRoughnessFt <= 0) return 0;
+            double multiplier = fluidProperties?.RoughnessMultiplier ?? 1.0;
+            if (multiplier <= 0) multiplier = 1.0;
+            return baseRoughnessFt * multiplier;
+        }
+
+        /// <summary>
+        /// Hybrid friction helper: uses Hazen-Williams when the Reynolds number is
+        /// safely turbulent; falls back to Darcy-Weisbach when flow is laminar or transitional.
+        /// Applies fluid-specific roughness/C multipliers so hot/cold glycol mixtures get
+        /// appropriately derated.
+        /// </summary>
+        public static double HybridPsiPer100Ft(
+            double gpm,
+            double diameterIn,
+            double baseHazenWilliamsCFactor,
+            double baseAbsoluteRoughnessFt,
+            FluidProperties? fluidProperties,
+            out string governingMethod,
+            double? psiPerFtHead = null,
+            double laminarReCutoff = 2000)
+        {
+            governingMethod = "";
+            if (gpm <= 0 || diameterIn <= 0 || baseHazenWilliamsCFactor <= 0 || baseAbsoluteRoughnessFt <= 0)
+                return 0;
+
+            var props = fluidProperties ?? new FluidProperties(WaterDensity_LbmPerFt3, WaterNu60F_Ft2PerS, 1.0, 1.0);
+            double velocity = VelocityFpsFromGpm(gpm, diameterIn);
+            double reynolds = Reynolds(velocity, diameterIn, props.KinematicViscosityFt2PerS);
+
+            if (reynolds < laminarReCutoff)
+            {
+                governingMethod = "Darcy-Weisbach";
+                double roughness = AdjustedRoughnessFt(baseAbsoluteRoughnessFt, props);
+                return HeadLoss_Darcy_PsiPer100Ft(gpm, diameterIn, roughness, props.KinematicViscosityFt2PerS, psiPerFtHead);
+            }
+
+            governingMethod = "Hazen-Williams";
+            double adjustedC = AdjustedHazenWilliamsCFactor(baseHazenWilliamsCFactor, props);
+            return HazenWilliamsPsiPer100Ft(gpm, diameterIn, adjustedC, psiPerFtHead);
         }
 
         /// <summary>
@@ -542,12 +628,35 @@ namespace RTM.Ductolator.Models
         private const double SlopeQuarterInPerFt_FtPerFt = 0.25 / InPerFt;   // 1/4 in per ft
         private const double SlopeEighthInPerFt_FtPerFt = 0.125 / InPerFt;   // 1/8 in per ft
         private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
-        private static readonly Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
+        private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
         {
             { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
             { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
             { SlopeSixteenthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
         };
+
+        public static void SetSanitaryCapacityTable(Dictionary<double, List<(double DiameterIn, double MaxDfu)>> customTable)
+        {
+            if (customTable == null || customTable.Count == 0) return;
+
+            // Shallow copy to avoid callers mutating the active table after the fact.
+            var newTable = new Dictionary<double, List<(double DiameterIn, double MaxDfu)>>();
+            foreach (var kvp in customTable)
+            {
+                if (kvp.Key <= 0 || kvp.Value == null) continue;
+                var row = kvp.Value
+                    .Where(v => v.DiameterIn > 0 && v.MaxDfu > 0)
+                    .OrderBy(v => v.DiameterIn)
+                    .ToList();
+                if (row.Count > 0)
+                {
+                    newTable[kvp.Key] = row;
+                }
+            }
+
+            if (newTable.Count > 0)
+                SanitaryCapacity = newTable;
+        }
 
         /// <summary>
         /// Minimum nominal diameter (in) to carry the given sanitary drainage fixture units

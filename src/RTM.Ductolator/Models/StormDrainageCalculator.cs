@@ -12,6 +12,17 @@ namespace RTM.Ductolator.Models
         private const double InPerFt = 12.0;
         private const double ManningCoefficient = 1.486; // US customary Manning constant
         private const double CfsToGpm = 448.831;
+        private static double _defaultRoughnessN = 0.012;
+
+        public static double DefaultRoughnessN
+        {
+            get => _defaultRoughnessN;
+            set
+            {
+                if (value > 0)
+                    _defaultRoughnessN = value;
+            }
+        }
 
         /// <summary>
         /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
@@ -27,10 +38,11 @@ namespace RTM.Ductolator.Models
         /// Solve full-flow circular pipe diameter (in) for a storm flow using Manning's equation.
         /// Q (gpm) = 448.831 * (1.486/n) * A * R^(2/3) * S^(1/2) where A in ft², R in ft, S slope (ft/ft).
         /// </summary>
-        public static double FullFlowDiameterFromGpm(double flowGpm, double slopeFtPerFt, double roughnessN = 0.012,
+        public static double FullFlowDiameterFromGpm(double flowGpm, double slopeFtPerFt, double? roughnessN = null,
                                                      double minDiameterIn = 2.0, double maxDiameterIn = 60.0)
         {
-            if (flowGpm <= 0 || slopeFtPerFt <= 0 || roughnessN <= 0) return 0;
+            double nValue = roughnessN ?? _defaultRoughnessN;
+            if (flowGpm <= 0 || slopeFtPerFt <= 0 || nValue <= 0) return 0;
 
             double FlowFromDiameter(double dIn)
             {
@@ -38,7 +50,7 @@ namespace RTM.Ductolator.Models
                 double area = Math.PI * dFt * dFt / 4.0;
                 double wettedPerimeter = Math.PI * dFt;
                 double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
-                double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
                 return qCfs * CfsToGpm; // to gpm
             }
 
@@ -50,10 +62,11 @@ namespace RTM.Ductolator.Models
         /// Uses the standard circular segment area/perimeter relationships with Manning's equation.
         /// </summary>
         public static double PartialFlowDiameterFromGpm(double flowGpm, double slopeFtPerFt, double depthRatio,
-                                                        double roughnessN = 0.012, double minDiameterIn = 2.0,
+                                                        double? roughnessN = null, double minDiameterIn = 2.0,
                                                         double maxDiameterIn = 60.0)
         {
-            if (flowGpm <= 0 || slopeFtPerFt <= 0 || roughnessN <= 0) return 0;
+            double nValue = roughnessN ?? _defaultRoughnessN;
+            if (flowGpm <= 0 || slopeFtPerFt <= 0 || nValue <= 0) return 0;
             depthRatio = Math.Max(0.05, Math.Min(0.99, depthRatio));
 
             double FlowFromDiameter(double dIn)
@@ -63,7 +76,7 @@ namespace RTM.Ductolator.Models
                 double wettedPerimeter = PartiallyFullWettedPerimeter(dFt, depthRatio);
                 if (wettedPerimeter <= 0 || area <= 0) return 0;
                 double hydraulicRadius = area / wettedPerimeter;
-                double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
+                double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
                 return qCfs * CfsToGpm; // to gpm
             }
 
@@ -73,20 +86,22 @@ namespace RTM.Ductolator.Models
         /// <summary>
         /// Maximum gpm that can be carried by a vertical leader (slope ~ 1.0) at full flow.
         /// </summary>
-        public static double VerticalLeaderMaxFlow(double diameterIn, double roughnessN = 0.012)
+        public static double VerticalLeaderMaxFlow(double diameterIn, double? roughnessN = null)
         {
-            if (diameterIn <= 0 || roughnessN <= 0) return 0;
-            return FullFlowFromDiameter(diameterIn, 1.0, roughnessN);
+            double nValue = roughnessN ?? _defaultRoughnessN;
+            if (diameterIn <= 0 || nValue <= 0) return 0;
+            return FullFlowFromDiameter(diameterIn, 1.0, nValue);
         }
 
         /// <summary>
         /// Minimum leader diameter (in) for a given flow assuming vertical orientation (slope ~1.0).
         /// </summary>
-        public static double VerticalLeaderDiameter(double flowGpm, double roughnessN = 0.012,
+        public static double VerticalLeaderDiameter(double flowGpm, double? roughnessN = null,
                                                     double minDiameterIn = 2.0, double maxDiameterIn = 24.0)
         {
-            if (flowGpm <= 0 || roughnessN <= 0) return 0;
-            return FullFlowDiameterFromGpm(flowGpm, 1.0, roughnessN, minDiameterIn, maxDiameterIn);
+            double nValue = roughnessN ?? _defaultRoughnessN;
+            if (flowGpm <= 0 || nValue <= 0) return 0;
+            return FullFlowDiameterFromGpm(flowGpm, 1.0, nValue, minDiameterIn, maxDiameterIn);
         }
 
         private static double SolveByBisection(double targetFlow, double lo, double hi, Func<double, double> flowFromDiameter)
