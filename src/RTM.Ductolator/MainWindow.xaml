@@ -225,8 +225,12 @@
                                                 <TextBox Name="InLength" ToolTip="Length of straight duct run used for frictional drop" TextChanged="InLength_TextChanged" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="ΣK (fittings loss coefficient)" />
-                                                <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless)" />
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="Fitting loss sum (K)" />
+                                                    <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                               ToolTip="Sum of loss coefficients from fittings; higher totals increase pressure drop." />
+                                                </StackPanel>
+                                                <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless); higher values add more static loss." />
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
@@ -315,8 +319,13 @@
                                     </Grid>
                                     <UniformGrid Columns="3" Margin="0,4">
                                         <StackPanel Margin="4">
-                                            <TextBlock Text="ΣK from fittings" />
-                                            <TextBox Name="DuctFittingSumKOutput" IsReadOnly="True" />
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Fitting loss sum (K)" />
+                                                <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                           ToolTip="Total K for the run; higher sums raise pressure drop." />
+                                            </StackPanel>
+                                            <TextBox Name="DuctFittingSumKOutput" IsReadOnly="True"
+                                                     ToolTip="Total K value from fittings; higher totals increase pressure drop." />
                                         </StackPanel>
                                         <StackPanel Margin="4">
                                             <TextBlock Text="Equivalent length (ft)" />
@@ -343,7 +352,7 @@
                                     <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12"
                                                Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
                                     <TextBlock x:Name="InputTipsLine2" TextWrapping="Wrap" FontSize="12"
-                                               Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and ΣK add fittings to total pressure." />
+                                               Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and fitting loss sum add fittings to total pressure." />
                                 </StackPanel>
                             </Border>
 
@@ -695,7 +704,7 @@
                                         </StackPanel>
                                     </UniformGrid>
                                     <TextBlock Text="Fittings use ASPE K factors and UPC equivalent length guidance." Margin="4,0,4,2" FontSize="12" Foreground="#6b7280" />
-                                    <TextBlock Text="Needs fitting + qty; outputs ΣK and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="#4b5563" />
+                                    <TextBlock Text="Needs fitting + qty; outputs fitting loss sum (K) and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="#4b5563" />
                                     <Grid Margin="4,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition />
@@ -708,8 +717,13 @@
                                     </Grid>
                                     <UniformGrid Columns="3" Margin="0,4">
                                         <StackPanel Margin="4">
-                                            <TextBlock Text="ΣK from fittings" />
-                                            <TextBox Name="PlFittingSumKOutput" IsReadOnly="True" />
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Fitting loss sum (K)" />
+                                                <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                           ToolTip="Total K for the plumbing run; higher sums raise pressure drop." />
+                                            </StackPanel>
+                                            <TextBox Name="PlFittingSumKOutput" IsReadOnly="True"
+                                                     ToolTip="Sum of plumbing fitting K values; higher totals increase pressure drop." />
                                         </StackPanel>
                                         <StackPanel Margin="4">
                                             <TextBlock Text="Equivalent length (ft)" />
