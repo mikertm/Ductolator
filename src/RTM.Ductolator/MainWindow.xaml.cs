@@ -482,13 +482,13 @@ namespace RTM.Ductolator
                 _catalogPreview.Add($"…plus {RuntimeCatalogs.Materials.Count - 6} more materials");
 
             foreach (var fitting in RuntimeCatalogs.DuctFittings.Take(4))
-                _catalogPreview.Add($"Duct fitting: {fitting.Type} – {fitting.Name}");
+                _catalogPreview.Add($"Duct fitting: {fitting.Category} – {fitting.Name}");
 
             if (RuntimeCatalogs.DuctFittings.Count > 4)
                 _catalogPreview.Add($"…plus {RuntimeCatalogs.DuctFittings.Count - 4} more duct fittings");
 
             foreach (var fitting in RuntimeCatalogs.PipeFittings.Take(4))
-                _catalogPreview.Add($"Pipe fitting: {fitting.Type} – {fitting.Name}");
+                _catalogPreview.Add($"Pipe fitting: {fitting.Category} – {fitting.Name}");
 
             if (RuntimeCatalogs.PipeFittings.Count > 4)
                 _catalogPreview.Add($"…plus {RuntimeCatalogs.PipeFittings.Count - 4} more pipe fittings");
