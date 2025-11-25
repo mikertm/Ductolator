@@ -56,7 +56,9 @@
                             </StackPanel>
                         </Border>
 
-                    <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,8,12,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                    <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,8,12,0"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
                         <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
                             <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
 
@@ -325,7 +327,9 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
                         <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
                             <StackPanel Orientation="Vertical" Margin="0,0,4,0">
                                 <StackPanel.Resources>
@@ -565,7 +569,8 @@
                         </StackPanel>
                     </Border>
 
-                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
                         <StackPanel Margin="8" Orientation="Vertical">
                             <Border Margin="4" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                                 <StackPanel>
@@ -1310,7 +1315,8 @@
     </TabItem>
 
             <TabItem x:Name="CatalogTab" Header="Catalogs &amp; data">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
                     <StackPanel Margin="12" Orientation="Vertical">
                         <TextBlock Text="Use built-in tables or point to a custom folder; built-ins stay active unless a valid catalog is loaded." TextWrapping="Wrap" />
                         <Border Padding="10" Style="{StaticResource AccentBorderStyle}">
