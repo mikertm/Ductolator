@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using Microsoft.Win32;
 using RTM.Ductolator.Models;
 using WinForms = System.Windows.Forms;
@@ -435,16 +434,16 @@ namespace RTM.Ductolator
 
             CatalogStatusNote.Text = string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
             CatalogStatusNote.Foreground = _catalogReport.Errors.Any()
-                ? (Brush)FindResource("Brush.TextDanger")
+                ? (System.Windows.Media.Brush)FindResource("Brush.TextDanger")
                 : _catalogReport.Warnings.Any()
-                    ? (Brush)FindResource("Brush.TextWarning")
-                    : (Brush)FindResource("Brush.TextSuccess");
+                    ? (System.Windows.Media.Brush)FindResource("Brush.TextWarning")
+                    : (System.Windows.Media.Brush)FindResource("Brush.TextSuccess");
 
             var (badgeBackground, badgeBorder, badgeText, badgeIcon, badgeTitle) = _catalogReport.Errors.Any()
-                ? ((Brush)FindResource("Brush.ChipDangerBackground"), (Brush)FindResource("Brush.ChipDangerBorder"), (Brush)FindResource("Brush.TextDanger"), "⛔", "Catalog load failed")
+                ? ((System.Windows.Media.Brush)FindResource("Brush.ChipDangerBackground"), (System.Windows.Media.Brush)FindResource("Brush.ChipDangerBorder"), (System.Windows.Media.Brush)FindResource("Brush.TextDanger"), "⛔", "Catalog load failed")
                 : _catalogReport.Warnings.Any()
-                    ? ((Brush)FindResource("Brush.ChipWarningBackground"), (Brush)FindResource("Brush.ChipWarningBorder"), (Brush)FindResource("Brush.TextWarning"), "⚠", "Loaded with warnings")
-                    : ((Brush)FindResource("Brush.ChipSuccessBackground"), (Brush)FindResource("Brush.ChipSuccessBorder"), (Brush)FindResource("Brush.TextSuccess"), "✔", "Catalog ready");
+                    ? ((System.Windows.Media.Brush)FindResource("Brush.ChipWarningBackground"), (System.Windows.Media.Brush)FindResource("Brush.ChipWarningBorder"), (System.Windows.Media.Brush)FindResource("Brush.TextWarning"), "⚠", "Loaded with warnings")
+                    : ((System.Windows.Media.Brush)FindResource("Brush.ChipSuccessBackground"), (System.Windows.Media.Brush)FindResource("Brush.ChipSuccessBorder"), (System.Windows.Media.Brush)FindResource("Brush.TextSuccess"), "✔", "Catalog ready");
 
             CatalogStatusBadge.Background = badgeBackground;
             CatalogStatusBadge.BorderBrush = badgeBorder;
@@ -455,7 +454,7 @@ namespace RTM.Ductolator
 
             CatalogHelperText.Text = usingBuiltIn
                 ? "Example: C:\\projects\\catalogs with materials.json (or materials.csv) and fittings.json (or fittings.csv)."
-                : $"Last loaded { _lastCatalogLoadedAt:G }. Expect materials.json (or .csv) and fittings.json (or .csv) in the selected folder.";
+                : $"Last loaded {_lastCatalogLoadedAt:G}. Expect materials.json (or .csv) and fittings.json (or .csv) in the selected folder.";
         }
 
         private void BrowseCatalogFolder_Click(object sender, RoutedEventArgs e)
@@ -1921,7 +1920,7 @@ namespace RTM.Ductolator
 
         private void FixtureType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ComboBox cb && cb.DataContext is FixtureRow row && cb.SelectedItem is FixtureType fixtureType)
+            if (sender is System.Windows.Controls.ComboBox cb && cb.DataContext is FixtureRow row && cb.SelectedItem is FixtureType fixtureType)
             {
                 row.FixtureType = fixtureType;
                 UpdateFixtureTotals();
