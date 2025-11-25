@@ -444,10 +444,10 @@ namespace RTM.Ductolator.Models
                                           List<string> warnings,
                                           List<string> errors)
         {
-            string jsonPath = Path.Combine(folder, "materials.json");
-            string csvPath = Path.Combine(folder, "materials.csv");
+            string? jsonPath = ResolveCatalogPath(folder, "materials", "json", warnings);
+            string? csvPath = ResolveCatalogPath(folder, "materials", "csv", warnings);
 
-            if (File.Exists(jsonPath))
+            if (!string.IsNullOrWhiteSpace(jsonPath) && File.Exists(jsonPath))
             {
                 try
                 {
@@ -467,7 +467,7 @@ namespace RTM.Ductolator.Models
                 }
             }
 
-            if (File.Exists(csvPath))
+            if (!string.IsNullOrWhiteSpace(csvPath) && File.Exists(csvPath))
             {
                 try
                 {
@@ -538,10 +538,10 @@ namespace RTM.Ductolator.Models
                                          List<string> warnings,
                                          List<string> errors)
         {
-            string jsonPath = Path.Combine(folder, "fittings.json");
-            string csvPath = Path.Combine(folder, "fittings.csv");
+            string? jsonPath = ResolveCatalogPath(folder, "fittings", "json", warnings);
+            string? csvPath = ResolveCatalogPath(folder, "fittings", "csv", warnings);
 
-            if (File.Exists(jsonPath))
+            if (!string.IsNullOrWhiteSpace(jsonPath) && File.Exists(jsonPath))
             {
                 try
                 {
@@ -560,7 +560,7 @@ namespace RTM.Ductolator.Models
                 }
             }
 
-            if (File.Exists(csvPath))
+            if (!string.IsNullOrWhiteSpace(csvPath) && File.Exists(csvPath))
             {
                 try
                 {
@@ -581,6 +581,22 @@ namespace RTM.Ductolator.Models
                     errors.Add($"fittings.csv parse error: {ex.Message}");
                 }
             }
+        }
+
+        private static string? ResolveCatalogPath(string folder, string baseName, string extension, List<string> warnings)
+        {
+            string primary = Path.Combine(folder, $"{baseName}.{extension}");
+            if (File.Exists(primary))
+                return primary;
+
+            string template = Path.Combine(folder, $"{baseName}-template.{extension}");
+            if (File.Exists(template))
+            {
+                warnings.Add($"{baseName}.{extension} not found; using {baseName}-template.{extension} instead.");
+                return template;
+            }
+
+            return null;
         }
 
         private static void AddFitting(string? type,

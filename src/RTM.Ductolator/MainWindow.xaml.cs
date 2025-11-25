@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -196,6 +197,10 @@ namespace RTM.Ductolator
         private List<PipeFittingSelection> _lastPlumbingFittingSnapshot = new();
         private CatalogLoadReport _catalogReport = RuntimeCatalogs.LastReport;
         private DateTime _lastCatalogLoadedAt = DateTime.Now;
+        private readonly ObservableCollection<string> _catalogFiles = new();
+        private readonly ObservableCollection<string> _catalogPreview = new();
+        private readonly ObservableCollection<string> _catalogWarnings = new();
+        private readonly ObservableCollection<string> _catalogErrors = new();
         private readonly List<FixtureType> _fixtureCatalog = new()
         {
             new FixtureType("Lavatory (private)", 1.0),
@@ -218,6 +223,14 @@ namespace RTM.Ductolator
         public IEnumerable<FixtureType> FixtureCatalog => _fixtureCatalog;
 
         public ObservableCollection<FixtureRow> FixtureRows => _fixtureRows;
+
+        public ObservableCollection<string> CatalogFiles => _catalogFiles;
+
+        public ObservableCollection<string> CatalogPreview => _catalogPreview;
+
+        public ObservableCollection<string> CatalogWarnings => _catalogWarnings;
+
+        public ObservableCollection<string> CatalogErrors => _catalogErrors;
 
         private bool _noviceMode;
         private readonly string _settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RTM.Ductolator");
@@ -393,7 +406,9 @@ namespace RTM.Ductolator
 
         private void LoadCatalogs(string? folder)
         {
-            var validationErrors = ValidateCatalogFolder(folder);
+            var (validationErrors, validationWarnings) = ValidateCatalogFolder(folder);
+            PopulateCatalogFileList(folder);
+            UpdateCatalogWarningsAndErrors(validationWarnings, validationErrors);
             if (validationErrors.Any())
             {
                 _catalogReport = new CatalogLoadReport(
@@ -401,8 +416,9 @@ namespace RTM.Ductolator
                     RuntimeCatalogs.Materials.Count,
                     RuntimeCatalogs.DuctFittings.Count,
                     RuntimeCatalogs.PipeFittings.Count,
-                    Array.Empty<string>(),
+                    validationWarnings,
                     validationErrors);
+                PopulateCatalogPreview();
                 UpdateCatalogStatus();
                 return;
             }
@@ -411,7 +427,85 @@ namespace RTM.Ductolator
             _lastCatalogLoadedAt = DateTime.Now;
             PopulatePlumbingMaterials();
             PopulateFittingLibraries();
+            PopulateCatalogFileList(folder);
+            PopulateCatalogPreview();
+            UpdateCatalogWarningsAndErrors(_catalogReport.Warnings, _catalogReport.Errors);
             UpdateCatalogStatus();
+        }
+
+        private void PopulateCatalogFileList(string? folder)
+        {
+            _catalogFiles.Clear();
+            if (string.IsNullOrWhiteSpace(folder))
+            {
+                _catalogFiles.Add("(built-in catalogs active)");
+                return;
+            }
+
+            try
+            {
+                if (!Directory.Exists(folder))
+                {
+                    _catalogFiles.Add($"Folder not found: {folder}");
+                    return;
+                }
+
+                var files = Directory.GetFiles(folder, "*.*")
+                    .Where(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(f => f)
+                    .Select(path =>
+                    {
+                        var info = new FileInfo(path);
+                        var sizeKb = Math.Max(1, info.Length / 1024.0);
+                        return $"{info.Name} — {sizeKb:F1} KB, modified {info.LastWriteTime:G}";
+                    });
+
+                foreach (var file in files)
+                    _catalogFiles.Add(file);
+
+                if (!_catalogFiles.Any())
+                    _catalogFiles.Add("No JSON or CSV files detected in this folder.");
+            }
+            catch (Exception ex)
+            {
+                _catalogFiles.Add($"Unable to read folder: {ex.Message}");
+            }
+        }
+
+        private void PopulateCatalogPreview()
+        {
+            _catalogPreview.Clear();
+            foreach (var material in RuntimeCatalogs.Materials.Take(6))
+                _catalogPreview.Add($"Material: {material.DisplayName} ({material.Key})");
+
+            if (RuntimeCatalogs.Materials.Count > 6)
+                _catalogPreview.Add($"…plus {RuntimeCatalogs.Materials.Count - 6} more materials");
+
+            foreach (var fitting in RuntimeCatalogs.DuctFittings.Take(4))
+                _catalogPreview.Add($"Duct fitting: {fitting.Type} – {fitting.Name}");
+
+            if (RuntimeCatalogs.DuctFittings.Count > 4)
+                _catalogPreview.Add($"…plus {RuntimeCatalogs.DuctFittings.Count - 4} more duct fittings");
+
+            foreach (var fitting in RuntimeCatalogs.PipeFittings.Take(4))
+                _catalogPreview.Add($"Pipe fitting: {fitting.Type} – {fitting.Name}");
+
+            if (RuntimeCatalogs.PipeFittings.Count > 4)
+                _catalogPreview.Add($"…plus {RuntimeCatalogs.PipeFittings.Count - 4} more pipe fittings");
+
+            if (!_catalogPreview.Any())
+                _catalogPreview.Add("No catalog data loaded yet.");
+        }
+
+        private void UpdateCatalogWarningsAndErrors(IReadOnlyList<string> warnings, IReadOnlyList<string> errors)
+        {
+            _catalogWarnings.Clear();
+            foreach (var warning in warnings)
+                _catalogWarnings.Add(warning);
+
+            _catalogErrors.Clear();
+            foreach (var error in errors)
+                _catalogErrors.Add(error);
         }
 
         private void UpdateCatalogStatus()
@@ -490,34 +584,146 @@ namespace RTM.Ductolator
             LoadCatalogs(CatalogFolderText?.Text);
         }
 
-        private IReadOnlyList<string> ValidateCatalogFolder(string? folder)
+        private void ResetCatalogs_Click(object sender, RoutedEventArgs e)
+        {
+            if (CatalogFolderText != null)
+                CatalogFolderText.Text = string.Empty;
+
+            LoadCatalogs(string.Empty);
+        }
+
+        private void CreateCatalogTemplates_Click(object sender, RoutedEventArgs e)
+        {
+            var targetFolder = CatalogFolderText?.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(targetFolder))
+            {
+                MessageBox.Show("Pick a catalog folder first so templates know where to go.", "Select folder", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(targetFolder);
+                string appBase = AppDomain.CurrentDomain.BaseDirectory;
+                string templateRoot = Path.Combine(appBase, "CatalogTemplates");
+                if (!Directory.Exists(templateRoot))
+                {
+                    MessageBox.Show($"Template folder not found at {templateRoot}.", "Catalog templates", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                var templates = new Dictionary<string, string>
+                {
+                    { Path.Combine(templateRoot, "materials-template.json"), Path.Combine(targetFolder, "materials.json") },
+                    { Path.Combine(templateRoot, "materials-template.csv"), Path.Combine(targetFolder, "materials.csv") },
+                    { Path.Combine(templateRoot, "fittings-template.json"), Path.Combine(targetFolder, "fittings.json") },
+                    { Path.Combine(templateRoot, "fittings-template.csv"), Path.Combine(targetFolder, "fittings.csv") }
+                };
+
+                var copied = new List<string>();
+                var skipped = new List<string>();
+
+                foreach (var kvp in templates)
+                {
+                    if (!File.Exists(kvp.Key))
+                        continue;
+
+                    if (File.Exists(kvp.Value))
+                    {
+                        skipped.Add(Path.GetFileName(kvp.Value));
+                        continue;
+                    }
+
+                    File.Copy(kvp.Key, kvp.Value, overwrite: false);
+                    copied.Add(Path.GetFileName(kvp.Value));
+                }
+
+                LoadCatalogs(targetFolder);
+
+                var message = new StringBuilder();
+                if (copied.Count > 0)
+                    message.Append($"Copied {string.Join(", ", copied)}. ");
+
+                if (skipped.Count > 0)
+                    message.Append($"Skipped existing {string.Join(", ", skipped)} to avoid overwriting. ");
+
+                if (message.Length == 0)
+                    message.Append("No template files were copied.");
+                else
+                    message.Append("Edit any new templates, then click Reload Catalogs.");
+
+                MessageBox.Show(message.ToString(), "Templates created", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to create templates: {ex.Message}", "Catalog templates", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenCatalogFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var folder = CatalogFolderText?.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+            {
+                MessageBox.Show("Pick an existing catalog folder first.", "Catalog folder", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open folder: {ex.Message}", "Catalog folder", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private (IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings) ValidateCatalogFolder(string? folder)
         {
             var errors = new List<string>();
+            var warnings = new List<string>();
             if (string.IsNullOrWhiteSpace(folder))
-                return errors;
+                return (errors, warnings);
 
             try
             {
                 if (!Directory.Exists(folder))
                 {
                     errors.Add($"Folder not found: {folder}");
-                    return errors;
+                    return (errors, warnings);
                 }
 
                 bool hasMaterials = File.Exists(Path.Combine(folder, "materials.json")) || File.Exists(Path.Combine(folder, "materials.csv"));
+                bool hasMaterialTemplate = File.Exists(Path.Combine(folder, "materials-template.json")) || File.Exists(Path.Combine(folder, "materials-template.csv"));
                 bool hasFittings = File.Exists(Path.Combine(folder, "fittings.json")) || File.Exists(Path.Combine(folder, "fittings.csv"));
+                bool hasFittingTemplate = File.Exists(Path.Combine(folder, "fittings-template.json")) || File.Exists(Path.Combine(folder, "fittings-template.csv"));
 
                 if (!hasMaterials)
-                    errors.Add("materials.json or materials.csv is missing in the selected folder.");
+                {
+                    if (hasMaterialTemplate)
+                        warnings.Add("materials.json/materials.csv not found; using materials-template instead. Rename it when you finalize your catalog.");
+                    else
+                        errors.Add("materials.json or materials.csv is missing in the selected folder.");
+                }
                 if (!hasFittings)
-                    errors.Add("fittings.json or fittings.csv is missing in the selected folder.");
+                {
+                    if (hasFittingTemplate)
+                        warnings.Add("fittings.json/fittings.csv not found; using fittings-template instead. Rename it when you finalize your catalog.");
+                    else
+                        errors.Add("fittings.json or fittings.csv is missing in the selected folder.");
+                }
             }
             catch (Exception ex)
             {
                 errors.Add($"Unable to read folder: {ex.Message}");
             }
 
-            return errors;
+            return (errors, warnings);
         }
 
         private void NoviceModeToggle_Checked(object sender, RoutedEventArgs e) => ApplyNoviceMode(true);
