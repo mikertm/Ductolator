@@ -56,22 +56,24 @@
                             </StackPanel>
                         </Border>
 
-                    <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,8,12,0"
+                    <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,8,6,0"
+                                  Padding="4"
                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                                   HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
-                            <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
+                        <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
+                                <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="0,0,0,8" />
 
-                            <Border Margin="0,0,0,10" Padding="8" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
-                                <StackPanel Orientation="Vertical">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
-                                        <Button Name="BtnClear" Content="Clear" Width="90" Click="BtnClear_Click" Margin="0,0,8,0" />
-                                        <Button Name="BtnExportDuct" Content="Export to CSV" Width="150" Click="BtnExportDuct_Click" />
+                                <Border Margin="0,0,0,10" Padding="8" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
+                                            <Button Name="BtnClear" Content="Clear" Width="90" Click="BtnClear_Click" Margin="0,0,8,0" />
+                                            <Button Name="BtnExportDuct" Content="Export to CSV" Width="150" Click="BtnExportDuct_Click" />
+                                        </StackPanel>
+                                        <TextBlock Text="Quick actions stay here so you don't have to scroll after entering inputs." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Margin="2,6,0,0" />
                                     </StackPanel>
-                                    <TextBlock Text="Quick actions stay here so you don't have to scroll after entering inputs." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Margin="2,6,0,0" />
-                                </StackPanel>
-                            </Border>
+                                </Border>
 
                             <Border Margin="0,0,0,12" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                     <Expander IsExpanded="True">
@@ -325,20 +327,22 @@
                             <TextBlock Name="DuctCodeNote" Margin="4,0" TextWrapping="Wrap" />
                             <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
                         </StackPanel>
+                        </Border>
                     </ScrollViewer>
 
-                    <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0"
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="6,8,0,0"
+                                  Padding="4"
                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                                   HorizontalContentAlignment="Stretch" PanningMode="VerticalOnly">
                         <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
-                            <StackPanel Orientation="Vertical" Margin="0,0,4,0">
+                            <StackPanel Orientation="Vertical">
                                 <StackPanel.Resources>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource CompactOutputTextBox}" />
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextWrapping" Value="Wrap" />
                                     </Style>
                                 </StackPanel.Resources>
-                                <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,4" />
+                                <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,8" />
 
                                 <UniformGrid Margin="0,0,0,4" Columns="2" HorizontalAlignment="Stretch">
                                     <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" MinWidth="180">
