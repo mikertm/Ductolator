@@ -327,6 +327,7 @@
                             <TextBlock Name="DuctCodeNote" Margin="4,0" TextWrapping="Wrap" />
                             <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
                         </StackPanel>
+                        </Border>
                     </ScrollViewer>
 
                     <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="6,8,0,0"
