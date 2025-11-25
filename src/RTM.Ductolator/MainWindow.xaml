@@ -27,16 +27,15 @@
 
         <TabControl x:Name="MainTabs" Grid.Row="2" Margin="0,12,0,0">
             <TabItem Header="Duct Sizing">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <Grid Margin="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3*" />
-                            <ColumnDefinition Width="2.5*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2.5*" />
+                    </Grid.ColumnDefinitions>
 
                         <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}">
                             <StackPanel>
@@ -47,7 +46,8 @@
                             </StackPanel>
                         </Border>
 
-                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,12,0" Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
+                    <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,8,12,0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
                             <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
 
                             <Border Margin="0,0,0,10" Padding="8" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
@@ -85,7 +85,7 @@
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="FlowLabel" Text="Flow (CFM)" />
-                                                <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
+                                                <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" MinWidth="150" />
                                                 <TextBlock x:Name="FlowExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Office branch: ~1,000 cfm" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
@@ -98,7 +98,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="VelocityLabel" Text="Velocity (FPM)" />
-                                                <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
+                                                <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" MinWidth="150" />
                                                 <TextBlock x:Name="VelocityExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Typical supply: 800–1800 ft/min" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
@@ -111,7 +111,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="FrictionLabel" Text="Friction (in. w.g. / 100 ft)" />
-                                                <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
+                                                <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" MinWidth="150" />
                                                 <TextBlock x:Name="FrictionExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Aim for 0.05–0.08 in. drop per 100 ft" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
@@ -124,7 +124,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="AspectRatioLabel" Text="Aspect Ratio (long/short)" />
-                                                <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
+                                                <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" MinWidth="150" />
                                                 <TextBlock x:Name="AspectRatioExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Keep it at 4:1 or lower for noise" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
@@ -135,17 +135,17 @@
 
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RoundDiameterLabel" Text="Round Diameter (in)" />
-                                                <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
+                                                <TextBox Name="InDia" ToolTip="Inside diameter in inches" MinWidth="150" />
                                                 <TextBlock x:Name="RoundDiameterExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 18 in round main" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RectSide1Label" Text="Rect Side 1 (in)" />
-                                                <TextBox Name="InS1" ToolTip="Long side in inches" />
+                                                <TextBox Name="InS1" ToolTip="Long side in inches" MinWidth="150" />
                                                 <TextBlock x:Name="RectSide1Example" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 24 in long side" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RectSide2Label" Text="Rect Side 2 (in)" />
-                                                <TextBox Name="InS2" ToolTip="Short side in inches" />
+                                                <TextBox Name="InS2" ToolTip="Short side in inches" MinWidth="150" />
                                                 <TextBlock x:Name="RectSide2Example" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 12 in short side" />
                                             </StackPanel>
                                         </Grid>
@@ -310,13 +310,15 @@
                             <TextBlock Name="DuctCodeNote" Margin="4,0" TextWrapping="Wrap" />
                             <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
                         </StackPanel>
+                    </ScrollViewer>
 
-                        <Border Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" VerticalScrollBarVisibility="Auto">
+                        <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,6" />
 
                                 <UniformGrid Columns="4" Margin="0,0,0,10">
-                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12" MinHeight="120">
                                         <StackPanel>
                                             <TextBlock Text="Velocity" FontWeight="Bold" />
                                             <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
@@ -330,7 +332,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="12" MinHeight="120">
                                         <StackPanel>
                                             <TextBlock Text="Friction" FontWeight="Bold" />
                                             <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
@@ -344,7 +346,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12" MinHeight="120">
                                         <StackPanel>
                                             <TextBlock Text="Total ΔP" FontWeight="Bold" />
                                             <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
@@ -358,7 +360,7 @@
                                 </UniformGrid>
 
                                 <UniformGrid Columns="2" Margin="0,0,0,6">
-                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12" MinHeight="140">
                                         <StackPanel>
                                             <TextBlock Text="Air Data" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,6,0,0">
@@ -390,7 +392,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12" MinHeight="140">
                                         <StackPanel>
                                             <TextBlock Text="Pressure / Leakage / Fan" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,6,0,0">
@@ -515,8 +517,8 @@
                                 </UniformGrid>
                             </StackPanel>
                         </Border>
-                    </Grid>
                 </ScrollViewer>
+                </Grid>
             </TabItem>
 
             <TabItem Header="Plumbing">
@@ -850,6 +852,42 @@
                             <TextBlock Text="Fixture Units &amp; Drainage" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8"
                                        Text="Select fixture types, quantities, and optional overrides. Defaults come from IPC/UPC fixture-unit tables. The schedule auto-sums total FU and probable demand." />
+
+                            <StackPanel Margin="0,0,0,8">
+                                <TextBlock Text="Custom fixture types" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
+                                           Foreground="{StaticResource Brush.TextSubtle}"
+                                           Text="Add your own fixtures with default FU values, then edit or delete them as needed." />
+                                <UniformGrid Columns="3" Margin="0,0,0,6">
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Fixture name" />
+                                        <TextBox Name="CustomFixtureNameInput" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Default FU" />
+                                        <TextBox Name="CustomFixtureFuInput" ToolTip="Default fixture units" />
+                                    </StackPanel>
+                                    <StackPanel Margin="4" VerticalAlignment="Bottom">
+                                        <Button Content="Add Custom Fixture" Width="160" Click="AddCustomFixture_Click" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <ItemsControl ItemsSource="{Binding CustomFixtures}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="2,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3*" />
+                                                    <ColumnDefinition Width="1.2*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                                <TextBox Grid.Column="1" Margin="6,0,0,0" Text="{Binding FixtureUnits, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="2" Content="Delete" Margin="6,0,0,0" Tag="{Binding}" Click="RemoveCustomFixture_Click" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
 
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
                                 <Button Content="Add Fixture" Width="100" Click="AddFixtureRow_Click" />
