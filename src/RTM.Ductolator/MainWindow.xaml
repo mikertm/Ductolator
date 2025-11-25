@@ -352,7 +352,7 @@
                                     <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12"
                                                Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
                                     <TextBlock x:Name="InputTipsLine2" TextWrapping="Wrap" FontSize="12"
-                                               Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and fitting loss sum add fittings to total pressure." />
+                                               Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Reynolds number highlights laminar vs. turbulent flow, and the Darcy friction factor (f) feeds total pressure. Straight length and fitting loss sum add fittings to total pressure." />
                                 </StackPanel>
                             </Border>
 
@@ -751,9 +751,9 @@
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
                                                Text="Enter flow in gpm, lengths in feet, nominal sizes in inches, and IDs in inches. Hazen-Williams pressure drop per 100 ft follows IPC/UPC practice; Darcy-Weisbach uses roughness from material and Re from flow." />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
-                                               Text="Use the hot-water checkbox for velocity caps, and switch to aged C-factors for conservative rehab sizing." />
+                                               Text="Use the hot-water checkbox for velocity caps (cold water under 8 ft/s is a common goal), and switch to aged C-factors for conservative rehab sizing." />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
-                                               Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes." />
+                                               Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes. Reynolds number flags laminar (&lt;2,000), transitional (≈2,000–4,000), or turbulent (&gt;4,000) flow; Darcy f typically lands 0.015–0.03 in clean, turbulent piping; higher viscosity lowers Re and raises f." />
                                 </StackPanel>
                             </Border>
     
@@ -767,15 +767,42 @@
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Velocity (ft/s)" />
-                                    <TextBox Name="PlVelocityOutput" IsReadOnly="True" />
+                                    <TextBox Name="PlVelocityOutput" IsReadOnly="True"
+                                             ToolTip="Aim under ~8 ft/s for cold domestic water; under ~5 ft/s for hot water or glycol to limit noise and erosion." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#e6f7ef" BorderBrush="#8bd2b2">
+                                            <TextBlock Text="Cold water target: &lt; 8 ft/s" FontSize="11" Foreground="#1b5e3b" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff7e6" BorderBrush="#f2c166">
+                                            <TextBlock Text="Hot/glycol: &lt; 5 ft/s" FontSize="11" Foreground="#8a5a00" />
+                                        </Border>
+                                    </WrapPanel>
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Reynolds Number" />
-                                    <TextBox Name="PlReOutput" IsReadOnly="True" />
+                                    <TextBox Name="PlReOutput" IsReadOnly="True"
+                                             ToolTip="&lt;2,000 is laminar, 2,000–4,000 transitional, and &gt;4,000 turbulent; turbulent flow keeps Hazen-Williams and Moody charts valid." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#e8f0fe" BorderBrush="#a7baf7">
+                                            <TextBlock Text="Turbulent sweet spot: &gt; 4,000" FontSize="11" Foreground="#1d3c74" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff4e5" BorderBrush="#f2c166">
+                                            <TextBlock Text="Transitional: 2,000–4,000" FontSize="11" Foreground="#8a5a00" />
+                                        </Border>
+                                    </WrapPanel>
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Darcy f" />
-                                    <TextBox Name="PlFrictionOutput" IsReadOnly="True" />
+                                    <TextBox Name="PlFrictionOutput" IsReadOnly="True"
+                                             ToolTip="Clean turbulent piping often yields f between 0.015–0.03; higher values signal rough pipe, low Re, or scale." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#f0f7ff" BorderBrush="#9fb8e8">
+                                            <TextBlock Text="Typical clean: 0.015–0.03" FontSize="11" Foreground="#1d3c74" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff0f0" BorderBrush="#f2a6a6">
+                                            <TextBlock Text="High? check scale/viscosity" FontSize="11" Foreground="#7f1d1d" />
+                                        </Border>
+                                    </WrapPanel>
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Fluid Density (lb/ft³)" />
@@ -783,7 +810,16 @@
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Kinematic viscosity (ft²/s)" />
-                                    <TextBox Name="PlFluidNuOutput" IsReadOnly="True" />
+                                    <TextBox Name="PlFluidNuOutput" IsReadOnly="True"
+                                             ToolTip="Higher viscosity lowers Reynolds number and can raise Darcy f; cooler water or glycol mixes increase viscosity." />
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#f7f4ff" BorderBrush="#c8b5f7">
+                                            <TextBlock Text="Lower ν → higher Re" FontSize="11" Foreground="#3d2466" />
+                                        </Border>
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff4e5" BorderBrush="#f2c166">
+                                            <TextBlock Text="High ν? expect higher f" FontSize="11" Foreground="#8a5a00" />
+                                        </Border>
+                                    </WrapPanel>
                                 </StackPanel>
                             </UniformGrid>
     
