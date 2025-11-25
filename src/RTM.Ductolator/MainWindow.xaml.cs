@@ -25,9 +25,54 @@ namespace RTM.Ductolator
 {
     public partial class MainWindow : Window
     {
-        public record FixtureType(string Name, double FixtureUnits)
+        public class FixtureType : INotifyPropertyChanged
         {
-            public override string ToString() => $"{Name} ({FixtureUnits:0.###} FU)";
+            private string _name;
+            private double _fixtureUnits;
+
+            public FixtureType(string name, double fixtureUnits, bool isCustom = false)
+            {
+                _name = name;
+                _fixtureUnits = fixtureUnits;
+                IsCustom = isCustom;
+            }
+
+            public string Name
+            {
+                get => _name;
+                set
+                {
+                    if (_name == value) return;
+                    _name = value;
+                    OnPropertyChanged(nameof(Name));
+                    OnPropertyChanged(nameof(DisplayText));
+                }
+            }
+
+            public double FixtureUnits
+            {
+                get => _fixtureUnits;
+                set
+                {
+                    if (Math.Abs(_fixtureUnits - value) < 0.0001) return;
+                    _fixtureUnits = value;
+                    OnPropertyChanged(nameof(FixtureUnits));
+                    OnPropertyChanged(nameof(DisplayText));
+                }
+            }
+
+            public bool IsCustom { get; }
+
+            public string DisplayText => $"{Name} ({FixtureUnits:0.###} FU)";
+
+            public override string ToString() => DisplayText;
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         public class FixtureRow : INotifyPropertyChanged
@@ -39,8 +84,7 @@ namespace RTM.Ductolator
 
             public FixtureRow(FixtureType fixtureType)
             {
-                _fixtureType = fixtureType;
-                _defaultFixtureUnits = fixtureType.FixtureUnits;
+                AttachFixtureType(fixtureType);
             }
 
             public FixtureType FixtureType
@@ -49,8 +93,7 @@ namespace RTM.Ductolator
                 set
                 {
                     if (_fixtureType == value || value == null) return;
-                    _fixtureType = value;
-                    DefaultFixtureUnits = value.FixtureUnits;
+                    AttachFixtureType(value);
                     OnPropertyChanged(nameof(FixtureType));
                     OnPropertyChanged(nameof(ResolvedFixtureUnits));
                 }
@@ -89,6 +132,39 @@ namespace RTM.Ductolator
                     _defaultFixtureUnits = value;
                     OnPropertyChanged(nameof(DefaultFixtureUnits));
                     OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+            }
+
+            private void AttachFixtureType(FixtureType fixtureType)
+            {
+                if (_fixtureType != null)
+                {
+                    _fixtureType.PropertyChanged -= FixtureType_PropertyChanged;
+                }
+
+                _fixtureType = fixtureType;
+                _fixtureType.PropertyChanged += FixtureType_PropertyChanged;
+                DefaultFixtureUnits = fixtureType.FixtureUnits;
+            }
+
+            private void FixtureType_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == nameof(FixtureType.FixtureUnits))
+                {
+                    DefaultFixtureUnits = _fixtureType.FixtureUnits;
+                    OnPropertyChanged(nameof(ResolvedFixtureUnits));
+                }
+                else if (e.PropertyName == nameof(FixtureType.Name))
+                {
+                    OnPropertyChanged(nameof(FixtureType));
+                }
+            }
+
+            public void DetachFixtureType()
+            {
+                if (_fixtureType != null)
+                {
+                    _fixtureType.PropertyChanged -= FixtureType_PropertyChanged;
                 }
             }
 
@@ -201,26 +277,14 @@ namespace RTM.Ductolator
         private readonly ObservableCollection<string> _catalogPreview = new();
         private readonly ObservableCollection<string> _catalogWarnings = new();
         private readonly ObservableCollection<string> _catalogErrors = new();
-        private readonly List<FixtureType> _fixtureCatalog = new()
-        {
-            new FixtureType("Lavatory (private)", 1.0),
-            new FixtureType("Lavatory (public)", 2.0),
-            new FixtureType("Water closet (flush tank)", 2.5),
-            new FixtureType("Water closet (flushometer valve)", 10.0),
-            new FixtureType("Urinal (flush tank)", 5.0),
-            new FixtureType("Urinal (flushometer valve)", 10.0),
-            new FixtureType("Shower head", 2.0),
-            new FixtureType("Bathtub or tub/shower", 4.0),
-            new FixtureType("Kitchen sink (residential)", 2.0),
-            new FixtureType("Dishwasher (residential)", 1.5),
-            new FixtureType("Clothes washer (laundry)", 2.5),
-            new FixtureType("Hose bibb / sillcock", 2.5),
-            new FixtureType("Service or mop sink", 3.0)
-        };
+        private readonly ObservableCollection<FixtureType> _fixtureCatalog = new();
+        private readonly ObservableCollection<FixtureType> _customFixtures = new();
 
         private readonly ObservableCollection<FixtureRow> _fixtureRows = new();
 
         public IEnumerable<FixtureType> FixtureCatalog => _fixtureCatalog;
+
+        public ObservableCollection<FixtureType> CustomFixtures => _customFixtures;
 
         public ObservableCollection<FixtureRow> FixtureRows => _fixtureRows;
 
@@ -247,6 +311,7 @@ namespace RTM.Ductolator
                 CatalogFolderText.Text = defaultFolder;
 
             LoadCatalogs(defaultFolder);
+            InitializeFixtureCatalog();
             PopulateFluids();
             PopulateCodeProfiles();
             InitializeFixtureRows();
@@ -275,6 +340,31 @@ namespace RTM.Ductolator
             }
 
             _noviceMode = false;
+        }
+
+        private void InitializeFixtureCatalog()
+        {
+            var defaults = new List<FixtureType>
+            {
+                new FixtureType("Lavatory (private)", 1.0),
+                new FixtureType("Lavatory (public)", 2.0),
+                new FixtureType("Water closet (flush tank)", 2.5),
+                new FixtureType("Water closet (flushometer valve)", 10.0),
+                new FixtureType("Urinal (flush tank)", 5.0),
+                new FixtureType("Urinal (flushometer valve)", 10.0),
+                new FixtureType("Shower head", 2.0),
+                new FixtureType("Bathtub or tub/shower", 4.0),
+                new FixtureType("Kitchen sink (residential)", 2.0),
+                new FixtureType("Dishwasher (residential)", 1.5),
+                new FixtureType("Clothes washer (laundry)", 2.5),
+                new FixtureType("Hose bibb / sillcock", 2.5),
+                new FixtureType("Service or mop sink", 3.0)
+            };
+
+            foreach (var fixture in defaults)
+            {
+                _fixtureCatalog.Add(fixture);
+            }
         }
 
         private void SaveUserSettings()
@@ -2088,6 +2178,7 @@ namespace RTM.Ductolator
                 foreach (FixtureRow row in e.OldItems)
                 {
                     row.PropertyChanged -= FixtureRow_PropertyChanged;
+                    row.DetachFixtureType();
                 }
             }
 
@@ -2110,6 +2201,67 @@ namespace RTM.Ductolator
             var fixtureType = type ?? _fixtureCatalog.FirstOrDefault() ?? new FixtureType("Fixture", 1.0);
             var row = new FixtureRow(fixtureType);
             _fixtureRows.Add(row);
+        }
+
+        private FixtureType? GetFallbackFixture(FixtureType removed)
+        {
+            return _fixtureCatalog.FirstOrDefault(f => f != removed);
+        }
+
+        private void AddCustomFixture_Click(object sender, RoutedEventArgs e)
+        {
+            string name = CustomFixtureNameInput?.Text?.Trim() ?? string.Empty;
+            string fuText = CustomFixtureFuInput?.Text ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                MessageBox.Show("Enter a fixture name before adding.", "Name required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!double.TryParse(fuText, NumberStyles.Float, CultureInfo.InvariantCulture, out double fixtureUnits) || fixtureUnits <= 0)
+            {
+                MessageBox.Show("Enter a positive default fixture unit value.", "Fixture units required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var fixture = new FixtureType(name, fixtureUnits, true);
+            _fixtureCatalog.Add(fixture);
+            _customFixtures.Add(fixture);
+
+            if (CustomFixtureNameInput != null)
+                CustomFixtureNameInput.Text = string.Empty;
+            if (CustomFixtureFuInput != null)
+                CustomFixtureFuInput.Text = string.Empty;
+        }
+
+        private void RemoveCustomFixture_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is FixtureType fixture)
+            {
+                var replacement = GetFallbackFixture(fixture);
+
+                foreach (var row in _fixtureRows.Where(r => ReferenceEquals(r.FixtureType, fixture)).ToList())
+                {
+                    if (replacement != null)
+                    {
+                        row.FixtureType = replacement;
+                    }
+                }
+
+                _customFixtures.Remove(fixture);
+                _fixtureCatalog.Remove(fixture);
+
+                if (!_fixtureCatalog.Any())
+                {
+                    var defaultFixture = new FixtureType("Fixture", 1.0);
+                    _fixtureCatalog.Add(defaultFixture);
+                    if (!_fixtureRows.Any())
+                    {
+                        AddFixtureRow(defaultFixture);
+                    }
+                }
+            }
         }
 
         private void UpdateFixtureTotals()
