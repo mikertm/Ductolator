@@ -282,6 +282,10 @@ namespace RTM.Ductolator
 
         private readonly ObservableCollection<FixtureRow> _fixtureRows = new();
 
+        private TextBox? CustomFixtureNameInputBox => FindName("CustomFixtureNameInput") as TextBox;
+
+        private TextBox? CustomFixtureFuInputBox => FindName("CustomFixtureFuInput") as TextBox;
+
         public IEnumerable<FixtureType> FixtureCatalog => _fixtureCatalog;
 
         public ObservableCollection<FixtureType> CustomFixtures => _customFixtures;
@@ -2210,8 +2214,8 @@ namespace RTM.Ductolator
 
         private void AddCustomFixture_Click(object sender, RoutedEventArgs e)
         {
-            string name = CustomFixtureNameInput?.Text?.Trim() ?? string.Empty;
-            string fuText = CustomFixtureFuInput?.Text ?? string.Empty;
+            string name = CustomFixtureNameInputBox?.Text?.Trim() ?? string.Empty;
+            string fuText = CustomFixtureFuInputBox?.Text ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -2229,10 +2233,10 @@ namespace RTM.Ductolator
             _fixtureCatalog.Add(fixture);
             _customFixtures.Add(fixture);
 
-            if (CustomFixtureNameInput != null)
-                CustomFixtureNameInput.Text = string.Empty;
-            if (CustomFixtureFuInput != null)
-                CustomFixtureFuInput.Text = string.Empty;
+            if (CustomFixtureNameInputBox != null)
+                CustomFixtureNameInputBox.Text = string.Empty;
+            if (CustomFixtureFuInputBox != null)
+                CustomFixtureFuInputBox.Text = string.Empty;
         }
 
         private void RemoveCustomFixture_Click(object sender, RoutedEventArgs e)
