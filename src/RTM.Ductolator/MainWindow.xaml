@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ductolator &amp; Plumbing Sizer" Height="720" Width="1200"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Closing="MainWindow_Closing">
     <Window.Resources>
         <Style x:Key="PillButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="14,6" />
@@ -88,11 +89,11 @@
                         <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="4" Padding="10" Background="#eef8f2" BorderBrush="#c6e6d1" BorderThickness="1">
                             <StackPanel>
                                 <TextBlock Text="How to use" FontWeight="Bold" />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                <TextBlock x:Name="HowToUseStep1" TextWrapping="Wrap" FontSize="12"
                                            Text="1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest." />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                <TextBlock x:Name="HowToUseStep2" TextWrapping="Wrap" FontSize="12"
                                            Text="2) Pick a code region to load common velocity and friction guidance." />
-                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                <TextBlock x:Name="HowToUseStep3" TextWrapping="Wrap" FontSize="12"
                                            Text="3) Click Calculate to fill air properties, pressure class, and equivalent shapes; Export saves the latest result to CSV." />
                             </StackPanel>
                         </Border>
@@ -101,9 +102,15 @@
                             <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
 
                             <Border Margin="0,0,0,12" Padding="8" Background="#f7faff" BorderBrush="#d7e3f7" BorderThickness="1">
-                                <Expander Header="Quick start" IsExpanded="True">
+                                <Expander IsExpanded="True">
+                                    <Expander.Header>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Quick start" VerticalAlignment="Center" />
+                                            <CheckBox x:Name="NoviceModeToggle" Content="Novice mode" Margin="12,0,0,0" VerticalAlignment="Center" Checked="NoviceModeToggle_Checked" Unchecked="NoviceModeToggle_Unchecked" />
+                                        </StackPanel>
+                                    </Expander.Header>
                                     <StackPanel Margin="0,2,0,0" Orientation="Vertical" Panel.ZIndex="1">
-                                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,8"
+                                        <TextBlock x:Name="QuickStartNoteText" TextWrapping="Wrap" FontSize="12" Margin="0,2,0,8"
                                                    Text="Use this for typical sizing: enter any two of flow, velocity, or friction plus one shape (round or rectangular) to solve the rest." />
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
@@ -118,8 +125,9 @@
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Flow (CFM)" />
+                                                <TextBlock x:Name="FlowLabel" Text="Flow (CFM)" />
                                                 <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
+                                                <TextBlock x:Name="FlowExample" FontSize="11" Foreground="#4b5563" Text="Office branch: ~1,000 cfm" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Terminals 300–1,200 CFM" FontSize="11" />
@@ -130,8 +138,9 @@
                                                 </WrapPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Velocity (FPM)" />
+                                                <TextBlock x:Name="VelocityLabel" Text="Velocity (FPM)" />
                                                 <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
+                                                <TextBlock x:Name="VelocityExample" FontSize="11" Foreground="#4b5563" Text="Typical supply: 800–1800 ft/min" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Supply 800–1800 FPM" FontSize="11" />
@@ -142,8 +151,9 @@
                                                 </WrapPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Friction (in. w.g. / 100 ft)" />
+                                                <TextBlock x:Name="FrictionLabel" Text="Friction (in. w.g. / 100 ft)" />
                                                 <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
+                                                <TextBlock x:Name="FrictionExample" FontSize="11" Foreground="#4b5563" Text="Aim for 0.05–0.08 in. drop per 100 ft" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Equal-friction 0.05–0.10" FontSize="11" />
@@ -154,8 +164,9 @@
                                                 </WrapPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Aspect Ratio (long/short)" />
+                                                <TextBlock x:Name="AspectRatioLabel" Text="Aspect Ratio (long/short)" />
                                                 <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
+                                                <TextBlock x:Name="AspectRatioExample" FontSize="11" Foreground="#4b5563" Text="Keep it at 4:1 or lower for noise" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Noise-friendly ≤4:1" FontSize="11" />
@@ -164,16 +175,19 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Round Diameter (in)" />
+                                                <TextBlock x:Name="RoundDiameterLabel" Text="Round Diameter (in)" />
                                                 <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
+                                                <TextBlock x:Name="RoundDiameterExample" FontSize="11" Foreground="#4b5563" Text="Example: 18 in round main" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Rect Side 1 (in)" />
+                                                <TextBlock x:Name="RectSide1Label" Text="Rect Side 1 (in)" />
                                                 <TextBox Name="InS1" ToolTip="Long side in inches" />
+                                                <TextBlock x:Name="RectSide1Example" FontSize="11" Foreground="#4b5563" Text="Example: 24 in long side" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
-                                                <TextBlock Text="Rect Side 2 (in)" />
+                                                <TextBlock x:Name="RectSide2Label" Text="Rect Side 2 (in)" />
                                                 <TextBox Name="InS2" ToolTip="Short side in inches" />
+                                                <TextBlock x:Name="RectSide2Example" FontSize="11" Foreground="#4b5563" Text="Example: 12 in short side" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -326,9 +340,9 @@
                             <Border Margin="0,0,0,10" Padding="8" Background="#f0f4ff" BorderBrush="#c5d2f7" BorderThickness="1">
                                 <StackPanel>
                                     <TextBlock Text="Input tips" FontWeight="Bold" />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                    <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12"
                                                Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                    <TextBlock x:Name="InputTipsLine2" TextWrapping="Wrap" FontSize="12"
                                                Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and ΣK add fittings to total pressure." />
                                 </StackPanel>
                             </Border>
