@@ -15,29 +15,17 @@
         <TextBlock Text="ASHRAE/SMACNA duct sizing and ASPE/UPC plumbing calculations"
                    FontSize="16" FontWeight="Bold"/>
 
-        <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Style="{StaticResource AccentBorderStyle}">
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
-                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,0" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
-                    <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
-                    <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" Style="{StaticResource BaseButtonStyle}" />
-                    <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" Style="{StaticResource BaseButtonStyle}" />
+        <Border Grid.Row="1" Margin="0,10,0,4" Padding="10" Style="{StaticResource CardBorderStyle}">
+            <DockPanel LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" Orientation="Vertical" VerticalAlignment="Center">
+                    <TextBlock Text="Catalog source" FontWeight="SemiBold" />
+                    <TextBlock Name="CatalogStatusSummary" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Name="CatalogStatusBadge" Style="{StaticResource BadgeBorderStyle}" Background="{StaticResource Brush.ChipInfoBackground}" BorderBrush="{StaticResource Brush.ChipInfoBorder}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Name="CatalogStatusIcon" FontWeight="Bold" Margin="0,0,6,0" Text="ℹ" />
-                            <TextBlock Name="CatalogStatusTitle" FontWeight="SemiBold" Text="Catalog status" />
-                        </StackPanel>
-                    </Border>
-                    <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Margin="6,0,0,0" Width="580" />
-                </StackPanel>
-                <TextBlock Name="CatalogHelperText" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
-            </StackPanel>
+                <Button Content="Manage catalogs" Width="140" HorizontalAlignment="Right" DockPanel.Dock="Right" Click="OpenCatalogSettings_Click" Style="{StaticResource BaseButtonStyle}" />
+            </DockPanel>
         </Border>
 
-        <TabControl Grid.Row="2" Margin="0,12,0,0">
+        <TabControl x:Name="MainTabs" Grid.Row="2" Margin="0,12,0,0">
             <TabItem Header="Duct Sizing">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid Margin="8">
@@ -1254,6 +1242,35 @@
             </ScrollViewer>
         </Grid>
     </TabItem>
+
+            <TabItem x:Name="CatalogTab" Header="Catalogs &amp; data">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12" Orientation="Vertical">
+                        <TextBlock Text="Use built-in tables or point to a custom folder; built-ins stay active unless a valid catalog is loaded." TextWrapping="Wrap" />
+                        <Border Padding="10" Style="{StaticResource AccentBorderStyle}">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; invalid or missing files keep the defaults." />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
+                                    <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
+                                    <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" Style="{StaticResource BaseButtonStyle}" />
+                                    <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" Style="{StaticResource BaseButtonStyle}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Name="CatalogStatusBadge" Style="{StaticResource BadgeBorderStyle}" Background="{StaticResource Brush.ChipInfoBackground}" BorderBrush="{StaticResource Brush.ChipInfoBorder}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Name="CatalogStatusIcon" FontWeight="Bold" Margin="0,0,6,0" Text="ℹ" />
+                                            <TextBlock Name="CatalogStatusTitle" FontWeight="SemiBold" Text="Catalog status" />
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Width="580" />
+                                </StackPanel>
+                                <TextBlock Name="CatalogHelperText" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
         </TabControl>
     </Grid>

@@ -398,11 +398,18 @@ namespace RTM.Ductolator.Models
             var pipeFittings = defaultPipe.ToList();
             var warnings = new List<string>();
             var errors = new List<string>();
-            string folderPath = string.IsNullOrWhiteSpace(folder) ? "" : folder.Trim();
+            string folderPath = string.IsNullOrWhiteSpace(folder) ? "(built-in)" : folder.Trim();
 
-            if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
+            if (folderPath == "(built-in)")
             {
-                warnings.Add("No custom catalog folder configured; built-in tables loaded.");
+                return new CatalogSet(materials.Values.ToList(), ductFittings, pipeFittings,
+                    new CatalogLoadReport(folderPath, materials.Count, ductFittings.Count, pipeFittings.Count, warnings, errors));
+            }
+
+            if (!Directory.Exists(folderPath))
+            {
+                errors.Add($"Folder not found: {folderPath}");
+                warnings.Add("Using built-in catalogs because the folder was not found.");
                 return new CatalogSet(materials.Values.ToList(), ductFittings, pipeFittings,
                     new CatalogLoadReport(folderPath, materials.Count, ductFittings.Count, pipeFittings.Count, warnings, errors));
             }

@@ -452,9 +452,22 @@ namespace RTM.Ductolator
             CatalogStatusTitle.Text = badgeTitle;
             CatalogStatusTitle.Foreground = badgeText;
 
+            if (CatalogStatusSummary != null)
+                CatalogStatusSummary.Text = _catalogReport.Errors.Any()
+                    ? "Catalog load failed; using built-ins."
+                    : usingBuiltIn
+                        ? "Using built-in catalogs."
+                        : $"Loaded from '{_catalogReport.Folder}'";
+
             CatalogHelperText.Text = usingBuiltIn
                 ? "Example: C:\\projects\\catalogs with materials.json (or materials.csv) and fittings.json (or fittings.csv)."
                 : $"Last loaded {_lastCatalogLoadedAt:G}. Expect materials.json (or .csv) and fittings.json (or .csv) in the selected folder.";
+        }
+
+        private void OpenCatalogSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainTabs != null && CatalogTab != null)
+                MainTabs.SelectedItem = CatalogTab;
         }
 
         private void BrowseCatalogFolder_Click(object sender, RoutedEventArgs e)
