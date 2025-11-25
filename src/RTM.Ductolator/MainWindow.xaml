@@ -533,10 +533,10 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
-                                </WrapPanel>
+                                </UniformGrid>
                             </StackPanel>
                         </Border>
-                </ScrollViewer>
+                    </ScrollViewer>
                 </Grid>
             </TabItem>
 
