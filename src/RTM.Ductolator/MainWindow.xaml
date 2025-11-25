@@ -753,7 +753,7 @@
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
                                                Text="Use the hot-water checkbox for velocity caps (cold water under 8 ft/s is a common goal), and switch to aged C-factors for conservative rehab sizing." />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
-                                               Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes. Reynolds number flags laminar (<2,000), transitional (≈2,000–4,000), or turbulent (>4,000) flow; Darcy f typically lands 0.015–0.03 in clean, turbulent piping; higher viscosity lowers Re and raises f." />
+                                               Text="Fluid temperature and glycol percentage tune density/viscosity, adjust Hazen-Williams C, and slightly increase roughness for heavy mixes. Reynolds number flags laminar (&lt;2,000), transitional (≈2,000–4,000), or turbulent (&gt;4,000) flow; Darcy f typically lands 0.015–0.03 in clean, turbulent piping; higher viscosity lowers Re and raises f." />
                                 </StackPanel>
                             </Border>
     
@@ -781,7 +781,7 @@
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Reynolds Number" />
                                     <TextBox Name="PlReOutput" IsReadOnly="True"
-                                             ToolTip="<2,000 is laminar, 2,000–4,000 transitional, and &gt;4,000 turbulent; turbulent flow keeps Hazen-Williams and Moody charts valid." />
+                                             ToolTip="&lt;2,000 is laminar, 2,000–4,000 transitional, and &gt;4,000 turbulent; turbulent flow keeps Hazen-Williams and Moody charts valid." />
                                     <WrapPanel>
                                         <Border Style="{StaticResource ChipBorderStyle}" Background="#e8f0fe" BorderBrush="#a7baf7">
                                             <TextBlock Text="Turbulent sweet spot: &gt; 4,000" FontSize="11" Foreground="#1d3c74" />
