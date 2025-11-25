@@ -326,15 +326,18 @@
                     </ScrollViewer>
 
                     <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" VerticalScrollBarVisibility="Auto">
-                        <Border Padding="8" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
-                            <StackPanel Orientation="Vertical">
+                        <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                            <StackPanel Orientation="Vertical" Margin="0,0,4,0">
                                 <StackPanel.Resources>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource CompactOutputTextBox}" />
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                    </Style>
                                 </StackPanel.Resources>
                                 <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,4" />
 
-                                <WrapPanel Margin="0,0,0,4" ItemWidth="220" MinWidth="480">
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="216">
+                                <WrapPanel Margin="0,0,0,4" ItemWidth="232" MinWidth="480">
+                                    <Border Margin="4,0" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="224">
                                         <StackPanel>
                                             <TextBlock Text="Velocity" FontWeight="Bold" />
                                             <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
@@ -348,7 +351,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="216">
+                                    <Border Margin="4,0" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="224">
                                         <StackPanel>
                                             <TextBlock Text="Friction" FontWeight="Bold" />
                                             <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
@@ -362,7 +365,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="216">
+                                    <Border Margin="4,0" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="224">
                                         <StackPanel>
                                             <TextBlock Text="Total ΔP" FontWeight="Bold" />
                                             <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
@@ -375,8 +378,8 @@
                                     </Border>
                                 </WrapPanel>
 
-                                <WrapPanel Margin="0" ItemWidth="230" MinWidth="480">
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="226">
+                                <WrapPanel Margin="0" ItemWidth="240" MinWidth="480">
+                                    <Border Margin="4,4,4,0" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="232">
                                         <StackPanel>
                                             <TextBlock Text="Air Data" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
@@ -408,7 +411,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="232">
                                         <StackPanel>
                                             <TextBlock Text="Pressure / Leakage / Fan" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
@@ -433,7 +436,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="232">
                                         <StackPanel>
                                             <TextBlock Text="Heat / Insulation" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
@@ -457,7 +460,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource MutedBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="10" Style="{StaticResource MutedBorderStyle}" CornerRadius="10" Width="232">
                                         <StackPanel>
                                             <TextBlock Text="Geometry" FontWeight="Bold" />
                                             <UniformGrid Columns="3" Margin="0,4,0,0">
