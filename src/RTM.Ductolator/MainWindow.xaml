@@ -18,13 +18,22 @@
         <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Style="{StaticResource AccentBorderStyle}">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
-                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,0" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
                     <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
                     <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" Style="{StaticResource BaseButtonStyle}" />
                     <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" Style="{StaticResource BaseButtonStyle}" />
                 </StackPanel>
-                <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Name="CatalogStatusBadge" Style="{StaticResource BadgeBorderStyle}" Background="{StaticResource Brush.ChipInfoBackground}" BorderBrush="{StaticResource Brush.ChipInfoBorder}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Name="CatalogStatusIcon" FontWeight="Bold" Margin="0,0,6,0" Text="ℹ" />
+                            <TextBlock Name="CatalogStatusTitle" FontWeight="SemiBold" Text="Catalog status" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Margin="6,0,0,0" Width="580" />
+                </StackPanel>
+                <TextBlock Name="CatalogHelperText" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
             </StackPanel>
         </Border>
 
