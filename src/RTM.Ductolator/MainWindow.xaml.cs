@@ -619,14 +619,39 @@ namespace RTM.Ductolator
                     { Path.Combine(templateRoot, "fittings-template.csv"), Path.Combine(targetFolder, "fittings.csv") }
                 };
 
+                var copied = new List<string>();
+                var skipped = new List<string>();
+
                 foreach (var kvp in templates)
                 {
-                    if (File.Exists(kvp.Key))
-                        File.Copy(kvp.Key, kvp.Value, overwrite: true);
+                    if (!File.Exists(kvp.Key))
+                        continue;
+
+                    if (File.Exists(kvp.Value))
+                    {
+                        skipped.Add(Path.GetFileName(kvp.Value));
+                        continue;
+                    }
+
+                    File.Copy(kvp.Key, kvp.Value, overwrite: false);
+                    copied.Add(Path.GetFileName(kvp.Value));
                 }
 
                 LoadCatalogs(targetFolder);
-                MessageBox.Show("Template files were copied into your folder. Edit them, then click Reload Catalogs.", "Templates created", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                var message = new StringBuilder();
+                if (copied.Count > 0)
+                    message.Append($"Copied {string.Join(", ", copied)}. ");
+
+                if (skipped.Count > 0)
+                    message.Append($"Skipped existing {string.Join(", ", skipped)} to avoid overwriting. ");
+
+                if (message.Length == 0)
+                    message.Append("No template files were copied.");
+                else
+                    message.Append("Edit any new templates, then click Reload Catalogs.");
+
+                MessageBox.Show(message.ToString(), "Templates created", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
