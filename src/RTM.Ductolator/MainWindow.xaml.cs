@@ -196,6 +196,7 @@ namespace RTM.Ductolator
         private List<DuctFittingSelection> _lastDuctFittingSnapshot = new();
         private List<PipeFittingSelection> _lastPlumbingFittingSnapshot = new();
         private CatalogLoadReport _catalogReport = RuntimeCatalogs.LastReport;
+        private DateTime _lastCatalogLoadedAt = DateTime.Now;
         private readonly List<FixtureType> _fixtureCatalog = new()
         {
             new FixtureType("Lavatory (private)", 1.0),
@@ -393,7 +394,22 @@ namespace RTM.Ductolator
 
         private void LoadCatalogs(string? folder)
         {
+            var validationErrors = ValidateCatalogFolder(folder);
+            if (validationErrors.Any())
+            {
+                _catalogReport = new CatalogLoadReport(
+                    string.IsNullOrWhiteSpace(folder) ? "(built-in)" : folder!,
+                    RuntimeCatalogs.Materials.Count,
+                    RuntimeCatalogs.DuctFittings.Count,
+                    RuntimeCatalogs.PipeFittings.Count,
+                    Array.Empty<string>(),
+                    validationErrors);
+                UpdateCatalogStatus();
+                return;
+            }
+
             _catalogReport = RuntimeCatalogs.ReloadFromFolder(folder);
+            _lastCatalogLoadedAt = DateTime.Now;
             PopulatePlumbingMaterials();
             PopulateFittingLibraries();
             UpdateCatalogStatus();
@@ -401,11 +417,13 @@ namespace RTM.Ductolator
 
         private void UpdateCatalogStatus()
         {
-            if (CatalogStatusNote == null)
+            if (CatalogStatusNote == null || CatalogHelperText == null ||
+                CatalogStatusBadge == null || CatalogStatusIcon == null || CatalogStatusTitle == null)
                 return;
 
             var parts = new List<string>();
-            string folderNote = string.IsNullOrWhiteSpace(_catalogReport.Folder)
+            bool usingBuiltIn = string.IsNullOrWhiteSpace(_catalogReport.Folder) || _catalogReport.Folder == "(built-in)";
+            string folderNote = usingBuiltIn
                 ? "Using built-in catalogs."
                 : $"Loaded from '{_catalogReport.Folder}'.";
             parts.Add(folderNote);
@@ -416,7 +434,28 @@ namespace RTM.Ductolator
                 parts.Add(string.Join(" ", _catalogReport.Errors));
 
             CatalogStatusNote.Text = string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
-            CatalogStatusNote.Foreground = _catalogReport.Errors.Any() ? Brushes.DarkRed : Brushes.DarkGreen;
+            CatalogStatusNote.Foreground = _catalogReport.Errors.Any()
+                ? (Brush)FindResource("Brush.TextDanger")
+                : _catalogReport.Warnings.Any()
+                    ? (Brush)FindResource("Brush.TextWarning")
+                    : (Brush)FindResource("Brush.TextSuccess");
+
+            var (badgeBackground, badgeBorder, badgeText, badgeIcon, badgeTitle) = _catalogReport.Errors.Any()
+                ? ((Brush)FindResource("Brush.ChipDangerBackground"), (Brush)FindResource("Brush.ChipDangerBorder"), (Brush)FindResource("Brush.TextDanger"), "⛔", "Catalog load failed")
+                : _catalogReport.Warnings.Any()
+                    ? ((Brush)FindResource("Brush.ChipWarningBackground"), (Brush)FindResource("Brush.ChipWarningBorder"), (Brush)FindResource("Brush.TextWarning"), "⚠", "Loaded with warnings")
+                    : ((Brush)FindResource("Brush.ChipSuccessBackground"), (Brush)FindResource("Brush.ChipSuccessBorder"), (Brush)FindResource("Brush.TextSuccess"), "✔", "Catalog ready");
+
+            CatalogStatusBadge.Background = badgeBackground;
+            CatalogStatusBadge.BorderBrush = badgeBorder;
+            CatalogStatusIcon.Text = badgeIcon;
+            CatalogStatusIcon.Foreground = badgeText;
+            CatalogStatusTitle.Text = badgeTitle;
+            CatalogStatusTitle.Foreground = badgeText;
+
+            CatalogHelperText.Text = usingBuiltIn
+                ? "Example: C:\\projects\\catalogs with materials.json (or materials.csv) and fittings.json (or fittings.csv)."
+                : $"Last loaded { _lastCatalogLoadedAt:G }. Expect materials.json (or .csv) and fittings.json (or .csv) in the selected folder.";
         }
 
         private void BrowseCatalogFolder_Click(object sender, RoutedEventArgs e)
@@ -437,6 +476,36 @@ namespace RTM.Ductolator
         private void ReloadCatalogs_Click(object sender, RoutedEventArgs e)
         {
             LoadCatalogs(CatalogFolderText?.Text);
+        }
+
+        private IReadOnlyList<string> ValidateCatalogFolder(string? folder)
+        {
+            var errors = new List<string>();
+            if (string.IsNullOrWhiteSpace(folder))
+                return errors;
+
+            try
+            {
+                if (!Directory.Exists(folder))
+                {
+                    errors.Add($"Folder not found: {folder}");
+                    return errors;
+                }
+
+                bool hasMaterials = File.Exists(Path.Combine(folder, "materials.json")) || File.Exists(Path.Combine(folder, "materials.csv"));
+                bool hasFittings = File.Exists(Path.Combine(folder, "fittings.json")) || File.Exists(Path.Combine(folder, "fittings.csv"));
+
+                if (!hasMaterials)
+                    errors.Add("materials.json or materials.csv is missing in the selected folder.");
+                if (!hasFittings)
+                    errors.Add("fittings.json or fittings.csv is missing in the selected folder.");
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Unable to read folder: {ex.Message}");
+            }
+
+            return errors;
         }
 
         private void NoviceModeToggle_Checked(object sender, RoutedEventArgs e) => ApplyNoviceMode(true);
