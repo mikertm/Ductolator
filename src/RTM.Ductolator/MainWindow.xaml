@@ -326,17 +326,20 @@
                     </ScrollViewer>
 
                     <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" VerticalScrollBarVisibility="Auto">
-                        <Border Padding="8" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
-                            <StackPanel Orientation="Vertical">
+                        <Border Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
+                            <StackPanel Orientation="Vertical" Margin="0,0,4,0">
                                 <StackPanel.Resources>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource CompactOutputTextBox}" />
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                    </Style>
                                 </StackPanel.Resources>
                                 <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,4" />
 
-                                <WrapPanel Margin="0,0,0,4" ItemWidth="220" MinWidth="480">
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="216">
+                                <UniformGrid Margin="0,0,0,4" Columns="3" HorizontalAlignment="Left">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="180">
                                         <StackPanel>
-                                            <TextBlock Text="Velocity" FontWeight="Bold" />
+                                            <TextBlock Text="Velocity (FPM)" FontWeight="Bold" />
                                             <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
                                             <WrapPanel>
                                                 <Border Style="{StaticResource ChipBorderStyle}">
@@ -348,9 +351,9 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="216">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="180">
                                         <StackPanel>
-                                            <TextBlock Text="Friction" FontWeight="Bold" />
+                                            <TextBlock Text="Friction (in. w.g./100 ft)" FontWeight="Bold" />
                                             <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
                                             <WrapPanel>
                                                 <Border Style="{StaticResource ChipBorderStyle}">
@@ -362,9 +365,9 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="216">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="180">
                                         <StackPanel>
-                                            <TextBlock Text="Total ΔP" FontWeight="Bold" />
+                                            <TextBlock Text="Total ΔP (in. w.g.)" FontWeight="Bold" />
                                             <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
                                             <WrapPanel>
                                                 <Border Style="{StaticResource ChipBorderStyle}">
@@ -373,15 +376,15 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                </WrapPanel>
+                                </UniformGrid>
 
-                                <WrapPanel Margin="0" ItemWidth="230" MinWidth="480">
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="226">
+                                <UniformGrid Margin="0" Columns="2" HorizontalAlignment="Left">
+                                    <Border Margin="4,4,4,0" Padding="8" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" Width="220">
                                         <StackPanel>
                                             <TextBlock Text="Air Data" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
                                                 <StackPanel Margin="2">
-                                                    <TextBlock Text="CFM (ft³/min)" />
+                                                    <TextBlock Text="Flow Rate (CFM)" />
                                                     <TextBox Name="OutCfm" IsReadOnly="True" />
                                                 </StackPanel>
                                                 <StackPanel Margin="2">
@@ -408,7 +411,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="8" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" Width="220">
                                         <StackPanel>
                                             <TextBlock Text="Pressure / Leakage / Fan" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
@@ -421,11 +424,11 @@
                                                     <TextBox Name="OutLeakage" IsReadOnly="True" />
                                                 </StackPanel>
                                                 <StackPanel Margin="2">
-                                                    <TextBlock Text="Fan BHP" />
+                                                    <TextBlock Text="Fan BHP (hp)" />
                                                     <TextBox Name="OutFanBhp" IsReadOnly="True" />
                                                 </StackPanel>
                                                 <StackPanel Margin="2">
-                                                <TextBlock Text="Velocity Pressure (check)" />
+                                                <TextBlock Text="Velocity Pressure (in. w.g., check)" />
                                                 <TextBox Name="OutVpEcho" IsReadOnly="True"
                                                          ToolTip="Echo of velocity pressure for quick fan and pressure class checks." />
                                                 </StackPanel>
@@ -433,7 +436,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="8" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" Width="220">
                                         <StackPanel>
                                             <TextBlock Text="Heat / Insulation" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,4,0,0">
@@ -457,7 +460,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4,4,4,0" Padding="6" Style="{StaticResource MutedBorderStyle}" CornerRadius="10" Width="226">
+                                    <Border Margin="4,4,4,0" Padding="8" Style="{StaticResource MutedBorderStyle}" CornerRadius="10" Width="220">
                                         <StackPanel>
                                             <TextBlock Text="Geometry" FontWeight="Bold" />
                                             <UniformGrid Columns="3" Margin="0,4,0,0">
