@@ -21,7 +21,7 @@
                     <TextBlock Text="Catalog source" FontWeight="SemiBold" />
                     <TextBlock Name="CatalogStatusSummary" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
                 </StackPanel>
-                <Button Content="Manage catalogs" Width="140" HorizontalAlignment="Right" DockPanel.Dock="Right" Click="OpenCatalogSettings_Click" Style="{StaticResource BaseButtonStyle}" />
+                <Button Content="Manage catalogs" Width="160" HorizontalAlignment="Right" DockPanel.Dock="Right" Click="OpenCatalogSettings_Click" Style="{StaticResource PrimaryButtonStyle}" />
             </DockPanel>
         </Border>
 
@@ -49,6 +49,17 @@
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,12,0" Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
                             <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
+
+                            <Border Margin="0,0,0,10" Padding="8" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
+                                        <Button Name="BtnClear" Content="Clear" Width="90" Click="BtnClear_Click" Margin="0,0,8,0" />
+                                        <Button Name="BtnExportDuct" Content="Export to CSV" Width="150" Click="BtnExportDuct_Click" />
+                                    </StackPanel>
+                                    <TextBlock Text="Quick actions stay here so you don't have to scroll after entering inputs." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Margin="2,6,0,0" />
+                                </StackPanel>
+                            </Border>
 
                             <Border Margin="0,0,0,12" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                 <Expander IsExpanded="True">
@@ -287,12 +298,6 @@
                                     <TextBlock Name="DuctFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
-                                <Button Name="BtnClear" Content="Clear" Width="80" Click="BtnClear_Click" Margin="0,0,8,0" />
-                                <Button Name="BtnExportDuct" Content="Export to CSV" Width="140" Click="BtnExportDuct_Click" />
-                            </StackPanel>
 
                             <Border Margin="0,0,0,10" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                 <StackPanel>
@@ -629,6 +634,17 @@
                                 <TextBlock Text="Code Region" VerticalAlignment="Center" Margin="0,0,8,0" />
                                 <ComboBox Name="PlRegionCombo" Width="260" />
                             </StackPanel>
+
+                            <Border Margin="4,8,4,4" Padding="8" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="Calculate Loss" Width="150" Click="BtnPlCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
+                                        <Button Content="Clear" Width="90" Click="BtnPlClear_Click" Margin="0,0,8,0" />
+                                        <Button Content="Export to CSV" Width="150" Click="BtnExportPlumbing_Click" />
+                                    </StackPanel>
+                                    <TextBlock Text="Run, reset, or export results without scrolling; you can still use the fitting tools below." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Margin="2,6,0,0" />
+                                </StackPanel>
+                            </Border>
     
                             <Border Margin="4" Padding="8" Style="{StaticResource HighlightBorderStyle}" CornerRadius="8">
                                 <StackPanel>
@@ -684,13 +700,6 @@
                                     <TextBlock Name="PlFittingSummaryText" Margin="4,2,4,0" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
-    
-                            <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
-                                <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
-                                <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
-                                <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
-                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, pressure drop, Reynolds number, and density." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
-                            </StackPanel>
     
                             <Border Margin="4,0,4,8" Padding="8" Style="{StaticResource WarningBorderStyle}" CornerRadius="8">
                                 <StackPanel>
@@ -1250,11 +1259,16 @@
                         <Border Padding="10" Style="{StaticResource AccentBorderStyle}">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
-                                <TextBlock TextWrapping="Wrap" FontSize="12" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; invalid or missing files keep the defaults." />
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; invalid or missing files keep the defaults. Templates are auto-detected even if they are still named materials-template/fittings-template." />
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
                                     <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
                                     <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" Style="{StaticResource BaseButtonStyle}" />
                                     <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" Style="{StaticResource BaseButtonStyle}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <Button Content="Reset to built-ins" Width="140" Click="ResetCatalogs_Click" Margin="0,0,8,0" />
+                                    <Button Content="Create template files" Width="170" Click="CreateCatalogTemplates_Click" Margin="0,0,8,0" />
+                                    <Button Content="Open catalog folder" Width="160" Click="OpenCatalogFolder_Click" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Name="CatalogStatusBadge" Style="{StaticResource BadgeBorderStyle}" Background="{StaticResource Brush.ChipInfoBackground}" BorderBrush="{StaticResource Brush.ChipInfoBorder}">
@@ -1266,6 +1280,48 @@
                                     <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Width="580" />
                                 </StackPanel>
                                 <TextBlock Name="CatalogHelperText" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
+
+                                <UniformGrid Columns="2" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Detected catalog files" FontWeight="SemiBold" />
+                                        <TextBlock Text="Helps verify the folder you picked has the right files and timestamps." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" />
+                                        <ListBox ItemsSource="{Binding CatalogFiles}" Height="120" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Loaded catalog preview" FontWeight="SemiBold" />
+                                        <TextBlock Text="Shows what actually loaded into the app after validation." FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" />
+                                        <ListBox ItemsSource="{Binding CatalogPreview}" Height="120" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </UniformGrid>
+
+                                <UniformGrid Columns="2" Margin="0,6,0,0">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Warnings" FontWeight="SemiBold" />
+                                        <ItemsControl ItemsSource="{Binding CatalogWarnings}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="⚠" Margin="0,0,6,0" />
+                                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" Width="260" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Errors" FontWeight="SemiBold" />
+                                        <ItemsControl ItemsSource="{Binding CatalogErrors}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="⛔" Margin="0,0,6,0" />
+                                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" Width="260" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </UniformGrid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
