@@ -87,6 +87,14 @@
                         <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
                     </Style>
 
+                    <Style TargetType="TextBox">
+                        <Setter Property="FontFamily" Value="Segoe UI" />
+                        <Setter Property="Padding" Value="8,6" />
+                        <Setter Property="MinHeight" Value="32" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="SnapsToDevicePixels" Value="True" />
+                    </Style>
+
                     <!-- Borders -->
                     <Style x:Key="CardBorderStyle" TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.CardBackground}" />
