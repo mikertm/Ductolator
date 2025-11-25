@@ -861,7 +861,15 @@
 
                             <Border BorderBrush="{StaticResource Brush.BorderMuted}" BorderThickness="1" CornerRadius="8" Background="{StaticResource Brush.Surface}">
                                 <StackPanel>
-                                    <Grid Margin="6" ColumnDefinitions="3* 1.5* 1.4* 1.6* 1.5* Auto">
+                                    <Grid Margin="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3*" />
+                                            <ColumnDefinition Width="1.5*" />
+                                            <ColumnDefinition Width="1.4*" />
+                                            <ColumnDefinition Width="1.6*" />
+                                            <ColumnDefinition Width="1.5*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
                                         <TextBlock Text="Fixture" FontWeight="Bold" />
                                         <TextBlock Grid.Column="1" Text="Default FU" FontWeight="Bold" />
                                         <TextBlock Grid.Column="2" Text="Quantity" FontWeight="Bold" />
@@ -872,7 +880,15 @@
                                     <ItemsControl ItemsSource="{Binding FixtureRows}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid Margin="6" ColumnDefinitions="3* 1.5* 1.4* 1.6* 1.5* Auto">
+                                                <Grid Margin="6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3*" />
+                                                        <ColumnDefinition Width="1.5*" />
+                                                        <ColumnDefinition Width="1.4*" />
+                                                        <ColumnDefinition Width="1.6*" />
+                                                        <ColumnDefinition Width="1.5*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
                                                     <ComboBox Grid.Column="0"
                                                               ItemsSource="{Binding DataContext.FixtureCatalog, RelativeSource={RelativeSource AncestorType=Window}}"
                                                               DisplayMemberPath="Name"
