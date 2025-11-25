@@ -62,8 +62,7 @@
         <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Background="#f6f2ff" BorderBrush="#d7cef5" BorderThickness="1">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
-                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
-                           Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files are merged with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
+                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
                     <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
                     <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" />
@@ -89,12 +88,9 @@
                         <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="4" Padding="10" Background="#eef8f2" BorderBrush="#c6e6d1" BorderThickness="1">
                             <StackPanel>
                                 <TextBlock Text="How to use" FontWeight="Bold" />
-                                <TextBlock x:Name="HowToUseStep1" TextWrapping="Wrap" FontSize="12"
-                                           Text="1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest." />
-                                <TextBlock x:Name="HowToUseStep2" TextWrapping="Wrap" FontSize="12"
-                                           Text="2) Pick a code region to load common velocity and friction guidance." />
-                                <TextBlock x:Name="HowToUseStep3" TextWrapping="Wrap" FontSize="12"
-                                           Text="3) Click Calculate to fill air properties, pressure class, and equivalent shapes; Export saves the latest result to CSV." />
+                                <TextBlock x:Name="HowToUseStep1" TextWrapping="Wrap" FontSize="12" Text="1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest." />
+                                <TextBlock x:Name="HowToUseStep2" TextWrapping="Wrap" FontSize="12" Text="2) Choose a code region to pull in common velocity and friction guidance." />
+                                <TextBlock x:Name="HowToUseStep3" TextWrapping="Wrap" FontSize="12" Text="3) Click Calculate to fill air properties, pressure class, and equivalent shapes; Export saves the latest result to CSV." />
                             </StackPanel>
                         </Border>
 
@@ -110,8 +106,7 @@
                                         </StackPanel>
                                     </Expander.Header>
                                     <StackPanel Margin="0,2,0,0" Orientation="Vertical" Panel.ZIndex="1">
-                                        <TextBlock x:Name="QuickStartNoteText" TextWrapping="Wrap" FontSize="12" Margin="0,2,0,8"
-                                                   Text="Use this for typical sizing: enter any two of flow, velocity, or friction plus one shape (round or rectangular) to solve the rest." />
+                                        <TextBlock x:Name="QuickStartNoteText" TextWrapping="Wrap" FontSize="12" Margin="0,2,0,8" Text="Use this for typical sizing: enter any two of flow, velocity, or friction plus one shape (round or rectangular) to solve the rest." />
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="2*" />
@@ -349,10 +344,8 @@
                             <Border Margin="0,0,0,10" Padding="8" Background="#f0f4ff" BorderBrush="#c5d2f7" BorderThickness="1">
                                 <StackPanel>
                                     <TextBlock Text="Input tips" FontWeight="Bold" />
-                                    <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12"
-                                               Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
-                                    <TextBlock x:Name="InputTipsLine2" TextWrapping="Wrap" FontSize="12"
-                                               Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Reynolds number highlights laminar vs. turbulent flow, and the Darcy friction factor (f) feeds total pressure. Straight length and fitting loss sum add fittings to total pressure." />
+                                    <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12" Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
+                                    <TextBlock x:Name="InputTipsLine2" TextWrapping="Wrap" FontSize="12" Text="Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Reynolds number highlights laminar vs. turbulent flow, and the Darcy friction factor (f) feeds total pressure. Straight length and fitting loss sum add fittings to total pressure." />
                                 </StackPanel>
                             </Border>
 
@@ -456,8 +449,9 @@
                                                     <TextBox Name="OutFanBhp" IsReadOnly="True" />
                                                 </StackPanel>
                                                 <StackPanel Margin="4">
-                                                    <TextBlock Text="Vel. Pressure echo" />
-                                                    <TextBox Name="OutVpEcho" IsReadOnly="True" />
+                                                <TextBlock Text="Velocity Pressure (check)" />
+                                                <TextBox Name="OutVpEcho" IsReadOnly="True"
+                                                         ToolTip="Echo of velocity pressure for quick fan and pressure class checks." />
                                                 </StackPanel>
                                             </UniformGrid>
                                         </StackPanel>
