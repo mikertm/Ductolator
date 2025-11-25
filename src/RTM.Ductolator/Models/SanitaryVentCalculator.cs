@@ -17,7 +17,7 @@ namespace RTM.Ductolator.Models
         private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
 
         // IPC/UPC style DFU limits for horizontal branches (nominal diameter, max DFU)
-        private static readonly Dictionary<double, List<(double DiameterIn, double MaxDfu)>> HorizontalBranchCapacity = new()
+        private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> HorizontalBranchCapacity = new()
         {
             { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
             { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
@@ -26,7 +26,7 @@ namespace RTM.Ductolator.Models
 
         // IPC Table 906.1 / UPC vent stack-vent capacities (nominal diameter, max DFU at typical developed lengths)
         // The length reduction factor derates long vents for friction and load diversity.
-        private static readonly List<(double DiameterIn, double BaseMaxDfu)> VentStackBaseCapacity = new()
+        private static List<(double DiameterIn, double BaseMaxDfu)> VentStackBaseCapacity = new()
         {
             (1.25, 1),
             (1.5, 8),
@@ -35,6 +35,39 @@ namespace RTM.Ductolator.Models
             (3.0, 212),
             (4.0, 500)
         };
+
+        public static void SetHorizontalBranchCapacity(Dictionary<double, List<(double DiameterIn, double MaxDfu)>> capacityTable)
+        {
+            if (capacityTable == null || capacityTable.Count == 0) return;
+
+            var newTable = new Dictionary<double, List<(double DiameterIn, double MaxDfu)>>();
+            foreach (var kvp in capacityTable)
+            {
+                if (kvp.Key <= 0 || kvp.Value == null) continue;
+                var row = kvp.Value
+                    .Where(v => v.DiameterIn > 0 && v.MaxDfu > 0)
+                    .OrderBy(v => v.DiameterIn)
+                    .ToList();
+
+                if (row.Count > 0)
+                    newTable[kvp.Key] = row;
+            }
+
+            if (newTable.Count > 0)
+                HorizontalBranchCapacity = newTable;
+        }
+
+        public static void SetVentStackBaseCapacity(List<(double DiameterIn, double BaseMaxDfu)> capacityTable)
+        {
+            if (capacityTable == null || capacityTable.Count == 0) return;
+            var filtered = capacityTable
+                .Where(v => v.DiameterIn > 0 && v.BaseMaxDfu > 0)
+                .OrderBy(v => v.DiameterIn)
+                .ToList();
+
+            if (filtered.Count > 0)
+                VentStackBaseCapacity = filtered;
+        }
 
         /// <summary>
         /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal branch at the given slope (ft/ft).
