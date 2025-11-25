@@ -336,8 +336,8 @@
                                 </StackPanel.Resources>
                                 <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,4" />
 
-                                <UniformGrid Margin="0,0,0,4" Columns="3" HorizontalAlignment="Stretch">
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" MinWidth="200">
+                                <UniformGrid Margin="0,0,0,4" Columns="2" HorizontalAlignment="Stretch">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10" MinWidth="180">
                                         <StackPanel>
                                             <TextBlock Text="Velocity (FPM)" FontWeight="Bold" />
                                             <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
@@ -351,7 +351,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" MinWidth="200">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource SuccessBorderStyle}" CornerRadius="10" MinWidth="180">
                                         <StackPanel>
                                             <TextBlock Text="Friction (in. w.g./100 ft)" FontWeight="Bold" />
                                             <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
@@ -365,7 +365,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" MinWidth="200">
+                                    <Border Margin="4,0" Padding="6" Style="{StaticResource WarningBorderStyle}" CornerRadius="10" MinWidth="180">
                                         <StackPanel>
                                             <TextBlock Text="Total ΔP (in. w.g.)" FontWeight="Bold" />
                                             <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
