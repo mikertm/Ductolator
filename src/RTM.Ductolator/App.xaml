@@ -3,5 +3,241 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary>
+                    <!-- Light palette -->
+                    <Color x:Key="Color.Primary.Light">#4B6BFB</Color>
+                    <Color x:Key="Color.PrimaryDark.Light">#2F4AB8</Color>
+                    <Color x:Key="Color.Secondary.Light">#8B5CF6</Color>
+                    <Color x:Key="Color.Surface.Light">#F7F8FB</Color>
+                    <Color x:Key="Color.SurfaceAlt.Light">#EEF2F8</Color>
+                    <Color x:Key="Color.Card.Light">#F2F4FC</Color>
+                    <Color x:Key="Color.CardAlt.Light">#EEF5FB</Color>
+                    <Color x:Key="Color.Emphasis.Light">#E8EDFF</Color>
+                    <Color x:Key="Color.Success.Light">#E9F6EF</Color>
+                    <Color x:Key="Color.Warning.Light">#FFF3E8</Color>
+                    <Color x:Key="Color.Muted.Light">#F2F0F7</Color>
+                    <Color x:Key="Color.Border.Light">#D6DEED</Color>
+                    <Color x:Key="Color.BorderAlt.Light">#C5D2F7</Color>
+                    <Color x:Key="Color.BorderMuted.Light">#D7DDE8</Color>
+                    <Color x:Key="Color.Text.Primary.Light">#0F172A</Color>
+                    <Color x:Key="Color.Text.Subtle.Light">#4B5563</Color>
+                    <Color x:Key="Color.Text.Danger.Light">#8B1E2C</Color>
+
+                    <!-- Dark palette (reserved for future theme switching) -->
+                    <Color x:Key="Color.Primary.Dark">#93B4FF</Color>
+                    <Color x:Key="Color.PrimaryDark.Dark">#6A8BE0</Color>
+                    <Color x:Key="Color.Secondary.Dark">#BBA7FF</Color>
+                    <Color x:Key="Color.Surface.Dark">#0F172A</Color>
+                    <Color x:Key="Color.SurfaceAlt.Dark">#1F2937</Color>
+                    <Color x:Key="Color.Card.Dark">#111827</Color>
+                    <Color x:Key="Color.CardAlt.Dark">#162337</Color>
+                    <Color x:Key="Color.Emphasis.Dark">#1E2A44</Color>
+                    <Color x:Key="Color.Success.Dark">#1D3B2A</Color>
+                    <Color x:Key="Color.Warning.Dark">#3F2A1B</Color>
+                    <Color x:Key="Color.Muted.Dark">#1F2433</Color>
+                    <Color x:Key="Color.Border.Dark">#243044</Color>
+                    <Color x:Key="Color.BorderAlt.Dark">#2F3D57</Color>
+                    <Color x:Key="Color.BorderMuted.Dark">#2C364A</Color>
+                    <Color x:Key="Color.Text.Primary.Dark">#E5E7EB</Color>
+                    <Color x:Key="Color.Text.Subtle.Dark">#C7D2FE</Color>
+                    <Color x:Key="Color.Text.Danger.Dark">#FECACA</Color>
+
+                    <!-- Brush aliases using light palette by default -->
+                    <SolidColorBrush x:Key="Brush.Primary" Color="{StaticResource Color.Primary.Light}" />
+                    <SolidColorBrush x:Key="Brush.PrimaryDark" Color="{StaticResource Color.PrimaryDark.Light}" />
+                    <SolidColorBrush x:Key="Brush.Secondary" Color="{StaticResource Color.Secondary.Light}" />
+                    <SolidColorBrush x:Key="Brush.AppBackground" Color="{StaticResource Color.Surface.Light}" />
+                    <SolidColorBrush x:Key="Brush.Surface" Color="{StaticResource Color.Surface.Light}" />
+                    <SolidColorBrush x:Key="Brush.SurfaceAlt" Color="{StaticResource Color.SurfaceAlt.Light}" />
+                    <SolidColorBrush x:Key="Brush.CardBackground" Color="{StaticResource Color.Card.Light}" />
+                    <SolidColorBrush x:Key="Brush.CardAltBackground" Color="{StaticResource Color.CardAlt.Light}" />
+                    <SolidColorBrush x:Key="Brush.EmphasisBackground" Color="{StaticResource Color.Emphasis.Light}" />
+                    <SolidColorBrush x:Key="Brush.SuccessBackground" Color="{StaticResource Color.Success.Light}" />
+                    <SolidColorBrush x:Key="Brush.WarningBackground" Color="{StaticResource Color.Warning.Light}" />
+                    <SolidColorBrush x:Key="Brush.MutedBackground" Color="{StaticResource Color.Muted.Light}" />
+                    <SolidColorBrush x:Key="Brush.Border" Color="{StaticResource Color.Border.Light}" />
+                    <SolidColorBrush x:Key="Brush.BorderAlt" Color="{StaticResource Color.BorderAlt.Light}" />
+                    <SolidColorBrush x:Key="Brush.BorderMuted" Color="{StaticResource Color.BorderMuted.Light}" />
+                    <SolidColorBrush x:Key="Brush.TextPrimary" Color="{StaticResource Color.Text.Primary.Light}" />
+                    <SolidColorBrush x:Key="Brush.TextSubtle" Color="{StaticResource Color.Text.Subtle.Light}" />
+                    <SolidColorBrush x:Key="Brush.TextDanger" Color="{StaticResource Color.Text.Danger.Light}" />
+                    <SolidColorBrush x:Key="Brush.TextSuccess" Color="#1B5E3B" />
+                    <SolidColorBrush x:Key="Brush.TextWarning" Color="#8A5A00" />
+                    <SolidColorBrush x:Key="Brush.TextInfo" Color="#1D3C74" />
+                    <SolidColorBrush x:Key="Brush.TextMutedStrong" Color="#3D2466" />
+                    <SolidColorBrush x:Key="Brush.TextDangerSoft" Color="#7F1D1D" />
+                    <SolidColorBrush x:Key="Brush.ChipSuccessBackground" Color="#E6F7EF" />
+                    <SolidColorBrush x:Key="Brush.ChipSuccessBorder" Color="#8BD2B2" />
+                    <SolidColorBrush x:Key="Brush.ChipWarningBackground" Color="#FFF7E6" />
+                    <SolidColorBrush x:Key="Brush.ChipWarningBorder" Color="#F2C166" />
+                    <SolidColorBrush x:Key="Brush.ChipInfoBackground" Color="#E8F0FE" />
+                    <SolidColorBrush x:Key="Brush.ChipInfoBorder" Color="#A7BAF7" />
+                    <SolidColorBrush x:Key="Brush.ChipDangerBackground" Color="#FFF0F0" />
+                    <SolidColorBrush x:Key="Brush.ChipDangerBorder" Color="#F2A6A6" />
+                    <SolidColorBrush x:Key="Brush.ChipPurpleBackground" Color="#F7F4FF" />
+                    <SolidColorBrush x:Key="Brush.ChipPurpleBorder" Color="#C8B5F7" />
+
+                    <!-- Typography -->
+                    <Style TargetType="TextBlock">
+                        <Setter Property="FontFamily" Value="Segoe UI" />
+                        <Setter Property="Foreground" Value="{StaticResource Brush.TextPrimary}" />
+                        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+                        <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
+                    </Style>
+
+                    <!-- Borders -->
+                    <Style x:Key="CardBorderStyle" TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource Brush.CardBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="CornerRadius" Value="10" />
+                        <Setter Property="Padding" Value="8" />
+                        <Setter Property="Margin" Value="0,0,0,12" />
+                    </Style>
+
+                    <Style x:Key="AccentBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
+                    </Style>
+
+                    <Style x:Key="MutedBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.MutedBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderMuted}" />
+                    </Style>
+
+                    <Style x:Key="SuccessBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.SuccessBackground}" />
+                        <Setter Property="BorderBrush" Value="#B8E6C5" />
+                    </Style>
+
+                    <Style x:Key="WarningBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.WarningBackground}" />
+                        <Setter Property="BorderBrush" Value="#F3CFAA" />
+                    </Style>
+
+                    <Style x:Key="HighlightBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.CardAltBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
+                    </Style>
+
+                    <Style x:Key="BadgeBorderStyle" TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource Brush.CardBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderMuted}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="CornerRadius" Value="10" />
+                        <Setter Property="Padding" Value="8,3" />
+                        <Setter Property="Margin" Value="0,6,6,0" />
+                    </Style>
+
+                    <!-- Buttons -->
+                    <Style x:Key="BaseButtonStyle" TargetType="Button">
+                        <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="Foreground" Value="{StaticResource Brush.TextPrimary}" />
+                        <Setter Property="Padding" Value="12,6" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="8"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.CardAltBackground}" />
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Border}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="border" Property="Opacity" Value="0.6" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}" />
+
+                    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                        <Setter Property="Background" Value="{StaticResource Brush.Primary}" />
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryDark}" />
+                        <Setter Property="Padding" Value="14,7" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="8"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.PrimaryDark}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.Secondary}" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="border" Property="Opacity" Value="0.65" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="PillButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                        <Setter Property="Padding" Value="14,6" />
+                        <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="18"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.CardAltBackground}" />
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Primary}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="border" Property="Opacity" Value="0.6" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="ChipBorderStyle" TargetType="Border" BasedOn="{StaticResource BadgeBorderStyle}" />
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
