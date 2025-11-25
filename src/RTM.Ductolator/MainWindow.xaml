@@ -3,52 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ductolator &amp; Plumbing Sizer" Height="720" Width="1200"
         WindowStartupLocation="CenterScreen"
-        Closing="MainWindow_Closing">
-    <Window.Resources>
-        <Style x:Key="PillButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="14,6" />
-            <Setter Property="Background" Value="#e9edff" />
-            <Setter Property="BorderBrush" Value="#c5d2f7" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="#1c2a52" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="18"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#dfe8ff" />
-                                <Setter TargetName="border" Property="BorderBrush" Value="#9fb1f7" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#cfd9ff" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Opacity" Value="0.6" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ChipBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#f1f3f9" />
-            <Setter Property="BorderBrush" Value="#d3d8e8" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="8,3" />
-            <Setter Property="Margin" Value="0,6,6,0" />
-        </Style>
-    </Window.Resources>
+        Closing="MainWindow_Closing"
+        Background="{StaticResource Brush.AppBackground}">
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -59,16 +15,16 @@
         <TextBlock Text="ASHRAE/SMACNA duct sizing and ASPE/UPC plumbing calculations"
                    FontSize="16" FontWeight="Bold"/>
 
-        <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Background="#f6f2ff" BorderBrush="#d7cef5" BorderThickness="1">
+        <Border Grid.Row="1" Margin="0,10,0,4" Padding="8" Style="{StaticResource AccentBorderStyle}">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Custom catalog folder" FontWeight="Bold" />
                 <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4" Text="Point to a folder containing materials.json/materials.csv and fittings.json/fittings.csv. Runtime files merge with the built-in ASHRAE/SMACNA/ASPE tables; parsing errors fall back to defaults." />
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
                     <TextBox Name="CatalogFolderText" Width="420" Margin="0,0,6,0" />
-                    <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" />
-                    <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" />
+                    <Button Content="Browse" Width="80" Margin="0,0,6,0" Click="BrowseCatalogFolder_Click" Style="{StaticResource BaseButtonStyle}" />
+                    <Button Content="Reload Catalogs" Width="130" Click="ReloadCatalogs_Click" Style="{StaticResource BaseButtonStyle}" />
                 </StackPanel>
-                <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Foreground="DarkRed" />
+                <TextBlock Name="CatalogStatusNote" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
             </StackPanel>
         </Border>
 
@@ -85,7 +41,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="4" Padding="10" Background="#eef8f2" BorderBrush="#c6e6d1" BorderThickness="1">
+                        <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}">
                             <StackPanel>
                                 <TextBlock Text="How to use" FontWeight="Bold" />
                                 <TextBlock x:Name="HowToUseStep1" TextWrapping="Wrap" FontSize="12" Text="1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest." />
@@ -97,7 +53,7 @@
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,12,0" Orientation="Vertical" VerticalAlignment="Stretch" Panel.ZIndex="1">
                             <TextBlock Text="Plan" FontWeight="Bold" FontSize="15" Margin="4,0,4,6" />
 
-                            <Border Margin="0,0,0,12" Padding="8" Background="#f7faff" BorderBrush="#d7e3f7" BorderThickness="1">
+                            <Border Margin="0,0,0,12" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                 <Expander IsExpanded="True">
                                     <Expander.Header>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -122,7 +78,7 @@
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="FlowLabel" Text="Flow (CFM)" />
                                                 <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
-                                                <TextBlock x:Name="FlowExample" FontSize="11" Foreground="#4b5563" Text="Office branch: ~1,000 cfm" />
+                                                <TextBlock x:Name="FlowExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Office branch: ~1,000 cfm" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Terminals 300–1,200 CFM" FontSize="11" />
@@ -135,7 +91,7 @@
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="VelocityLabel" Text="Velocity (FPM)" />
                                                 <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
-                                                <TextBlock x:Name="VelocityExample" FontSize="11" Foreground="#4b5563" Text="Typical supply: 800–1800 ft/min" />
+                                                <TextBlock x:Name="VelocityExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Typical supply: 800–1800 ft/min" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Supply 800–1800 FPM" FontSize="11" />
@@ -148,7 +104,7 @@
                                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="FrictionLabel" Text="Friction (in. w.g. / 100 ft)" />
                                                 <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
-                                                <TextBlock x:Name="FrictionExample" FontSize="11" Foreground="#4b5563" Text="Aim for 0.05–0.08 in. drop per 100 ft" />
+                                                <TextBlock x:Name="FrictionExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Aim for 0.05–0.08 in. drop per 100 ft" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Equal-friction 0.05–0.10" FontSize="11" />
@@ -161,7 +117,7 @@
                                             <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="AspectRatioLabel" Text="Aspect Ratio (long/short)" />
                                                 <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
-                                                <TextBlock x:Name="AspectRatioExample" FontSize="11" Foreground="#4b5563" Text="Keep it at 4:1 or lower for noise" />
+                                                <TextBlock x:Name="AspectRatioExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Keep it at 4:1 or lower for noise" />
                                                 <WrapPanel>
                                                     <Border Style="{StaticResource ChipBorderStyle}">
                                                         <TextBlock Text="Noise-friendly ≤4:1" FontSize="11" />
@@ -172,24 +128,24 @@
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RoundDiameterLabel" Text="Round Diameter (in)" />
                                                 <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
-                                                <TextBlock x:Name="RoundDiameterExample" FontSize="11" Foreground="#4b5563" Text="Example: 18 in round main" />
+                                                <TextBlock x:Name="RoundDiameterExample" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 18 in round main" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RectSide1Label" Text="Rect Side 1 (in)" />
                                                 <TextBox Name="InS1" ToolTip="Long side in inches" />
-                                                <TextBlock x:Name="RectSide1Example" FontSize="11" Foreground="#4b5563" Text="Example: 24 in long side" />
+                                                <TextBlock x:Name="RectSide1Example" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 24 in long side" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="4" Orientation="Vertical">
                                                 <TextBlock x:Name="RectSide2Label" Text="Rect Side 2 (in)" />
                                                 <TextBox Name="InS2" ToolTip="Short side in inches" />
-                                                <TextBlock x:Name="RectSide2Example" FontSize="11" Foreground="#4b5563" Text="Example: 12 in short side" />
+                                                <TextBlock x:Name="RectSide2Example" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" Text="Example: 12 in short side" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
                                 </Expander>
                             </Border>
 
-                            <Border Margin="0,0,0,12" Padding="8" Background="#f8f5ff" BorderBrush="#dcd2f6" BorderThickness="1">
+                            <Border Margin="0,0,0,12" Padding="8" Style="{StaticResource AccentBorderStyle}">
                                 <Expander Header="Advanced" IsExpanded="False">
                                     <StackPanel Orientation="Vertical" Margin="0,2,0,0">
                                         <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,8"
@@ -222,7 +178,7 @@
                                             <StackPanel Grid.Row="0" Grid.Column="3" Margin="4" Orientation="Vertical">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                     <TextBlock Text="Fitting loss sum (K)" />
-                                                    <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                    <TextBlock Text="ℹ" Foreground="{StaticResource Brush.TextSubtle}" FontSize="12" Margin="6,0,0,0"
                                                                ToolTip="Sum of loss coefficients from fittings; higher totals increase pressure drop." />
                                                 </StackPanel>
                                                 <TextBox Name="InLossCoeff" ToolTip="Sum of fitting loss coefficients (dimensionless); higher values add more static loss." />
@@ -266,7 +222,7 @@
                                 </Expander>
                             </Border>
 
-                            <Border Margin="0,0,0,12" Padding="10" Background="#f2f4fc" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <Border Margin="0,0,0,12" Padding="10" Style="{StaticResource HighlightBorderStyle}">
                                 <StackPanel Orientation="Vertical">
                                     <TextBlock Text="Regional presets" FontWeight="Bold" />
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,6">
@@ -282,7 +238,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Margin="0,0,0,12" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <Border Margin="0,0,0,12" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                 <StackPanel>
                                     <TextBlock Text="Fittings (ASHRAE/SMACNA)" FontWeight="Bold" />
                                     <UniformGrid Columns="3" Margin="0,4">
@@ -301,14 +257,14 @@
                                         </StackPanel>
                                     </UniformGrid>
                                     <TextBlock Text="Select a fitting, enter quantity, then Add; totals refresh below"
-                                               Margin="4,0,4,6" FontSize="12" Foreground="#6b7280" />
+                                               Margin="4,0,4,6" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
                                     <Grid Margin="4,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <ListBox Name="DuctFittingRunList" Height="120" Grid.Column="0" />
-                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
                                             <TextBlock Name="DuctFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
                                         </Border>
                                     </Grid>
@@ -316,7 +272,7 @@
                                         <StackPanel Margin="4">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="Fitting loss sum (K)" />
-                                                <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                <TextBlock Text="ℹ" Foreground="{StaticResource Brush.TextSubtle}" FontSize="12" Margin="6,0,0,0"
                                                            ToolTip="Total K for the run; higher sums raise pressure drop." />
                                             </StackPanel>
                                             <TextBox Name="DuctFittingSumKOutput" IsReadOnly="True"
@@ -336,12 +292,12 @@
                             </Border>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" />
+                                <Button Name="BtnCalc" Content="Calculate" Width="120" Click="BtnCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
                                 <Button Name="BtnClear" Content="Clear" Width="80" Click="BtnClear_Click" Margin="0,0,8,0" />
                                 <Button Name="BtnExportDuct" Content="Export to CSV" Width="140" Click="BtnExportDuct_Click" />
                             </StackPanel>
 
-                            <Border Margin="0,0,0,10" Padding="8" Background="#f0f4ff" BorderBrush="#c5d2f7" BorderThickness="1">
+                            <Border Margin="0,0,0,10" Padding="8" Style="{StaticResource HighlightBorderStyle}">
                                 <StackPanel>
                                     <TextBlock Text="Input tips" FontWeight="Bold" />
                                     <TextBlock x:Name="InputTipsLine1" TextWrapping="Wrap" FontSize="12" Text="Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations." />
@@ -350,15 +306,15 @@
                             </Border>
 
                             <TextBlock Name="DuctCodeNote" Margin="4,0" TextWrapping="Wrap" />
-                            <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="DarkRed" />
+                            <TextBlock Name="DuctStatusNote" Margin="4,0,4,8" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
                         </StackPanel>
 
-                        <Border Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" Padding="12" Background="#f5f7fb" BorderBrush="#d7deef" BorderThickness="1">
+                        <Border Grid.Row="1" Grid.Column="1" Margin="0,8,4,0" Padding="12" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" CornerRadius="10">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock Text="Results" FontWeight="Bold" FontSize="15" Margin="0,0,0,6" />
 
                                 <UniformGrid Columns="4" Margin="0,0,0,10">
-                                    <Border Margin="4" Padding="10" Background="#edf7ff" BorderBrush="#c5dcf5" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Velocity" FontWeight="Bold" />
                                             <TextBox Name="OutVel" IsReadOnly="True" Margin="0,4,0,2" />
@@ -372,7 +328,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4" Padding="10" Background="#f3f7ed" BorderBrush="#d4e6b3" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Friction" FontWeight="Bold" />
                                             <TextBox Name="OutDp100" IsReadOnly="True" Margin="0,4,0,2" />
@@ -386,7 +342,7 @@
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
-                                    <Border Margin="4" Padding="10" Background="#fff4ed" BorderBrush="#f0c9a7" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Total ΔP" FontWeight="Bold" />
                                             <TextBox Name="OutTotalDp" IsReadOnly="True" Margin="0,4,0,2" />
@@ -400,7 +356,7 @@
                                 </UniformGrid>
 
                                 <UniformGrid Columns="2" Margin="0,0,0,6">
-                                    <Border Margin="4" Padding="10" Background="#f0f7ff" BorderBrush="#c5dcf5" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource HighlightBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Air Data" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,6,0,0">
@@ -432,7 +388,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4" Padding="10" Background="#fef6ed" BorderBrush="#f0c9a7" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource WarningBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Pressure / Leakage / Fan" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,6,0,0">
@@ -457,7 +413,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4" Padding="10" Background="#f4fbf3" BorderBrush="#c9e7c2" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource SuccessBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Heat / Insulation" FontWeight="Bold" />
                                             <UniformGrid Columns="2" Margin="0,6,0,0">
@@ -481,7 +437,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Margin="4" Padding="10" Background="#f2f0f7" BorderBrush="#d3cde8" BorderThickness="1" CornerRadius="12">
+                                    <Border Margin="4" Padding="10" Style="{StaticResource MutedBorderStyle}" CornerRadius="12">
                                         <StackPanel>
                                             <TextBlock Text="Geometry" FontWeight="Bold" />
                                             <UniformGrid Columns="3" Margin="0,6,0,0">
@@ -568,10 +524,10 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Margin="8" Padding="10" Background="#f3f4f6" BorderBrush="#d1d5db" BorderThickness="1" CornerRadius="10">
+                    <Border Grid.Column="0" Margin="8" Padding="10" Style="{StaticResource CardBorderStyle}" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.Border}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Plumbing Guide" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,4,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,4,0,8"
                                        Text="Jump between cards and follow the quick steps in each section." />
                             <StackPanel>
                                 <Button Content="Loss" Tag="{x:Reference LossCard}" Click="NavigateToCard_Click" Margin="0,4,0,0" Style="{StaticResource PillButtonStyle}" />
@@ -588,7 +544,7 @@
 
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="8" Orientation="Vertical">
-                            <Border Margin="4" Padding="12" Background="#f9f1e8" BorderBrush="#e3c99b" BorderThickness="1" CornerRadius="10">
+                            <Border Margin="4" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                                 <StackPanel>
                                     <TextBlock Text="Plumbing overview" FontWeight="Bold" />
                                     <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,4"
@@ -607,10 +563,10 @@
                                 </StackPanel>
                             </Border>
     
-                    <Border x:Name="LossCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="LossCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Loss" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter flow, length, and nominal size or explicit ID with material and fluid details. Step 2: Pick a region and add fittings. Step 3: Calculate loss, clear, or export." />
                             <TextBlock Text="Pipe Conditions" FontWeight="Bold" />
                             <UniformGrid Columns="4" Margin="0,4">
@@ -677,10 +633,10 @@
                                 <ComboBox Name="PlRegionCombo" Width="260" />
                             </StackPanel>
     
-                            <Border Margin="4" Padding="8" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                            <Border Margin="4" Padding="8" Style="{StaticResource HighlightBorderStyle}" CornerRadius="8">
                                 <StackPanel>
                                     <TextBlock Text="Fittings (ASPE/UPC)" FontWeight="Bold" />
-                                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,6"
+                                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,6"
                                                Text="Step 2 helper: select a fitting, add quantities, and review equivalent lengths." />
                                     <UniformGrid Columns="3" Margin="0,4">
                                         <StackPanel Margin="4">
@@ -697,15 +653,15 @@
                                             <Button Content="Clear" Width="60" Click="ClearPlumbingFittings_Click" />
                                         </StackPanel>
                                     </UniformGrid>
-                                    <TextBlock Text="Fittings use ASPE K factors and UPC equivalent length guidance." Margin="4,0,4,2" FontSize="12" Foreground="#6b7280" />
-                                    <TextBlock Text="Needs fitting + qty; outputs fitting loss sum (K) and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="#4b5563" />
+                                    <TextBlock Text="Fittings use ASPE K factors and UPC equivalent length guidance." Margin="4,0,4,2" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" />
+                                    <TextBlock Text="Needs fitting + qty; outputs fitting loss sum (K) and equivalent length." Margin="4,0,4,6" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" />
                                     <Grid Margin="4,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <ListBox Name="PlFittingRunList" Height="120" Grid.Column="0" />
-                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="8">
+                                        <Border Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="8">
                                             <TextBlock Name="PlFittingBadgeText" VerticalAlignment="Center" TextWrapping="Wrap" />
                                         </Border>
                                     </Grid>
@@ -713,7 +669,7 @@
                                         <StackPanel Margin="4">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="Fitting loss sum (K)" />
-                                                <TextBlock Text="ℹ" Foreground="#4b5563" FontSize="12" Margin="6,0,0,0"
+                                                <TextBlock Text="ℹ" Foreground="{StaticResource Brush.TextSubtle}" FontSize="12" Margin="6,0,0,0"
                                                            ToolTip="Total K for the plumbing run; higher sums raise pressure drop." />
                                             </StackPanel>
                                             <TextBox Name="PlFittingSumKOutput" IsReadOnly="True"
@@ -733,13 +689,13 @@
                             </Border>
     
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
-                                <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" />
+                                <Button Content="Calculate Loss" Width="140" Click="BtnPlCalc_Click" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" />
                                 <Button Content="Clear" Width="80" Click="BtnPlClear_Click" Margin="0,0,8,0" />
                                 <Button Content="Export to CSV" Width="140" Click="BtnExportPlumbing_Click" />
-                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, pressure drop, Reynolds number, and density." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                <TextBlock Text="Needs flow, length, size/material; outputs velocity, pressure drop, Reynolds number, and density." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                             </StackPanel>
     
-                            <Border Margin="4,0,4,8" Padding="8" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="8">
+                            <Border Margin="4,0,4,8" Padding="8" Style="{StaticResource WarningBorderStyle}" CornerRadius="8">
                                 <StackPanel>
                                     <TextBlock Text="Input tips" FontWeight="Bold" />
                                     <TextBlock TextWrapping="Wrap" FontSize="12"
@@ -764,11 +720,11 @@
                                     <TextBox Name="PlVelocityOutput" IsReadOnly="True"
                                              ToolTip="Aim under ~8 ft/s for cold domestic water; under ~5 ft/s for hot water or glycol to limit noise and erosion." />
                                     <WrapPanel>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#e6f7ef" BorderBrush="#8bd2b2">
-                                            <TextBlock Text="Cold water target: &lt; 8 ft/s" FontSize="11" Foreground="#1b5e3b" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipSuccessBackground}" BorderBrush="{StaticResource Brush.ChipSuccessBorder}">
+                                            <TextBlock Text="Cold water target: &lt; 8 ft/s" FontSize="11" Foreground="{StaticResource Brush.TextSuccess}" />
                                         </Border>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff7e6" BorderBrush="#f2c166">
-                                            <TextBlock Text="Hot/glycol: &lt; 5 ft/s" FontSize="11" Foreground="#8a5a00" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipWarningBackground}" BorderBrush="{StaticResource Brush.ChipWarningBorder}">
+                                            <TextBlock Text="Hot/glycol: &lt; 5 ft/s" FontSize="11" Foreground="{StaticResource Brush.TextWarning}" />
                                         </Border>
                                     </WrapPanel>
                                 </StackPanel>
@@ -777,11 +733,11 @@
                                     <TextBox Name="PlReOutput" IsReadOnly="True"
                                              ToolTip="&lt;2,000 is laminar, 2,000–4,000 transitional, and &gt;4,000 turbulent; turbulent flow keeps Hazen-Williams and Moody charts valid." />
                                     <WrapPanel>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#e8f0fe" BorderBrush="#a7baf7">
-                                            <TextBlock Text="Turbulent sweet spot: &gt; 4,000" FontSize="11" Foreground="#1d3c74" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipInfoBackground}" BorderBrush="{StaticResource Brush.ChipInfoBorder}">
+                                            <TextBlock Text="Turbulent sweet spot: &gt; 4,000" FontSize="11" Foreground="{StaticResource Brush.TextInfo}" />
                                         </Border>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff4e5" BorderBrush="#f2c166">
-                                            <TextBlock Text="Transitional: 2,000–4,000" FontSize="11" Foreground="#8a5a00" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipWarningBackground}" BorderBrush="{StaticResource Brush.ChipWarningBorder}">
+                                            <TextBlock Text="Transitional: 2,000–4,000" FontSize="11" Foreground="{StaticResource Brush.TextWarning}" />
                                         </Border>
                                     </WrapPanel>
                                 </StackPanel>
@@ -790,11 +746,11 @@
                                     <TextBox Name="PlFrictionOutput" IsReadOnly="True"
                                              ToolTip="Clean turbulent piping often yields f between 0.015–0.03; higher values signal rough pipe, low Re, or scale." />
                                     <WrapPanel>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#f0f7ff" BorderBrush="#9fb8e8">
-                                            <TextBlock Text="Typical clean: 0.015–0.03" FontSize="11" Foreground="#1d3c74" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.CardAltBackground}" BorderBrush="{StaticResource Brush.BorderAlt}">
+                                            <TextBlock Text="Typical clean: 0.015–0.03" FontSize="11" Foreground="{StaticResource Brush.TextInfo}" />
                                         </Border>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff0f0" BorderBrush="#f2a6a6">
-                                            <TextBlock Text="High? check scale/viscosity" FontSize="11" Foreground="#7f1d1d" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipDangerBackground}" BorderBrush="{StaticResource Brush.ChipDangerBorder}">
+                                            <TextBlock Text="High? check scale/viscosity" FontSize="11" Foreground="{StaticResource Brush.TextDangerSoft}" />
                                         </Border>
                                     </WrapPanel>
                                 </StackPanel>
@@ -807,11 +763,11 @@
                                     <TextBox Name="PlFluidNuOutput" IsReadOnly="True"
                                              ToolTip="Higher viscosity lowers Reynolds number and can raise Darcy f; cooler water or glycol mixes increase viscosity." />
                                     <WrapPanel>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#f7f4ff" BorderBrush="#c8b5f7">
-                                            <TextBlock Text="Lower ν → higher Re" FontSize="11" Foreground="#3d2466" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipPurpleBackground}" BorderBrush="{StaticResource Brush.ChipPurpleBorder}">
+                                            <TextBlock Text="Lower ν → higher Re" FontSize="11" Foreground="{StaticResource Brush.TextMutedStrong}" />
                                         </Border>
-                                        <Border Style="{StaticResource ChipBorderStyle}" Background="#fff4e5" BorderBrush="#f2c166">
-                                            <TextBlock Text="High ν? expect higher f" FontSize="11" Foreground="#8a5a00" />
+                                        <Border Style="{StaticResource ChipBorderStyle}" Background="{StaticResource Brush.ChipWarningBackground}" BorderBrush="{StaticResource Brush.ChipWarningBorder}">
+                                            <TextBlock Text="High ν? expect higher f" FontSize="11" Foreground="{StaticResource Brush.TextWarning}" />
                                         </Border>
                                     </WrapPanel>
                                 </StackPanel>
@@ -837,14 +793,14 @@
                             </UniformGrid>
     
                             <TextBlock Name="PlVelocityNote" Margin="4,0" TextWrapping="Wrap" />
-                            <TextBlock Name="PlStatusNote" Margin="4,0,4,0" TextWrapping="Wrap" Foreground="DarkRed" />
+                            <TextBlock Name="PlStatusNote" Margin="4,0,4,0" TextWrapping="Wrap" Foreground="{StaticResource Brush.TextDanger}" />
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="TargetFrictionCard" Margin="0,0,0,10" Padding="12" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="TargetFrictionCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Target Friction" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter flow and target pressure drop per 100 ft. Step 2: Solve the inside diameter. Step 3: Review the nearest nominal size." />
                             <TextBlock Text="Size for Target Friction" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
@@ -862,7 +818,7 @@
     
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,8" VerticalAlignment="Center">
                                 <Button Content="Solve Diameter" Width="140" Click="BtnPlSize_Click" />
-                                <TextBlock Text="Needs flow + target drop per 100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                <TextBlock Text="Needs flow + target drop per 100 ft; outputs ID and nearest nominal size." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                             </StackPanel>
     
                             <UniformGrid Columns="3" Margin="0,4">
@@ -880,10 +836,10 @@
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="FixtureUnitsCard" Margin="0,0,0,10" Padding="12" Background="#f1f3f9" BorderBrush="#d3d8e8" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="FixtureUnitsCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource CardBorderStyle}" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.BorderMuted}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Fixture Units" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Build a fixture list. Step 2: Review the auto-summed fixture units and probable demand. Step 3: Use the demand to size branches and mains." />
                             <TextBlock Text="Fixture Units &amp; Drainage" FontWeight="Bold" />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8"
@@ -891,10 +847,10 @@
 
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
                                 <Button Content="Add Fixture" Width="100" Click="AddFixtureRow_Click" />
-                                <TextBlock Text="Use default fixture units or override when needed." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                <TextBlock Text="Use default fixture units or override when needed." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                             </StackPanel>
 
-                            <Border BorderBrush="#d3d8e8" BorderThickness="1" CornerRadius="8" Background="#fff">
+                            <Border BorderBrush="{StaticResource Brush.BorderMuted}" BorderThickness="1" CornerRadius="8" Background="{StaticResource Brush.Surface}">
                                 <StackPanel>
                                     <Grid Margin="6" ColumnDefinitions="3* 1.5* 1.4* 1.6* 1.5* Auto">
                                         <TextBlock Text="Fixture" FontWeight="Bold" />
@@ -934,7 +890,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Content="Calc Hunter Demand" Width="160" Click="BtnFixtureDemand_Click" />
-                                    <TextBlock Text="Auto-updates when fixtures change." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                    <TextBlock Text="Auto-updates when fixtures change." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Probable Demand (gpm)" />
@@ -944,10 +900,10 @@
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="SanitaryCard" Margin="0,0,0,10" Padding="12" Background="#f7f4ed" BorderBrush="#dfd4bc" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="SanitaryCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Sanitary" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter DFU and slope. Step 2: Size for minimum diameter. Step 3: Check allowable DFU for existing sizes." />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
                                        Text="Enter DFU and slope, then Size Sanitary to get a minimum diameter or check allowable DFU at a chosen size." />
@@ -963,7 +919,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Content="Size Sanitary" Width="140" Click="BtnSanitarySize_Click" />
-                                    <TextBlock Text="Needs DFU + slope; outputs minimum diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                    <TextBlock Text="Needs DFU + slope; outputs minimum diameter." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Min Diameter (in)" />
@@ -981,7 +937,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Content="Allowable DFU" Width="140" Click="BtnSanitaryAllowable_Click" />
-                                    <TextBlock Text="Needs diameter + slope; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                    <TextBlock Text="Needs diameter + slope; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Allowable DFU" />
@@ -992,10 +948,10 @@
                         </StackPanel>
                     </Border>
 
-                    <Border x:Name="VentStackCard" Margin="0,0,0,10" Padding="12" Background="#eef2ff" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="VentStackCard" Margin="0,0,0,10" Padding="12" Background="{StaticResource Brush.EmphasisBackground}" BorderBrush="{StaticResource Brush.BorderAlt}" BorderThickness="1" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Vent Stack" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter vented DFU and developed length, then size the vent stack. Step 2: Check allowable DFU for an existing vent size." />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
                                        Text="Enter vented DFU and developed length to size a vent stack, or check allowable DFU at a given vent diameter and length." />
@@ -1011,7 +967,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Content="Size Vent Stack" Width="140" Click="BtnVentSize_Click" />
-                                    <TextBlock Text="Needs vent DFU + length; outputs vent diameter." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                    <TextBlock Text="Needs vent DFU + length; outputs vent diameter." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Vent Diameter (in)" />
@@ -1029,7 +985,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="4" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Content="Allowable DFU" Width="140" Click="BtnVentAllowable_Click" />
-                                    <TextBlock Text="Needs vent size + length; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="#4b5563" VerticalAlignment="Center" />
+                                    <TextBlock Text="Needs vent size + length; outputs allowable DFU." Margin="8,0,0,0" FontSize="11" Foreground="{StaticResource Brush.TextSubtle}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Margin="4">
                                     <TextBlock Text="Allowable DFU" />
@@ -1039,10 +995,10 @@
                         </StackPanel>
                     </Border>
 
-                    <Border x:Name="StormwaterCard" Margin="0,0,0,10" Padding="12" Background="#eef5fb" BorderBrush="#c5d2f7" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="StormwaterCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource HighlightBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Stormwater" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter roof area, rainfall, slope, and roughness. Step 2: Run storm sizing and partial-flow checks. Step 3: Check leaders." />
                             <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,4"
                                        Text="Enter roof area, rainfall, slope, and Manning n, then run the storm calculations to size drains, partial-flow segments, and leaders." />
@@ -1116,10 +1072,10 @@
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="GasCard" Margin="0,0,0,10" Padding="12" Background="#fefaf5" BorderBrush="#e8d8c3" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="GasCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Natural Gas (IFGC/NFPA 54)" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter load, length, pressure drop, and properties. Step 2: Size gas. Step 3: Review diameter, flow, and velocity." />
                             <UniformGrid Columns="5" Margin="0,4">
                                 <StackPanel Margin="4">
@@ -1164,10 +1120,10 @@
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="RecircCard" Margin="0,0,0,10" Padding="12" Background="#f1f5f9" BorderBrush="#d2deed" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="RecircCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource CardBorderStyle}" Background="{StaticResource Brush.SurfaceAlt}" BorderBrush="{StaticResource Brush.BorderMuted}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="DHW Recirculation" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter loop volume, turnover, and heat loss. Step 2: Add pipe and fitting lengths. Step 3: Calculate recirculation flow and head." />
                             <UniformGrid Columns="4" Margin="0,4">
                                 <StackPanel Margin="4">
@@ -1226,10 +1182,10 @@
                         </StackPanel>
                     </Border>
     
-                    <Border x:Name="HammerCard" Margin="0,0,0,10" Padding="12" Background="#fff7ed" BorderBrush="#f3d1a6" BorderThickness="1" CornerRadius="10">
+                    <Border x:Name="HammerCard" Margin="0,0,0,10" Padding="12" Style="{StaticResource WarningBorderStyle}" CornerRadius="10">
                         <StackPanel>
                             <TextBlock Text="Water Hammer Check" FontWeight="Bold" FontSize="14" />
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#4b5563" Margin="0,2,0,8"
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Brush.TextSubtle}" Margin="0,2,0,8"
                                        Text="Step 1: Enter line velocity and length. Step 2: Add closure time and static pressure. Step 3: Check surge and total pressure." />
                             <UniformGrid Columns="4" Margin="0,4">
                                 <StackPanel Margin="4">
