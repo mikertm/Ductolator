@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -118,6 +119,8 @@ namespace RTM.Ductolator
             }
         }
 
+        private record UserSettings(bool NoviceMode);
+
         private record DuctExportRow(
             double FlowCfm,
             double VelocityFpm,
@@ -216,10 +219,16 @@ namespace RTM.Ductolator
 
         public ObservableCollection<FixtureRow> FixtureRows => _fixtureRows;
 
+        private bool _noviceMode;
+        private readonly string _settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RTM.Ductolator");
+        private const string SettingsFileName = "user-settings.json";
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
+            LoadUserSettings();
+            ApplyNoviceMode(_noviceMode);
             var defaultFolder = ConfigurationManager.AppSettings["CustomCatalogFolder"] ?? string.Empty;
             if (CatalogFolderText != null)
                 CatalogFolderText.Text = defaultFolder;
@@ -231,6 +240,155 @@ namespace RTM.Ductolator
 
             UpdateDuctFittingSummary(0, 0);
             UpdatePlumbingFittingSummary(0, 0);
+        }
+
+        private string GetSettingsPath() => Path.Combine(_settingsFolder, SettingsFileName);
+
+        private void LoadUserSettings()
+        {
+            try
+            {
+                var path = GetSettingsPath();
+                if (File.Exists(path))
+                {
+                    var settings = JsonSerializer.Deserialize<UserSettings>(File.ReadAllText(path));
+                    _noviceMode = settings?.NoviceMode ?? false;
+                    return;
+                }
+            }
+            catch
+            {
+                _noviceMode = false;
+            }
+
+            _noviceMode = false;
+        }
+
+        private void SaveUserSettings()
+        {
+            try
+            {
+                Directory.CreateDirectory(_settingsFolder);
+                var json = JsonSerializer.Serialize(new UserSettings(_noviceMode));
+                File.WriteAllText(GetSettingsPath(), json);
+            }
+            catch
+            {
+                // Ignore persistence issues
+            }
+        }
+
+        private void ApplyNoviceMode(bool isNovice)
+        {
+            _noviceMode = isNovice;
+
+            if (NoviceModeToggle != null && NoviceModeToggle.IsChecked != isNovice)
+                NoviceModeToggle.IsChecked = isNovice;
+
+            if (QuickStartNoteText != null)
+                QuickStartNoteText.Text = isNovice
+                    ? "Enter any two of the airflow, air speed, or pressure drop inputs plus one shape. We'll fill in the rest for you."
+                    : "Use this for typical sizing: enter any two of flow, velocity, or friction plus one shape (round or rectangular) to solve the rest.";
+
+            if (HowToUseStep1 != null)
+                HowToUseStep1.Text = isNovice
+                    ? "1) Type any two of airflow, air speed, or pressure drop plus one shape (round or rectangular). We'll solve the rest."
+                    : "1) Enter any two of flow, velocity, or friction plus one geometry (round or rectangular) to solve the rest.";
+
+            if (HowToUseStep2 != null)
+                HowToUseStep2.Text = isNovice
+                    ? "2) Pick a code region to auto-fill common air speed and pressure drop guidance."
+                    : "2) Pick a code region to load common velocity and friction guidance.";
+
+            if (HowToUseStep3 != null)
+                HowToUseStep3.Text = isNovice
+                    ? "3) Click Calculate to get air properties, pressure class, and sizes. Export saves the latest result to CSV."
+                    : "3) Click Calculate to fill air properties, pressure class, and equivalent shapes; Export saves the latest result to CSV.";
+
+            if (FlowLabel != null)
+                FlowLabel.Text = isNovice ? "Airflow (cfm)" : "Flow (CFM)";
+
+            if (InCfm != null)
+                InCfm.ToolTip = isNovice
+                    ? "How much air moves through the duct each minute."
+                    : "Cubic feet per minute (ft³/min)";
+
+            if (FlowExample != null)
+                FlowExample.Text = "Office branch: ~1,000 cfm";
+
+            if (VelocityLabel != null)
+                VelocityLabel.Text = isNovice ? "Air speed (feet/min)" : "Velocity (FPM)";
+
+            if (InVel != null)
+                InVel.ToolTip = isNovice
+                    ? "Feet per minute of air speed; supply mains often 800–1800 ft/min, returns 700–1200 ft/min."
+                    : "Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm";
+
+            if (VelocityExample != null)
+                VelocityExample.Text = "Typical supply: 800–1800 ft/min";
+
+            if (FrictionLabel != null)
+                FrictionLabel.Text = isNovice ? "Pressure drop per 100 ft" : "Friction (in. w.g. / 100 ft)";
+
+            if (InDp100 != null)
+                InDp100.ToolTip = isNovice
+                    ? "Inches of water lost every 100 ft of duct; aim for roughly 0.05–0.08 for quiet runs."
+                    : "Inches of water per 100 ft; equal-friction duct design often 0.05–0.1";
+
+            if (FrictionExample != null)
+                FrictionExample.Text = "Aim for 0.05–0.08 in. drop per 100 ft";
+
+            if (AspectRatioLabel != null)
+                AspectRatioLabel.Text = isNovice ? "Shape ratio (long ÷ short)" : "Aspect Ratio (long/short)";
+
+            if (InAR != null)
+                InAR.ToolTip = isNovice
+                    ? "Rectangle long side divided by short side; keep it under about 4:1 for noise control."
+                    : "Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)";
+
+            if (AspectRatioExample != null)
+                AspectRatioExample.Text = "Keep it at 4:1 or lower for noise";
+
+            if (RoundDiameterLabel != null)
+                RoundDiameterLabel.Text = isNovice ? "Round diameter (inches)" : "Round Diameter (in)";
+
+            if (InDia != null)
+                InDia.ToolTip = isNovice
+                    ? "Inside round duct diameter in inches."
+                    : "Inside diameter in inches";
+
+            if (RoundDiameterExample != null)
+                RoundDiameterExample.Text = "Example: 18 in round main";
+
+            if (RectSide1Label != null)
+                RectSide1Label.Text = isNovice ? "Rectangle side A (inches)" : "Rect Side 1 (in)";
+
+            if (InS1 != null)
+                InS1.ToolTip = isNovice ? "Long side of the rectangle in inches." : "Long side in inches";
+
+            if (RectSide1Example != null)
+                RectSide1Example.Text = "Example: 24 in long side";
+
+            if (RectSide2Label != null)
+                RectSide2Label.Text = isNovice ? "Rectangle side B (inches)" : "Rect Side 2 (in)";
+
+            if (InS2 != null)
+                InS2.ToolTip = isNovice ? "Short side of the rectangle in inches." : "Short side in inches";
+
+            if (RectSide2Example != null)
+                RectSide2Example.Text = "Example: 12 in short side";
+
+            if (InputTipsLine1 != null)
+                InputTipsLine1.Text = isNovice
+                    ? "Enter airflow (cfm), air speed (feet/min), or pressure drop per 100 ft. Sizes are in inches; lengths are in feet."
+                    : "Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations.";
+
+            if (InputTipsLine2 != null)
+                InputTipsLine2.Text = isNovice
+                    ? "Air temperature (°F) and altitude (ft) tweak density/viscosity. Straight length and ΣK add fitting pressure to the total."
+                    : "Air temp (°F) and altitude (ft) tune density/viscosity for non-standard air. Straight length and ΣK add fittings to total pressure.";
+
+            SaveUserSettings();
         }
 
         private void LoadCatalogs(string? folder)
@@ -279,6 +437,15 @@ namespace RTM.Ductolator
         private void ReloadCatalogs_Click(object sender, RoutedEventArgs e)
         {
             LoadCatalogs(CatalogFolderText?.Text);
+        }
+
+        private void NoviceModeToggle_Checked(object sender, RoutedEventArgs e) => ApplyNoviceMode(true);
+
+        private void NoviceModeToggle_Unchecked(object sender, RoutedEventArgs e) => ApplyNoviceMode(false);
+
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            SaveUserSettings();
         }
 
         private record DuctFittingSelection(DuctFitting Fitting, int Quantity)
