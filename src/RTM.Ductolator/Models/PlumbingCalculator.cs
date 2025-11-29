@@ -300,13 +300,14 @@ namespace RTM.Ductolator.Models
 
         /// <summary>
         /// Head loss (ft/100 ft) via Hazen-Williams with diameter in inches and flow in gpm.
-        /// Uses standard form: h_f = 4.52 * Q^1.85 / (C^1.85 * d_in^4.87).
+        /// Uses standard form: h_f = 10.44 * Q^1.85 / (C^1.85 * d_in^4.87).
+        /// This returns feet of head per 100 ft, which is then converted to PSI by HazenWilliamsPsiPer100Ft.
         /// </summary>
         public static double HazenWilliamsHeadLoss_FtPer100Ft(double gpm, double diameterIn, double cFactor)
         {
             if (gpm <= 0 || diameterIn <= 0 || cFactor <= 0) return 0;
 
-            double numerator = 4.52 * Math.Pow(gpm, 1.85);
+            double numerator = 10.44 * Math.Pow(gpm, 1.85);
             double denominator = Math.Pow(cFactor, 1.85) * Math.Pow(diameterIn, 4.87);
             return numerator / denominator;
         }
@@ -756,27 +757,25 @@ namespace RTM.Ductolator.Models
 
         /// <summary>
         /// IFGC/NFPA 54 low-pressure gas formula (Equation 4-1):
-        /// Q = 1.316 * (ΔP * d^5 / (Cr * L))^0.5
-        /// But commonly cited as: Q = 2313 * D^2.623 * (ΔP / (Cr * L))^0.541
-        /// where ΔP in in.w.c, D in inches, L in ft.
-        /// Cr = 0.6094 for Natural Gas (SG=0.60).
-        /// For other gravities, we adjust Cr or the result.
-        /// General form: Q = 2313 * D^2.623 * (ΔP / L)^0.541 * (0.60 / SG)^0.5
+        /// Q = 1.316 * sqrt(ΔH * D^5 / (Cr * L))
+        /// where ΔH is pressure drop in in.w.c., D is diameter in inches, L is length in ft.
+        /// Cr = specific gravity correction factor (0.6094 for natural gas SG=0.60).
+        /// For other specific gravities: Cr = 0.6094 * (SG / 0.60).
+        /// Returns flow in scfh (standard cubic feet per hour).
         /// </summary>
         public static double GasFlow_Scfh(double diameterIn, double lengthFt, double pressureDropInWc,
                                           double specificGravity = 0.6, double basePressurePsi = 0.5)
         {
             if (diameterIn <= 0 || lengthFt <= 0 || pressureDropInWc <= 0 || specificGravity <= 0) return 0;
 
-            // IFGC 2021 Equation 4-1 coefficients
-            // Q = 2313 * D^2.623 * (DeltaH / L)^0.541
-            // This assumes Natural Gas with SG=0.60.
-            // To correct for other specific gravities, multiply by sqrt(0.60 / SG).
-
-            double baseFlow = 2313.0 * Math.Pow(diameterIn, 2.623) * Math.Pow(pressureDropInWc / lengthFt, 0.541);
-            double gravityCorrection = Math.Sqrt(0.60 / specificGravity);
-
-            return baseFlow * gravityCorrection;
+            // IFGC Equation 4-1: Q = 1.316 * sqrt(ΔH * D^5 / (Cr * L))
+            // Cr for natural gas (SG=0.60) is 0.6094
+            // For other specific gravities: Cr = 0.6094 * (SG / 0.60)
+            double cr = 0.6094 * (specificGravity / 0.60);
+            double d5 = Math.Pow(diameterIn, 5.0);
+            double term = (pressureDropInWc * d5) / (cr * lengthFt);
+            
+            return 1.316 * Math.Sqrt(term);
         }
 
         public static double GasFlow_Mbh(double diameterIn, double lengthFt, double pressureDropInWc,
