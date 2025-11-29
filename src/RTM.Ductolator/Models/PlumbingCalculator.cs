@@ -630,7 +630,7 @@ namespace RTM.Ductolator.Models
         private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
         private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
         {
-            { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
+            { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 42), (4.0, 216) } },
             { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
             { SlopeSixteenthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
         };
@@ -755,19 +755,28 @@ namespace RTM.Ductolator.Models
         private const double GasHeatingValue_BtuPerScf = 1000.0; // typical pipeline gas
 
         /// <summary>
-        /// IFGC/NFPA 54 empirical sizing equation (low pressure):
-        /// Q_scfh = 3550 * (ΔP * P_base / (SG * L))^0.54 * d^2.63
-        /// where ΔP and P_base in psi, L in ft, d in inches, SG relative to air.
+        /// IFGC/NFPA 54 low-pressure gas formula (Equation 4-1):
+        /// Q = 1.316 * (ΔP * d^5 / (Cr * L))^0.5
+        /// But commonly cited as: Q = 2313 * D^2.623 * (ΔP / (Cr * L))^0.541
+        /// where ΔP in in.w.c, D in inches, L in ft.
+        /// Cr = 0.6094 for Natural Gas (SG=0.60).
+        /// For other gravities, we adjust Cr or the result.
+        /// General form: Q = 2313 * D^2.623 * (ΔP / L)^0.541 * (0.60 / SG)^0.5
         /// </summary>
         public static double GasFlow_Scfh(double diameterIn, double lengthFt, double pressureDropInWc,
                                           double specificGravity = 0.6, double basePressurePsi = 0.5)
         {
             if (diameterIn <= 0 || lengthFt <= 0 || pressureDropInWc <= 0 || specificGravity <= 0) return 0;
 
-            double deltaPsi = pressureDropInWc / InWcPerPsi;
-            double term = deltaPsi * basePressurePsi / (specificGravity * lengthFt);
-            double multiplier = Math.Pow(term, 0.54);
-            return 3550.0 * multiplier * Math.Pow(diameterIn, 2.63);
+            // IFGC 2021 Equation 4-1 coefficients
+            // Q = 2313 * D^2.623 * (DeltaH / L)^0.541
+            // This assumes Natural Gas with SG=0.60.
+            // To correct for other specific gravities, multiply by sqrt(0.60 / SG).
+
+            double baseFlow = 2313.0 * Math.Pow(diameterIn, 2.623) * Math.Pow(pressureDropInWc / lengthFt, 0.541);
+            double gravityCorrection = Math.Sqrt(0.60 / specificGravity);
+
+            return baseFlow * gravityCorrection;
         }
 
         public static double GasFlow_Mbh(double diameterIn, double lengthFt, double pressureDropInWc,
