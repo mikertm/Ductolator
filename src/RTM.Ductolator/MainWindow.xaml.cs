@@ -1551,8 +1551,8 @@ namespace RTM.Ductolator
                 SetBox(OutRArea, areaFt2, "0.000");
                 SetBox(OutRPerim, perimFt, "0.000");
             }
-            else if (cfm > 0 && velInput > 0 && targetAR > 0)
-            {
+            else if (cfm > 0 && velInput > 0 && targetAR > 0 && s1In <= 0 && s2In <= 0)
+{
                 // --- Case 3: CFM + Velocity + AR → synthetic rectangle + equivalent round ---
                 usedVelFpm = velInput;
                 areaFt2 = cfm / usedVelFpm;
