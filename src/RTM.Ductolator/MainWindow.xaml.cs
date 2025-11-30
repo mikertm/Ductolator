@@ -466,29 +466,9 @@ namespace RTM.Ductolator
 
             if (RoundDiameterExample != null)
                 RoundDiameterExample.Text = "Example: 18 in round main";
-
-            if (RectSide1Label != null)
-                RectSide1Label.Text = isNovice ? "Rectangle side A (inches)" : "Rect Side 1 (in)";
-
-            if (InS1 != null)
-                InS1.ToolTip = isNovice ? "Long side of the rectangle in inches." : "Long side in inches";
-
-            if (RectSide1Example != null)
-                RectSide1Example.Text = "Example: 24 in long side";
-
-            if (RectSide2Label != null)
-                RectSide2Label.Text = isNovice ? "Rectangle side B (inches)" : "Rect Side 2 (in)";
-
-            if (InS2 != null)
-                InS2.ToolTip = isNovice ? "Short side of the rectangle in inches." : "Short side in inches";
-
-            if (RectSide2Example != null)
-                RectSide2Example.Text = "Example: 12 in short side";
-
-            if (InputTipsLine1 != null)
-                InputTipsLine1.Text = isNovice
-                    ? "Enter airflow (cfm), air speed (feet/min), or pressure drop per 100 ft. Sizes are in inches; lengths are in feet."
-                    : "Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, or flow+velocity combinations.";
+            InputTipsLine1.Text = isNovice
+                ? "Enter airflow (cfm), air speed (feet/min), or pressure drop per 100 ft. Sizes are in inches; lengths are in feet. You can solve for a missing side."
+                : "Enter CFM (ft³/min), velocity (ft/min), friction (in. w.g. per 100 ft), dimensions in inches, and lengths in feet. You can size with diameter, rectangle, partial rectangle, or flow+velocity combinations.";
 
             if (InputTipsLine2 != null)
                 InputTipsLine2.Text = isNovice
@@ -1442,6 +1422,130 @@ namespace RTM.Ductolator
                 SetBox(OutRArea, areaFt2, "0.000");
                 SetBox(OutRPerim, perimFt, "0.000");
             }
+            else if ((s1In > 0 || s2In > 0) && cfm > 0 && (velInput > 0 || dp100Input > 0))
+            {
+                // --- Case 2b: One rectangular side + CFM + (velocity OR friction) → solve for missing side ---
+                double knownSide = s1In > 0 ? s1In : s2In;
+                double missingSide = 0;
+
+                if (velInput > 0)
+                {
+                    // Simple case: area = CFM / velocity, then missing side = area / known side
+                    usedVelFpm = velInput;
+                    areaFt2 = cfm / usedVelFpm;
+                    double areaIn2 = areaFt2 * 144.0; // convert ft² to in²
+                    missingSide = areaIn2 / knownSide;
+
+                    if (missingSide <= 0)
+                    {
+                        MessageBox.Show(
+                            "Unable to calculate missing rectangular side. Check that CFM and velocity yield a valid area.",
+                            "Calculation Error",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+                else if (dp100Input > 0)
+                {
+                    // Complex case: iteratively solve for missing side that satisfies friction constraint
+                    // Use bisection to find the missing side dimension
+                    double Func(double testSide)
+                    {
+                        double longSide = Math.Max(knownSide, testSide);
+                        double shortSide = Math.Min(knownSide, testSide);
+                        double eqRound = DuctCalculator.EquivalentRound_Rect(longSide, shortSide);
+                        var geom = DuctCalculator.RectGeometry(longSide, shortSide);
+                        double testVel = DuctCalculator.VelocityFpmFromCfmAndArea(cfm, geom.AreaFt2);
+                        double re = DuctCalculator.Reynolds(testVel, eqRound, air);
+                        double f = DuctCalculator.FrictionFactor(re, eqRound);
+                        double dp = DuctCalculator.DpPer100Ft_InWG(testVel, eqRound, f, air);
+                        return dp - dp100Input;
+                    }
+
+                    double lo = 2.0;   // inches
+                    double hi = 120.0; // inches
+
+                    double fLo = Func(lo);
+                    double fHi = Func(hi);
+
+                    // Try to bracket the root
+                    for (int i = 0; i < 20 && fLo * fHi > 0; i++)
+                    {
+                        lo = Math.Max(1.0, lo / 1.5);
+                        hi *= 1.5;
+                        fLo = Func(lo);
+                        fHi = Func(hi);
+                    }
+
+                    // Bisection solver
+                    for (int i = 0; i < 80; i++)
+                    {
+                        double mid = 0.5 * (lo + hi);
+                        double fMid = Func(mid);
+
+                        if (Math.Abs(fMid) < 1e-4)
+                        {
+                            missingSide = mid;
+                            break;
+                        }
+
+                        if (fLo * fMid < 0)
+                        {
+                            hi = mid;
+                            fHi = fMid;
+                        }
+                        else
+                        {
+                            lo = mid;
+                            fLo = fMid;
+                        }
+                    }
+
+                    if (missingSide <= 0)
+                        missingSide = 0.5 * (lo + hi);
+
+                    // Calculate resulting velocity and area
+                    double longSide = Math.Max(knownSide, missingSide);
+                    double shortSide = Math.Min(knownSide, missingSide);
+                    var rectGeom = DuctCalculator.RectGeometry(longSide, shortSide);
+                    areaFt2 = rectGeom.AreaFt2;
+                    usedVelFpm = DuctCalculator.VelocityFpmFromCfmAndArea(cfm, areaFt2);
+                }
+
+                // Assign sides properly (long/short)
+                double finalLongSide = Math.Max(knownSide, missingSide);
+                double finalShortSide = Math.Min(knownSide, missingSide);
+
+                var finalRectGeom = DuctCalculator.RectGeometry(finalLongSide, finalShortSide);
+                areaFt2 = finalRectGeom.AreaFt2;
+                perimFt = finalRectGeom.PerimeterFt;
+
+                // Equivalent round for friction
+                primaryRoundDiaIn = DuctCalculator.EquivalentRound_Rect(finalLongSide, finalShortSide);
+                dhIn = primaryRoundDiaIn;
+
+                double arActual = finalLongSide / finalShortSide;
+
+                // Check aspect ratio and warn if > 4:1 (ASHRAE/SMACNA noise recommendation)
+                if (arActual > 4.0 && DuctStatusNote != null)
+                {
+                    string arWarning = $"⚠ Aspect ratio {arActual:0.0}:1 exceeds recommended 4:1 limit for noise control. Consider adjusting dimensions.";
+                    DuctStatusNote.Text = arWarning;
+                }
+
+                // Round group shows equivalent round
+                SetBox(OutDia, primaryRoundDiaIn, "0.##");
+                SetBox(OutAreaRound, areaFt2, "0.000");
+                SetBox(OutCircRound, perimFt, "0.000");
+
+                // Rectangle outputs show calculated dimensions
+                SetBox(OutRS1, finalLongSide, "0.##");
+                SetBox(OutRS2, finalShortSide, "0.##");
+                SetBox(OutRAR, arActual, "0.000");
+                SetBox(OutRArea, areaFt2, "0.000");
+                SetBox(OutRPerim, perimFt, "0.000");
+            }
             else if (cfm > 0 && velInput > 0 && targetAR > 0)
             {
                 // --- Case 3: CFM + Velocity + AR → synthetic rectangle + equivalent round ---
@@ -1493,7 +1597,8 @@ namespace RTM.Ductolator
                 MessageBox.Show(
                     "Not enough inputs.\n\nProvide one of the following combinations:\n" +
                     "  • Diameter + (CFM or Velocity or dP/100ft)\n" +
-                    "  • Rect sides + (CFM or Velocity or dP/100ft)\n" +
+                    "  • Rect sides (both) + (CFM or Velocity or dP/100ft)\n" +
+                    "  • One rect side + CFM + (Velocity or dP/100ft)\n" +
                     "  • CFM + Velocity + Aspect Ratio\n" +
                     "  • CFM + dP per 100 ft (round sizing).",
                     "Inputs Required",
