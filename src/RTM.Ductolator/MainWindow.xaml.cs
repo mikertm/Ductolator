@@ -1425,7 +1425,8 @@ namespace RTM.Ductolator
             else if ((s1In > 0 || s2In > 0) && cfm > 0 && (velInput > 0 || dp100Input > 0))
             {
                 // --- Case 2b: One rectangular side + CFM + (velocity OR friction) → solve for missing side ---
-                double knownSide = s1In > 0 ? s1In : s2In;
+                bool s1IsInput = s1In > 0;
+                double knownSide = s1IsInput ? s1In : s2In;
                 double missingSide = 0;
 
                 if (velInput > 0)
@@ -1513,9 +1514,13 @@ namespace RTM.Ductolator
                     usedVelFpm = DuctCalculator.VelocityFpmFromCfmAndArea(cfm, areaFt2);
                 }
 
-                // Assign sides properly (long/short)
-                double finalLongSide = Math.Max(knownSide, missingSide);
-                double finalShortSide = Math.Min(knownSide, missingSide);
+                // Preserve input side order: assign calculated side to the input that was missing
+                double outputS1 = s1IsInput ? knownSide : missingSide;
+                double outputS2 = s1IsInput ? missingSide : knownSide;
+
+                // Calculate geometry using actual sides for long/short determination
+                double finalLongSide = Math.Max(outputS1, outputS2);
+                double finalShortSide = Math.Min(outputS1, outputS2);
 
                 var finalRectGeom = DuctCalculator.RectGeometry(finalLongSide, finalShortSide);
                 areaFt2 = finalRectGeom.AreaFt2;
@@ -1539,9 +1544,9 @@ namespace RTM.Ductolator
                 SetBox(OutAreaRound, areaFt2, "0.000");
                 SetBox(OutCircRound, perimFt, "0.000");
 
-                // Rectangle outputs show calculated dimensions
-                SetBox(OutRS1, finalLongSide, "0.##");
-                SetBox(OutRS2, finalShortSide, "0.##");
+                // Rectangle outputs preserve side 1 and side 2 order from inputs
+                SetBox(OutRS1, outputS1, "0.##");
+                SetBox(OutRS2, outputS2, "0.##");
                 SetBox(OutRAR, arActual, "0.000");
                 SetBox(OutRArea, areaFt2, "0.000");
                 SetBox(OutRPerim, perimFt, "0.000");
