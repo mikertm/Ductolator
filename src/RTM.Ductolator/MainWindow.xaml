@@ -13,15 +13,122 @@
             x:Key="CompactInputTextBox"
             BasedOn="{StaticResource {x:Type TextBox}}"
             TargetType="TextBox">
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="MinHeight" Value="26" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
+            <Setter Property="Background" Value="{StaticResource Brush.InputBackground}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border
+                            x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                            <ScrollViewer
+                                x:Name="PART_ContentHost"
+                                Focusable="false"
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter TargetName="border" Property="Opacity" Value="0.56" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Accent}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="true">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Brush.Accent}" />
+                                <Setter TargetName="border" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
         <Style
             x:Key="CompactOutputTextBox"
             BasedOn="{StaticResource CompactInputTextBox}"
             TargetType="TextBox">
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderMuted}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border
+                            x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                            <ScrollViewer
+                                x:Name="PART_ContentHost"
+                                Focusable="false"
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="UnitLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource Brush.TextSubtle}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Brush.SurfaceAlt}" />
+            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect
+                        BlurRadius="8"
+                        Direction="270"
+                        Opacity="0.05"
+                        ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style
+            x:Key="SuccessCardStyle"
+            BasedOn="{StaticResource CardStyle}"
+            TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Brush.SuccessBackground}" />
+            <Setter Property="BorderBrush" Value="#B8E6C5" />
+        </Style>
+
+        <Style
+            x:Key="WarningCardStyle"
+            BasedOn="{StaticResource CardStyle}"
+            TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Brush.WarningBackground}" />
+            <Setter Property="BorderBrush" Value="#F3CFAA" />
+        </Style>
+
+        <Style
+            x:Key="AccentCardStyle"
+            BasedOn="{StaticResource CardStyle}"
+            TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
+            <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
         </Style>
     </Window.Resources>
     <Grid Margin="12">
@@ -203,157 +310,175 @@
                                                 TextWrapping="Wrap" />
                                             <Grid Margin="0,0,0,6">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="2*" />
-                                                    <ColumnDefinition Width="2*" />
-                                                    <ColumnDefinition Width="2*" />
-                                                    <ColumnDefinition Width="2*" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="24" />
+                                                    <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
 
-                                                <StackPanel
-                                                    Grid.Row="0"
-                                                    Grid.Column="0"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="FlowLabel" Text="Flow (CFM)" />
-                                                    <TextBox
-                                                        Name="InCfm"
-                                                        MinWidth="150"
-                                                        ToolTip="Cubic feet per minute (ft³/min)" />
+                                                <!--  Airflow Parameters  -->
+                                                <StackPanel Grid.Column="0">
                                                     <TextBlock
-                                                        x:Name="FlowExample"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Office branch: ~1,000 cfm" />
-                                                    <WrapPanel>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Terminals 300–1,200 CFM" />
-                                                        </Border>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Mains 1,500–8,000 CFM" />
-                                                        </Border>
-                                                    </WrapPanel>
-                                                </StackPanel>
-                                                <StackPanel
-                                                    Grid.Row="0"
-                                                    Grid.Column="1"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="VelocityLabel" Text="Velocity (FPM)" />
-                                                    <TextBox
-                                                        Name="InVel"
-                                                        MinWidth="150"
-                                                        ToolTip="Feet per minute; common supply 800–1800 fpm, returns 700–1200 fpm" />
-                                                    <TextBlock
-                                                        x:Name="VelocityExample"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Typical supply: 800–1800 ft/min" />
-                                                    <WrapPanel>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Supply 800–1800 FPM" />
-                                                        </Border>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Return 700–1200 FPM" />
-                                                        </Border>
-                                                    </WrapPanel>
-                                                </StackPanel>
-                                                <StackPanel
-                                                    Grid.Row="0"
-                                                    Grid.Column="2"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="FrictionLabel" Text="Friction (in. w.g. / 100 ft)" />
-                                                    <TextBox
-                                                        Name="InDp100"
-                                                        MinWidth="150"
-                                                        ToolTip="Inches of water per 100 ft; equal-friction duct design often 0.05–0.1" />
-                                                    <TextBlock
-                                                        x:Name="FrictionExample"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Aim for 0.05–0.08 in. drop per 100 ft" />
-                                                    <WrapPanel>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Equal-friction 0.05–0.10" />
-                                                        </Border>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Quiet zones ≤0.08" />
-                                                        </Border>
-                                                    </WrapPanel>
-                                                </StackPanel>
-                                                <StackPanel
-                                                    Grid.Row="0"
-                                                    Grid.Column="3"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="AspectRatioLabel" Text="Aspect Ratio (long/short)" />
-                                                    <TextBox
-                                                        Name="InAR"
-                                                        MinWidth="150"
-                                                        ToolTip="Dimensionless; use ≥1 (e.g., 2 = 2:1 rectangle)" />
-                                                    <TextBlock
-                                                        x:Name="AspectRatioExample"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Keep it at 4:1 or lower for noise" />
-                                                    <WrapPanel>
-                                                        <Border Style="{StaticResource ChipBorderStyle}">
-                                                            <TextBlock FontSize="11" Text="Noise-friendly ≤4:1" />
-                                                        </Border>
-                                                    </WrapPanel>
+                                                        Margin="0,0,0,8"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource Brush.Accent}"
+                                                        Text="Airflow Parameters" />
+
+                                                    <Grid Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="FlowLabel" Text="Flow Rate" />
+                                                            <TextBox Name="InCfm" ToolTip="Cubic feet per minute (ft³/min)" />
+                                                            <TextBlock
+                                                                x:Name="FlowExample"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Office branch: ~1,000 cfm" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="CFM" />
+                                                    </Grid>
+
+                                                    <Grid Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="VelocityLabel" Text="Velocity" />
+                                                            <TextBox Name="InVel" ToolTip="Feet per minute; common supply 800–1800 fpm" />
+                                                            <TextBlock
+                                                                x:Name="VelocityExample"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Typical supply: 800–1800 ft/min" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="FPM" />
+                                                    </Grid>
+
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="FrictionLabel" Text="Friction Rate" />
+                                                            <TextBox Name="InDp100" ToolTip="Inches of water per 100 ft" />
+                                                            <TextBlock
+                                                                x:Name="FrictionExample"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Aim for 0.05–0.08 in. drop per 100 ft" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="in. w.g./100'" />
+                                                    </Grid>
                                                 </StackPanel>
 
-                                                <StackPanel
-                                                    Grid.Row="1"
-                                                    Grid.Column="0"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="RoundDiameterLabel" Text="Round Diameter (in)" />
-                                                    <TextBox
-                                                        Name="InDia"
-                                                        MinWidth="150"
-                                                        ToolTip="Inside diameter in inches" />
-                                                    <TextBlock
-                                                        x:Name="RoundDiameterExample"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Example: 18 in round main" />
-                                                </StackPanel>
-                                                <StackPanel
-                                                    Grid.Row="1"
+                                                <!--  Divider  -->
+                                                <Rectangle
                                                     Grid.Column="1"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="RectSide1Label" Text="Rect Side 1 (in)" />
-                                                    <TextBox
-                                                        Name="InS1"
-                                                        MinWidth="150"
-                                                        ToolTip="Long side in inches" />
+                                                    Width="1"
+                                                    Margin="0,4"
+                                                    HorizontalAlignment="Center"
+                                                    Fill="{StaticResource Brush.BorderMuted}" />
+
+                                                <!--  Geometry Parameters  -->
+                                                <StackPanel Grid.Column="2">
                                                     <TextBlock
-                                                        x:Name="RectSide1Example"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Example: 24 in long side" />
-                                                </StackPanel>
-                                                <StackPanel
-                                                    Grid.Row="1"
-                                                    Grid.Column="2"
-                                                    Margin="4"
-                                                    Orientation="Vertical">
-                                                    <TextBlock x:Name="RectSide2Label" Text="Rect Side 2 (in)" />
-                                                    <TextBox
-                                                        Name="InS2"
-                                                        MinWidth="150"
-                                                        ToolTip="Short side in inches" />
-                                                    <TextBlock
-                                                        x:Name="RectSide2Example"
-                                                        FontSize="11"
-                                                        Foreground="{StaticResource Brush.TextSubtle}"
-                                                        Text="Example: 12 in short side" />
+                                                        Margin="0,0,0,8"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource Brush.Accent}"
+                                                        Text="Geometry Parameters" />
+
+                                                    <Grid Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="RoundDiameterLabel" Text="Round Diameter" />
+                                                            <TextBox Name="InDia" ToolTip="Inside diameter in inches" />
+                                                            <TextBlock
+                                                                x:Name="RoundDiameterExample"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Example: 18 in round main" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="in" />
+                                                    </Grid>
+
+                                                    <Grid Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="RectSide1Label" Text="Rect Side 1" />
+                                                            <TextBox Name="InS1" ToolTip="Long side in inches" />
+                                                            <TextBlock
+                                                                x:Name="RectSide1Example"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Example: 24 in long side" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="in" />
+                                                    </Grid>
+
+                                                    <Grid Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="RectSide2Label" Text="Rect Side 2" />
+                                                            <TextBox Name="InS2" ToolTip="Short side in inches" />
+                                                            <TextBlock
+                                                                x:Name="RectSide2Example"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Example: 12 in short side" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text="in" />
+                                                    </Grid>
+
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock x:Name="AspectRatioLabel" Text="Aspect Ratio" />
+                                                            <TextBox Name="InAR" ToolTip="Dimensionless; use ≥1" />
+                                                            <TextBlock
+                                                                x:Name="AspectRatioExample"
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource Brush.TextSubtle}"
+                                                                Text="Keep it at 4:1 or lower" />
+                                                        </StackPanel>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            Style="{StaticResource UnitLabelStyle}"
+                                                            Text=":1" />
+                                                    </Grid>
                                                 </StackPanel>
                                             </Grid>
                                         </StackPanel>
@@ -705,8 +830,7 @@
                                         MinWidth="180"
                                         Margin="4,0"
                                         Padding="6"
-                                        CornerRadius="10"
-                                        Style="{StaticResource HighlightBorderStyle}">
+                                        Style="{StaticResource AccentCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Velocity (FPM)" />
                                             <TextBox
@@ -727,8 +851,7 @@
                                         MinWidth="180"
                                         Margin="4,0"
                                         Padding="6"
-                                        CornerRadius="10"
-                                        Style="{StaticResource SuccessBorderStyle}">
+                                        Style="{StaticResource SuccessCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Friction (in. w.g./100 ft)" />
                                             <TextBox
@@ -749,8 +872,7 @@
                                         MinWidth="180"
                                         Margin="4,0"
                                         Padding="6"
-                                        CornerRadius="10"
-                                        Style="{StaticResource WarningBorderStyle}">
+                                        Style="{StaticResource WarningCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Total ΔP (in. w.g.)" />
                                             <TextBox
@@ -774,8 +896,7 @@
                                         MinWidth="260"
                                         Margin="4,4,4,0"
                                         Padding="8"
-                                        CornerRadius="10"
-                                        Style="{StaticResource HighlightBorderStyle}">
+                                        Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Air Data" />
                                             <UniformGrid Margin="0,4,0,0" Columns="2">
@@ -811,8 +932,7 @@
                                         MinWidth="260"
                                         Margin="4,4,4,0"
                                         Padding="8"
-                                        CornerRadius="10"
-                                        Style="{StaticResource WarningBorderStyle}">
+                                        Style="{StaticResource WarningCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Pressure / Leakage / Fan" />
                                             <Grid Margin="0,4,0,0">
@@ -863,8 +983,7 @@
                                         MinWidth="260"
                                         Margin="4,4,4,0"
                                         Padding="8"
-                                        CornerRadius="10"
-                                        Style="{StaticResource SuccessBorderStyle}">
+                                        Style="{StaticResource SuccessCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Heat / Insulation" />
                                             <UniformGrid Margin="0,4,0,0" Columns="2">
@@ -892,8 +1011,7 @@
                                         MinWidth="260"
                                         Margin="4,4,4,0"
                                         Padding="8"
-                                        CornerRadius="10"
-                                        Style="{StaticResource MutedBorderStyle}">
+                                        Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Geometry" />
                                             <UniformGrid Margin="0,4,0,0" Columns="3">
@@ -980,14 +1098,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border
-                        Grid.Column="0"
-                        Margin="8"
-                        Padding="10"
-                        Background="{StaticResource Brush.SurfaceAlt}"
-                        BorderBrush="{StaticResource Brush.Border}"
-                        CornerRadius="10"
-                        Style="{StaticResource CardBorderStyle}">
+                    <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                         <StackPanel>
                             <TextBlock
                                 FontSize="14"
@@ -1059,11 +1170,7 @@
                         PanningMode="VerticalOnly"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="8" Orientation="Vertical">
-                            <Border
-                                Margin="4"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource WarningBorderStyle}">
+                            <Border Style="{StaticResource AccentCardStyle}">
                                 <StackPanel>
                                     <TextBlock FontWeight="Bold" Text="Plumbing overview" />
                                     <TextBlock
@@ -1085,12 +1192,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="LossCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource WarningBorderStyle}">
+                            <Border x:Name="LossCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -1506,12 +1608,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="TargetFrictionCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource HighlightBorderStyle}">
+                            <Border x:Name="TargetFrictionCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -1574,14 +1671,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="FixtureUnitsCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                Background="{StaticResource Brush.SurfaceAlt}"
-                                BorderBrush="{StaticResource Brush.BorderMuted}"
-                                CornerRadius="10"
-                                Style="{StaticResource CardBorderStyle}">
+                            <Border x:Name="FixtureUnitsCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -1775,12 +1865,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="SanitaryCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource WarningBorderStyle}">
+                            <Border x:Name="SanitaryCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -1863,14 +1948,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="VentStackCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                Background="{StaticResource Brush.EmphasisBackground}"
-                                BorderBrush="{StaticResource Brush.BorderAlt}"
-                                BorderThickness="1"
-                                CornerRadius="10">
+                            <Border x:Name="VentStackCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -1949,12 +2027,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="StormwaterCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource HighlightBorderStyle}">
+                            <Border x:Name="StormwaterCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -2054,12 +2127,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="GasCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource WarningBorderStyle}">
+                            <Border x:Name="GasCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -2120,14 +2188,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="RecircCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                Background="{StaticResource Brush.SurfaceAlt}"
-                                BorderBrush="{StaticResource Brush.BorderMuted}"
-                                CornerRadius="10"
-                                Style="{StaticResource CardBorderStyle}">
+                            <Border x:Name="RecircCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -2202,12 +2263,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border
-                                x:Name="HammerCard"
-                                Margin="0,0,0,10"
-                                Padding="12"
-                                CornerRadius="10"
-                                Style="{StaticResource WarningBorderStyle}">
+                            <Border x:Name="HammerCard" Style="{StaticResource CardStyle}">
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="14"
@@ -2276,7 +2332,7 @@
                     VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="12" Orientation="Vertical">
                         <TextBlock Text="Use built-in tables or point to a custom folder; built-ins stay active unless a valid catalog is loaded." TextWrapping="Wrap" />
-                        <Border Padding="10" Style="{StaticResource AccentBorderStyle}">
+                        <Border Style="{StaticResource AccentCardStyle}">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock FontWeight="Bold" Text="Custom catalog folder" />
                                 <TextBlock

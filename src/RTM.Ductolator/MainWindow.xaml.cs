@@ -1552,7 +1552,7 @@ namespace RTM.Ductolator
                 SetBox(OutRPerim, perimFt, "0.000");
             }
             else if (cfm > 0 && velInput > 0 && targetAR > 0 && s1In <= 0 && s2In <= 0)
-{
+            {
                 // --- Case 3: CFM + Velocity + AR → synthetic rectangle + equivalent round ---
                 usedVelFpm = velInput;
                 areaFt2 = cfm / usedVelFpm;
@@ -2754,6 +2754,64 @@ namespace RTM.Ductolator
             UpdatePlumbingFittingTotals();
 
             _lastPlumbingExport = null;
+        }
+
+        // Konami Code Easter Egg
+        private readonly System.Windows.Input.Key[] _konamiCode =
+        {
+            System.Windows.Input.Key.Up, System.Windows.Input.Key.Up,
+            System.Windows.Input.Key.Down, System.Windows.Input.Key.Down,
+            System.Windows.Input.Key.Left, System.Windows.Input.Key.Right,
+            System.Windows.Input.Key.Left, System.Windows.Input.Key.Right,
+            System.Windows.Input.Key.B, System.Windows.Input.Key.A
+        };
+        private int _konamiIndex = 0;
+        private System.Windows.Threading.DispatcherTimer? _partyTimer;
+        private readonly Random _partyRandom = new();
+
+        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+
+            if (e.Key == _konamiCode[_konamiIndex])
+            {
+                _konamiIndex++;
+                if (_konamiIndex == _konamiCode.Length)
+                {
+                    _konamiIndex = 0;
+                    TogglePartyMode();
+                }
+            }
+            else
+            {
+                _konamiIndex = 0;
+            }
+        }
+
+        private void TogglePartyMode()
+        {
+            if (_partyTimer == null)
+            {
+                _partyTimer = new System.Windows.Threading.DispatcherTimer();
+                _partyTimer.Interval = TimeSpan.FromMilliseconds(200);
+                _partyTimer.Tick += (s, e) =>
+                {
+                    var color = System.Windows.Media.Color.FromRgb(
+                        (byte)_partyRandom.Next(256),
+                        (byte)_partyRandom.Next(256),
+                        (byte)_partyRandom.Next(256));
+                    Background = new System.Windows.Media.SolidColorBrush(color);
+                };
+                _partyTimer.Start();
+                MessageBox.Show("Party Mode Activated! 🥳", "Konami Code", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                _partyTimer.Stop();
+                _partyTimer = null;
+                Background = (System.Windows.Media.Brush)FindResource("Brush.Surface"); // Reset to default
+                MessageBox.Show("Party Mode Deactivated.", "Konami Code", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
     }
 }
