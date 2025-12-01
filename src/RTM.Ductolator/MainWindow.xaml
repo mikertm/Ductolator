@@ -3,8 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Super Ductolator &amp; Plumbing Sizer"
-    Width="1200"
-    Height="900"
+    Width="1000"
+    Height="750"
     Background="{StaticResource Brush.AppBackground}"
     Closing="MainWindow_Closing"
     WindowStartupLocation="CenterScreen">
@@ -13,9 +13,9 @@
             x:Key="CompactInputTextBox"
             BasedOn="{StaticResource {x:Type TextBox}}"
             TargetType="TextBox">
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="MinHeight" Value="32" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
@@ -93,9 +93,9 @@
             <Setter Property="Background" Value="{StaticResource Brush.SurfaceAlt}" />
             <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect
@@ -131,7 +131,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
         </Style>
     </Window.Resources>
-    <Grid Margin="12">
+    <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -139,25 +139,25 @@
         </Grid.RowDefinitions>
 
         <TextBlock
-            FontSize="16"
+            FontSize="14"
             FontWeight="Bold"
             Text="ASHRAE/SMACNA duct sizing and ASPE/UPC plumbing calculations" />
 
         <Border
             Grid.Row="1"
-            Margin="0,8,0,4"
-            Padding="8"
+            Margin="0,6,0,4"
+            Padding="6"
             Background="{StaticResource Brush.SurfaceAlt}"
             BorderBrush="{StaticResource Brush.BorderMuted}"
             BorderThickness="1"
-            CornerRadius="8">
+            CornerRadius="6">
             <DockPanel LastChildFill="False">
                 <StackPanel
                     VerticalAlignment="Center"
                     DockPanel.Dock="Left"
                     Orientation="Vertical">
                     <TextBlock
-                        FontSize="13"
+                        FontSize="12"
                         FontWeight="SemiBold"
                         Text="Catalog source" />
                     <TextBlock
@@ -179,9 +179,9 @@
         <TabControl
             x:Name="MainTabs"
             Grid.Row="2"
-            Margin="0,12,0,0">
+            Margin="0,8,0,0">
             <TabItem Header="Duct Sizing">
-                <Grid Margin="8">
+                <Grid Margin="6">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -194,8 +194,8 @@
                     <Border
                         Grid.Row="0"
                         Grid.ColumnSpan="2"
-                        Margin="4"
-                        Padding="10"
+                        Margin="2"
+                        Padding="8"
                         Style="{StaticResource SuccessBorderStyle}">
                         <StackPanel>
                             <TextBlock FontWeight="Bold" Text="How to use" />
@@ -220,35 +220,35 @@
                     <ScrollViewer
                         Grid.Row="1"
                         Grid.Column="0"
-                        Margin="0,8,6,0"
-                        Padding="4"
+                        Margin="0,6,4,0"
+                        Padding="2"
                         HorizontalContentAlignment="Stretch"
                         HorizontalScrollBarVisibility="Disabled"
                         PanningMode="VerticalOnly"
                         VerticalScrollBarVisibility="Auto">
                         <Border
-                            Padding="12"
+                            Padding="8"
                             Background="{StaticResource Brush.SurfaceAlt}"
                             BorderBrush="{StaticResource Brush.Border}"
                             BorderThickness="1"
-                            CornerRadius="10">
+                            CornerRadius="8">
                             <StackPanel
                                 VerticalAlignment="Stretch"
                                 Panel.ZIndex="1"
                                 Orientation="Vertical">
                                 <TextBlock
-                                    Margin="0,0,0,8"
-                                    FontSize="15"
+                                    Margin="0,0,0,6"
+                                    FontSize="14"
                                     FontWeight="Bold"
                                     Text="Plan" />
 
                                 <Border
-                                    Margin="0,0,0,10"
-                                    Padding="8"
+                                    Margin="0,0,0,8"
+                                    Padding="6"
                                     Background="{StaticResource Brush.EmphasisBackground}"
                                     BorderBrush="{StaticResource Brush.BorderAlt}"
                                     BorderThickness="1"
-                                    CornerRadius="8">
+                                    CornerRadius="6">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                             <Button
@@ -279,8 +279,8 @@
                                 </Border>
 
                                 <Border
-                                    Margin="0,0,0,12"
-                                    Padding="8"
+                                    Margin="0,0,0,8"
+                                    Padding="6"
                                     Style="{StaticResource HighlightBorderStyle}">
                                     <Expander IsExpanded="True">
                                         <Expander.Header>
@@ -486,8 +486,8 @@
                                 </Border>
 
                                 <Border
-                                    Margin="0,0,0,12"
-                                    Padding="8"
+                                    Margin="0,0,0,8"
+                                    Padding="6"
                                     Style="{StaticResource AccentBorderStyle}">
                                     <Expander Header="Advanced" IsExpanded="False">
                                         <StackPanel Margin="0,2,0,0" Orientation="Vertical">
@@ -624,8 +624,8 @@
                                 </Border>
 
                                 <Border
-                                    Margin="0,0,0,12"
-                                    Padding="10"
+                                    Margin="0,0,0,8"
+                                    Padding="8"
                                     Style="{StaticResource HighlightBorderStyle}">
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock FontWeight="Bold" Text="Regional presets" />
@@ -667,8 +667,8 @@
                                 </Border>
 
                                 <Border
-                                    Margin="0,0,0,12"
-                                    Padding="8"
+                                    Margin="0,0,0,8"
+                                    Padding="6"
                                     Style="{StaticResource HighlightBorderStyle}">
                                     <StackPanel>
                                         <TextBlock FontWeight="Bold" Text="Fittings (ASHRAE/SMACNA)" />
@@ -763,8 +763,8 @@
                                 </Border>
 
                                 <Border
-                                    Margin="0,0,0,10"
-                                    Padding="8"
+                                    Margin="0,0,0,6"
+                                    Padding="6"
                                     Style="{StaticResource HighlightBorderStyle}">
                                     <StackPanel>
                                         <TextBlock FontWeight="Bold" Text="Input tips" />
@@ -797,18 +797,18 @@
                     <ScrollViewer
                         Grid.Row="1"
                         Grid.Column="1"
-                        Margin="6,8,0,0"
-                        Padding="4"
+                        Margin="4,6,0,0"
+                        Padding="2"
                         HorizontalContentAlignment="Stretch"
                         HorizontalScrollBarVisibility="Disabled"
                         PanningMode="VerticalOnly"
                         VerticalScrollBarVisibility="Auto">
                         <Border
-                            Padding="12"
+                            Padding="8"
                             Background="{StaticResource Brush.SurfaceAlt}"
                             BorderBrush="{StaticResource Brush.Border}"
                             BorderThickness="1"
-                            CornerRadius="10">
+                            CornerRadius="8">
                             <StackPanel Orientation="Vertical">
                                 <StackPanel.Resources>
                                     <Style BasedOn="{StaticResource CompactOutputTextBox}" TargetType="TextBox" />
@@ -817,8 +817,8 @@
                                     </Style>
                                 </StackPanel.Resources>
                                 <TextBlock
-                                    Margin="0,0,0,8"
-                                    FontSize="15"
+                                    Margin="0,0,0,6"
+                                    FontSize="14"
                                     FontWeight="Bold"
                                     Text="Results" />
 
@@ -827,9 +827,9 @@
                                     HorizontalAlignment="Stretch"
                                     Columns="2">
                                     <Border
-                                        MinWidth="180"
-                                        Margin="4,0"
-                                        Padding="6"
+                                        MinWidth="160"
+                                        Margin="3,0"
+                                        Padding="5"
                                         Style="{StaticResource AccentCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Velocity (FPM)" />
@@ -848,9 +848,9 @@
                                         </StackPanel>
                                     </Border>
                                     <Border
-                                        MinWidth="180"
-                                        Margin="4,0"
-                                        Padding="6"
+                                        MinWidth="160"
+                                        Margin="3,0"
+                                        Padding="5"
                                         Style="{StaticResource SuccessCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Friction (in. w.g./100 ft)" />
@@ -869,9 +869,9 @@
                                         </StackPanel>
                                     </Border>
                                     <Border
-                                        MinWidth="180"
-                                        Margin="4,0"
-                                        Padding="6"
+                                        MinWidth="160"
+                                        Margin="3,0"
+                                        Padding="5"
                                         Style="{StaticResource WarningCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Total ΔP (in. w.g.)" />
@@ -893,9 +893,9 @@
                                     HorizontalAlignment="Stretch"
                                     Columns="2">
                                     <Border
-                                        MinWidth="260"
-                                        Margin="4,4,4,0"
-                                        Padding="8"
+                                        MinWidth="240"
+                                        Margin="3,3,3,0"
+                                        Padding="6"
                                         Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Air Data" />
@@ -929,9 +929,9 @@
                                     </Border>
 
                                     <Border
-                                        MinWidth="260"
-                                        Margin="4,4,4,0"
-                                        Padding="8"
+                                        MinWidth="240"
+                                        Margin="3,3,3,0"
+                                        Padding="6"
                                         Style="{StaticResource WarningCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Pressure / Leakage / Fan" />
@@ -980,9 +980,9 @@
                                     </Border>
 
                                     <Border
-                                        MinWidth="260"
-                                        Margin="4,4,4,0"
-                                        Padding="8"
+                                        MinWidth="240"
+                                        Margin="3,3,3,0"
+                                        Padding="6"
                                         Style="{StaticResource SuccessCardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Heat / Insulation" />
@@ -1008,9 +1008,9 @@
                                     </Border>
 
                                     <Border
-                                        MinWidth="260"
-                                        Margin="4,4,4,0"
-                                        Padding="8"
+                                        MinWidth="240"
+                                        Margin="3,3,3,0"
+                                        Padding="6"
                                         Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <TextBlock FontWeight="Bold" Text="Geometry" />
