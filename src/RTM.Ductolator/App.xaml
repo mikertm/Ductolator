@@ -1,12 +1,13 @@
-<Application x:Class="RTM.Ductolator.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
+<Application
+    x:Class="RTM.Ductolator.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary>
-                    <!-- Light palette -->
+                    <!--  Light palette  -->
                     <Color x:Key="Color.Primary.Light">#4B6BFB</Color>
                     <Color x:Key="Color.PrimaryDark.Light">#2F4AB8</Color>
                     <Color x:Key="Color.Secondary.Light">#8B5CF6</Color>
@@ -25,7 +26,7 @@
                     <Color x:Key="Color.Text.Subtle.Light">#4B5563</Color>
                     <Color x:Key="Color.Text.Danger.Light">#8B1E2C</Color>
 
-                    <!-- Dark palette (reserved for future theme switching) -->
+                    <!--  Dark palette (reserved for future theme switching)  -->
                     <Color x:Key="Color.Primary.Dark">#93B4FF</Color>
                     <Color x:Key="Color.PrimaryDark.Dark">#6A8BE0</Color>
                     <Color x:Key="Color.Secondary.Dark">#BBA7FF</Color>
@@ -44,10 +45,12 @@
                     <Color x:Key="Color.Text.Subtle.Dark">#C7D2FE</Color>
                     <Color x:Key="Color.Text.Danger.Dark">#FECACA</Color>
 
-                    <!-- Brush aliases using light palette by default -->
+                    <!--  Brush aliases using light palette by default  -->
                     <SolidColorBrush x:Key="Brush.Primary" Color="{StaticResource Color.Primary.Light}" />
                     <SolidColorBrush x:Key="Brush.PrimaryDark" Color="{StaticResource Color.PrimaryDark.Light}" />
                     <SolidColorBrush x:Key="Brush.Secondary" Color="{StaticResource Color.Secondary.Light}" />
+                    <SolidColorBrush x:Key="Brush.Accent" Color="{StaticResource Color.Primary.Light}" />
+                    <SolidColorBrush x:Key="Brush.InputBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="Brush.AppBackground" Color="{StaticResource Color.Surface.Light}" />
                     <SolidColorBrush x:Key="Brush.Surface" Color="{StaticResource Color.Surface.Light}" />
                     <SolidColorBrush x:Key="Brush.SurfaceAlt" Color="{StaticResource Color.SurfaceAlt.Light}" />
@@ -79,7 +82,7 @@
                     <SolidColorBrush x:Key="Brush.ChipPurpleBackground" Color="#F7F4FF" />
                     <SolidColorBrush x:Key="Brush.ChipPurpleBorder" Color="#C8B5F7" />
 
-                    <!-- Typography -->
+                    <!--  Typography  -->
                     <Style TargetType="TextBlock">
                         <Setter Property="FontFamily" Value="Segoe UI" />
                         <Setter Property="Foreground" Value="{StaticResource Brush.TextPrimary}" />
@@ -95,7 +98,7 @@
                         <Setter Property="SnapsToDevicePixels" Value="True" />
                     </Style>
 
-                    <!-- Borders -->
+                    <!--  Borders  -->
                     <Style x:Key="CardBorderStyle" TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.CardBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}" />
@@ -105,27 +108,42 @@
                         <Setter Property="Margin" Value="0,0,0,12" />
                     </Style>
 
-                    <Style x:Key="AccentBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                    <Style
+                        x:Key="AccentBorderStyle"
+                        BasedOn="{StaticResource CardBorderStyle}"
+                        TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
                     </Style>
 
-                    <Style x:Key="MutedBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                    <Style
+                        x:Key="MutedBorderStyle"
+                        BasedOn="{StaticResource CardBorderStyle}"
+                        TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.MutedBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderMuted}" />
                     </Style>
 
-                    <Style x:Key="SuccessBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                    <Style
+                        x:Key="SuccessBorderStyle"
+                        BasedOn="{StaticResource CardBorderStyle}"
+                        TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.SuccessBackground}" />
                         <Setter Property="BorderBrush" Value="#B8E6C5" />
                     </Style>
 
-                    <Style x:Key="WarningBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                    <Style
+                        x:Key="WarningBorderStyle"
+                        BasedOn="{StaticResource CardBorderStyle}"
+                        TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.WarningBackground}" />
                         <Setter Property="BorderBrush" Value="#F3CFAA" />
                     </Style>
 
-                    <Style x:Key="HighlightBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                    <Style
+                        x:Key="HighlightBorderStyle"
+                        BasedOn="{StaticResource CardBorderStyle}"
+                        TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource Brush.CardAltBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
                     </Style>
@@ -139,7 +157,7 @@
                         <Setter Property="Margin" Value="0,6,6,0" />
                     </Style>
 
-                    <!-- Buttons -->
+                    <!--  Buttons  -->
                     <Style x:Key="BaseButtonStyle" TargetType="Button">
                         <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
@@ -151,12 +169,13 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="border"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="8"
-                                            Padding="{TemplateBinding Padding}">
+                                    <Border
+                                        x:Name="border"
+                                        Padding="{TemplateBinding Padding}"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="8">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -177,9 +196,12 @@
                         </Setter>
                     </Style>
 
-                    <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}" />
+                    <Style BasedOn="{StaticResource BaseButtonStyle}" TargetType="Button" />
 
-                    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                    <Style
+                        x:Key="PrimaryButtonStyle"
+                        BasedOn="{StaticResource BaseButtonStyle}"
+                        TargetType="Button">
                         <Setter Property="Background" Value="{StaticResource Brush.Primary}" />
                         <Setter Property="Foreground" Value="White" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryDark}" />
@@ -187,12 +209,13 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="border"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="8"
-                                            Padding="{TemplateBinding Padding}">
+                                    <Border
+                                        x:Name="border"
+                                        Padding="{TemplateBinding Padding}"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="8">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -211,19 +234,23 @@
                         </Setter>
                     </Style>
 
-                    <Style x:Key="PillButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                    <Style
+                        x:Key="PillButtonStyle"
+                        BasedOn="{StaticResource BaseButtonStyle}"
+                        TargetType="Button">
                         <Setter Property="Padding" Value="14,6" />
                         <Setter Property="Background" Value="{StaticResource Brush.EmphasisBackground}" />
                         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderAlt}" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="border"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="18"
-                                            Padding="{TemplateBinding Padding}">
+                                    <Border
+                                        x:Name="border"
+                                        Padding="{TemplateBinding Padding}"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="18">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -243,7 +270,10 @@
                         </Setter>
                     </Style>
 
-                    <Style x:Key="ChipBorderStyle" TargetType="Border" BasedOn="{StaticResource BadgeBorderStyle}" />
+                    <Style
+                        x:Key="ChipBorderStyle"
+                        BasedOn="{StaticResource BadgeBorderStyle}"
+                        TargetType="Border" />
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
