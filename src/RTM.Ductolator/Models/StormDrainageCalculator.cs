@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RTM.Ductolator.Models
 {
@@ -23,6 +25,18 @@ namespace RTM.Ductolator.Models
                     _defaultRoughnessN = value;
             }
         }
+
+        // IPC Table 1106.2 (2021) Vertical Conductors and Leaders
+        // Diameter (in) -> Max Flow (gpm)
+        private static readonly List<(double DiameterIn, double MaxGpm)> VerticalLeaderCapacity = new()
+        {
+            (2.0, 30),
+            (3.0, 92),
+            (4.0, 192),
+            (5.0, 360),
+            (6.0, 563),
+            (8.0, 1208)
+        };
 
         /// <summary>
         /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
@@ -84,24 +98,52 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
-        /// Maximum gpm that can be carried by a vertical leader (slope ~ 1.0) at full flow.
+        /// Maximum gpm that can be carried by a vertical leader (IPC Table 1106.2).
         /// </summary>
-        public static double VerticalLeaderMaxFlow(double diameterIn, double? roughnessN = null)
+        public static double VerticalLeaderMaxFlow(double diameterIn)
         {
-            double nValue = roughnessN ?? _defaultRoughnessN;
-            if (diameterIn <= 0 || nValue <= 0) return 0;
-            return FullFlowFromDiameter(diameterIn, 1.0, nValue);
+            if (diameterIn <= 0) return 0;
+            var match = VerticalLeaderCapacity.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
+            if (match != default)
+                return match.MaxGpm;
+
+            // Interpolate or extrapolate if not exact match found
+            // Since this is a code table, usually we pick the next smaller size's capacity (safe) or next larger size?
+            // Safer to return 0 or interpolate carefully.
+            // For now, let's find the largest size smaller than diameterIn.
+
+            var lower = VerticalLeaderCapacity.Where(x => x.DiameterIn <= diameterIn).OrderByDescending(x => x.DiameterIn).FirstOrDefault();
+
+            // If it's larger than our largest, we might need to extrapolate, but IPC stops at 8".
+            // Some extended tables go higher. Let's stick to the table logic.
+            if (lower != default)
+            {
+                // If it's effectively equal, we returned it above.
+                // If we are between sizes (e.g. 2.5"), strictly speaking code requires next larger pipe size for the flow.
+                // So capacity of a 2.5" pipe is effectively the capacity of a 2" pipe? No, that's for sizing.
+                // Capacity of 2.5" pipe is at least capacity of 2" pipe.
+                return lower.MaxGpm;
+            }
+
+            return 0;
         }
 
         /// <summary>
-        /// Minimum leader diameter (in) for a given flow assuming vertical orientation (slope ~1.0).
+        /// Minimum vertical leader diameter (in) for a given flow using IPC Table 1106.2.
         /// </summary>
-        public static double VerticalLeaderDiameter(double flowGpm, double? roughnessN = null,
-                                                    double minDiameterIn = 2.0, double maxDiameterIn = 24.0)
+        public static double VerticalLeaderDiameter(double flowGpm)
         {
-            double nValue = roughnessN ?? _defaultRoughnessN;
-            if (flowGpm <= 0 || nValue <= 0) return 0;
-            return FullFlowDiameterFromGpm(flowGpm, 1.0, nValue, minDiameterIn, maxDiameterIn);
+            if (flowGpm <= 0) return 0;
+
+            foreach (var entry in VerticalLeaderCapacity)
+            {
+                if (entry.MaxGpm >= flowGpm)
+                    return entry.DiameterIn;
+            }
+
+            // If flow exceeds largest table entry (8" = 1208 GPM), return 0 or largest?
+            // Return 0 to indicate "Too large for standard table"
+            return 0;
         }
 
         private static double SolveByBisection(double targetFlow, double lo, double hi, Func<double, double> flowFromDiameter)
@@ -151,16 +193,6 @@ namespace RTM.Ductolator.Models
             double theta = 2 * Math.Acos(1 - 2 * depthRatio);
             double radius = diameterFt / 2.0;
             return radius * theta;
-        }
-
-        private static double FullFlowFromDiameter(double diameterIn, double slopeFtPerFt, double roughnessN)
-        {
-            double dFt = diameterIn / InPerFt;
-            double area = Math.PI * dFt * dFt / 4.0;
-            double wettedPerimeter = Math.PI * dFt;
-            double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
-            double qCfs = (ManningCoefficient / roughnessN) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-            return qCfs * CfsToGpm;
         }
     }
 }

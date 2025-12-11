@@ -629,14 +629,35 @@ namespace RTM.Ductolator.Models
         private const double SlopeQuarterInPerFt_FtPerFt = 0.25 / InPerFt;   // 1/4 in per ft
         private const double SlopeEighthInPerFt_FtPerFt = 0.125 / InPerFt;   // 1/8 in per ft
         private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
-        private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> SanitaryCapacity = new()
+
+        // Building Drains and Sewers (IPC Table 710.1(1))
+        private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> BuildingDrainCapacity = new()
         {
             { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 42), (4.0, 216) } },
             { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
             { SlopeSixteenthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
         };
 
-        public static void SetSanitaryCapacityTable(Dictionary<double, List<(double DiameterIn, double MaxDfu)>> customTable)
+        // Horizontal Fixture Branches and Stacks (IPC Table 710.1(2))
+        // Does not depend on slope? IPC table says "Horizontal Fixture Branches" Max DFU
+        // 1-1/2: 3, 2: 6, 2-1/2: 12, 3: 20, 4: 160.
+        // We will store this as a single list since it applies to "horizontal branches" regardless of slope (though min slope applies).
+        private static readonly List<(double DiameterIn, double MaxDfu)> HorizontalFixtureBranchCapacity = new()
+        {
+            (1.5, 3),
+            (2.0, 6),
+            (2.5, 12),
+            (3.0, 20),
+            (4.0, 160),
+            (5.0, 360),
+            (6.0, 620),
+            (8.0, 1400)
+        };
+
+        /// <summary>
+        /// Update the Building Drain capacity table (IPC 710.1(1) style).
+        /// </summary>
+        public static void SetBuildingDrainCapacityTable(Dictionary<double, List<(double DiameterIn, double MaxDfu)>> customTable)
         {
             if (customTable == null || customTable.Count == 0) return;
 
@@ -656,40 +677,56 @@ namespace RTM.Ductolator.Models
             }
 
             if (newTable.Count > 0)
-                SanitaryCapacity = newTable;
+                BuildingDrainCapacity = newTable;
         }
 
         /// <summary>
-        /// Minimum nominal diameter (in) to carry the given sanitary drainage fixture units
-        /// for a horizontal branch at the provided slope (ft/ft). Uses embedded IPC-style DFU caps.
-        /// Returns 0 when no table value satisfies the demand.
+        /// Minimum nominal diameter (in) to carry the given sanitary drainage fixture units.
+        /// Default behavior checks Fixture Branch limits (IPC 710.1(2)) which is safer/conservative.
+        /// Set isBuildingDrain=true to use Building Drain/Sewer limits (IPC 710.1(1)) which depend on slope.
         /// </summary>
-        public static double MinSanitaryDiameterFromDfu(double drainageFixtureUnits, double slopeFtPerFt)
+        public static double MinSanitaryDiameterFromDfu(double drainageFixtureUnits, double slopeFtPerFt, bool isBuildingDrain = false)
         {
-            if (drainageFixtureUnits <= 0 || slopeFtPerFt <= 0) return 0;
+            if (drainageFixtureUnits <= 0) return 0;
 
-            // Find nearest slope in table (simple nearest match)
-            double closestSlope = 0;
-            double minDelta = double.MaxValue;
-            foreach (var kvp in SanitaryCapacity)
+            if (!isBuildingDrain)
             {
-                double delta = Math.Abs(kvp.Key - slopeFtPerFt);
-                if (delta < minDelta)
+                // Fixture Branch Logic
+                foreach (var entry in HorizontalFixtureBranchCapacity)
                 {
-                    minDelta = delta;
-                    closestSlope = kvp.Key;
+                    if (drainageFixtureUnits <= entry.MaxDfu)
+                        return entry.DiameterIn;
                 }
+                return 0; // Exceeds table
             }
-
-            if (closestSlope == 0) return 0;
-
-            foreach (var entry in SanitaryCapacity[closestSlope])
+            else
             {
-                if (drainageFixtureUnits <= entry.MaxDfu)
-                    return entry.DiameterIn;
-            }
+                // Building Drain Logic (depends on slope)
+                if (slopeFtPerFt <= 0) return 0;
 
-            return 0;
+                // Find nearest slope in table (simple nearest match)
+                double closestSlope = 0;
+                double minDelta = double.MaxValue;
+                foreach (var kvp in BuildingDrainCapacity)
+                {
+                    double delta = Math.Abs(kvp.Key - slopeFtPerFt);
+                    if (delta < minDelta)
+                    {
+                        minDelta = delta;
+                        closestSlope = kvp.Key;
+                    }
+                }
+
+                if (closestSlope == 0) return 0;
+
+                foreach (var entry in BuildingDrainCapacity[closestSlope])
+                {
+                    if (drainageFixtureUnits <= entry.MaxDfu)
+                        return entry.DiameterIn;
+                }
+
+                return 0;
+            }
         }
 
         // === Storm drainage (Manning full-pipe) ===
