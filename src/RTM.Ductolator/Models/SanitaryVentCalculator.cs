@@ -17,12 +17,30 @@ namespace RTM.Ductolator.Models
         private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
 
         // IPC/UPC style DFU limits for horizontal branches (nominal diameter, max DFU)
-        private static Dictionary<double, List<(double DiameterIn, double MaxDfu)>> HorizontalBranchCapacity = new()
+        // IPC Table 710.1(2) Horizontal Fixture Branches and Stacks.
+        // NOTE: This table is independent of slope (unlike Building Drain).
+        // The original code used Building Drain capacities here which was incorrect for "Branches".
+        // Now updated to use Fixture Branch limits (more conservative).
+        private static List<(double DiameterIn, double MaxDfu)> HorizontalBranchCapacity = new()
         {
-            { SlopeQuarterInPerFt_FtPerFt, new List<(double, double)> { (2.0, 21), (2.5, 24), (3.0, 35), (4.0, 216) } },
-            { SlopeEighthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 15), (2.5, 20), (3.0, 36), (4.0, 180) } },
-            { SlopeSixteenthInPerFt_FtPerFt, new List<(double, double)> { (2.0, 8), (2.5, 21), (3.0, 42), (4.0, 216) } }
+            (1.5, 3),
+            (2.0, 6),
+            (2.5, 12),
+            (3.0, 20),
+            (4.0, 160),
+            (5.0, 360),
+            (6.0, 620),
+            (8.0, 1400)
         };
+
+        // If we want to support the old structure for Building Drains just in case, we can keep it,
+        // but given the class name "SanitaryVentCalculator" and method "MinBranchDiameter",
+        // it strongly implies fixture branches.
+        // However, the signature uses 'slopeFtPerFt', which implies building drain logic.
+        // If the user passes a slope, they might expect slope-dependent sizing (Building Drain).
+        // But "Branch" usually means fixture branch.
+        // To be safe and correct per the name "Horizontal Branch", we should use the Branch table.
+        // We will ignore the slope for capacity lookup but check it for minimum velocity/code compliance if needed (1/4" usually min for <=2.5").
 
         // IPC Table 906.1 / UPC vent stack-vent capacities (nominal diameter, max DFU at typical developed lengths)
         // The length reduction factor derates long vents for friction and load diversity.
@@ -36,25 +54,17 @@ namespace RTM.Ductolator.Models
             (4.0, 500)
         };
 
-        public static void SetHorizontalBranchCapacity(Dictionary<double, List<(double DiameterIn, double MaxDfu)>> capacityTable)
+        public static void SetHorizontalBranchCapacity(List<(double DiameterIn, double MaxDfu)> capacityTable)
         {
             if (capacityTable == null || capacityTable.Count == 0) return;
 
-            var newTable = new Dictionary<double, List<(double DiameterIn, double MaxDfu)>>();
-            foreach (var kvp in capacityTable)
-            {
-                if (kvp.Key <= 0 || kvp.Value == null) continue;
-                var row = kvp.Value
-                    .Where(v => v.DiameterIn > 0 && v.MaxDfu > 0)
-                    .OrderBy(v => v.DiameterIn)
-                    .ToList();
+             var row = capacityTable
+                .Where(v => v.DiameterIn > 0 && v.MaxDfu > 0)
+                .OrderBy(v => v.DiameterIn)
+                .ToList();
 
-                if (row.Count > 0)
-                    newTable[kvp.Key] = row;
-            }
-
-            if (newTable.Count > 0)
-                HorizontalBranchCapacity = newTable;
+            if (row.Count > 0)
+                HorizontalBranchCapacity = row;
         }
 
         public static void SetVentStackBaseCapacity(List<(double DiameterIn, double BaseMaxDfu)> capacityTable)
@@ -70,17 +80,18 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
-        /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal branch at the given slope (ft/ft).
+        /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal fixture branch.
+        /// Uses IPC Table 710.1(2). Slope is ignored for capacity but must meet code minimums (usually 1/4" per ft).
         /// Returns 0 when no table value satisfies the demand.
         /// </summary>
         public static double MinBranchDiameterFromDfu(double drainageFixtureUnits, double slopeFtPerFt)
         {
-            if (drainageFixtureUnits <= 0 || slopeFtPerFt <= 0) return 0;
+            if (drainageFixtureUnits <= 0) return 0;
 
-            double closestSlope = ClosestSlopeKey(HorizontalBranchCapacity.Keys, slopeFtPerFt);
-            if (closestSlope == 0) return 0;
+            // Note: Slope is not used for capacity lookup of Horizontal Fixture Branches in IPC.
+            // Capacity is fixed by diameter.
 
-            foreach (var entry in HorizontalBranchCapacity[closestSlope])
+            foreach (var entry in HorizontalBranchCapacity)
             {
                 if (drainageFixtureUnits <= entry.MaxDfu)
                     return entry.DiameterIn;
@@ -90,18 +101,15 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
-        /// Maximum allowable DFU for a given nominal diameter and slope using embedded IPC/UPC branch tables.
-        /// Returns 0 if the diameter is not present in the nearest slope row.
+        /// Maximum allowable DFU for a given nominal diameter for a horizontal fixture branch.
+        /// Uses IPC Table 710.1(2).
+        /// Returns 0 if the diameter is not present.
         /// </summary>
         public static double AllowableFixtureUnits(double diameterIn, double slopeFtPerFt)
         {
-            if (diameterIn <= 0 || slopeFtPerFt <= 0) return 0;
+            if (diameterIn <= 0) return 0;
 
-            double closestSlope = ClosestSlopeKey(HorizontalBranchCapacity.Keys, slopeFtPerFt);
-            if (closestSlope == 0) return 0;
-
-            var row = HorizontalBranchCapacity[closestSlope];
-            var match = row.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
+            var match = HorizontalBranchCapacity.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
             return match == default ? 0 : match.MaxDfu;
         }
 
@@ -136,23 +144,6 @@ namespace RTM.Ductolator.Models
             if (match == default) return 0;
 
             return match.BaseMaxDfu * lengthFactor;
-        }
-
-        private static double ClosestSlopeKey(IEnumerable<double> keys, double slope)
-        {
-            double closest = 0;
-            double minDelta = double.MaxValue;
-            foreach (var key in keys)
-            {
-                double delta = Math.Abs(key - slope);
-                if (delta < minDelta)
-                {
-                    minDelta = delta;
-                    closest = key;
-                }
-            }
-
-            return closest;
         }
     }
 }
