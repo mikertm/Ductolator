@@ -309,7 +309,12 @@ namespace RTM.Ductolator.Models
         {
             if (gpm <= 0 || diameterIn <= 0 || cFactor <= 0) return 0;
 
-            double numerator = 10.44 * Math.Pow(gpm, 1.85);
+            // Constant 10.44 is widely used for Q in gpm, C, d in inches -> hf in ft/100ft?
+            // Actually, many sources cite 0.2083 * (100/C)^1.85 * Q^1.85 / d^4.8655.
+            // 0.2083 * 100^1.85 = 1043.6.
+            // So the numerator constant should be approx 1044, not 10.44.
+            // Let's correct it to 1044.0 to align with standard values.
+            double numerator = 1044.0 * Math.Pow(gpm, 1.85);
             double denominator = Math.Pow(cFactor, 1.85) * Math.Pow(diameterIn, 4.87);
             return numerator / denominator;
         }

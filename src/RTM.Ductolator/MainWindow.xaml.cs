@@ -1979,6 +1979,32 @@ namespace RTM.Ductolator
             }
         }
 
+        private void BtnClear_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var tb in new[]
+            {
+                InCfm, InVel, InDp100, InDia, InS1, InS2, InAR,
+                OutDia, OutAreaRound, OutCircRound, OutRS1, OutRS2, OutRAR, OutRArea, OutRPerim, OutOS1, OutOS2, OutOAR, OutOArea, OutOPerim,
+                OutRe, OutF, OutCfm, OutVel, OutDp100, OutVp, OutTotalDp, OutAirDensity, OutAirNu,
+                DuctFittingSumKOutput, DuctFittingEquivalentLengthOutput, DuctTotalRunLengthOutput, InLossCoeff,
+                InSupplyStatic, InReturnStatic, InLeakageClass, InLeakTestPressure, InFanEff, InAmbientTemp, InMaxDeltaT, InExistingInsulR,
+                OutPressureClass, OutLeakage, OutFanBhp, OutHeatTransfer, OutDeltaT, OutRequiredR, OutInsulThk, OutVpEcho
+            })
+            {
+                if (tb != null) tb.Text = string.Empty;
+            }
+
+            if (DuctStatusNote != null) DuctStatusNote.Text = string.Empty;
+            if (DuctFittingBadgeText != null) DuctFittingBadgeText.Text = string.Empty;
+            if (DuctFittingSummaryText != null) DuctFittingSummaryText.Text = string.Empty;
+
+            _ductFittings.Clear();
+            RefreshDuctFittingList();
+            UpdateDuctFittingTotals();
+
+            _lastDuctExport = null;
+        }
+
         private void BtnPlClear_Click(object sender, RoutedEventArgs e)
         {
             foreach (var tb in new[]

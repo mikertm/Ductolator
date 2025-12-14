@@ -82,9 +82,7 @@ namespace RTM.Ductolator.Tests
             // Let's write the test for ~2.6 psi. If it fails (getting ~0.026), I will fix the production code constant to 1044.
 
             // Hand calc target: ~2.6 psi/100ft.
-            TestTolerance.AssertApproximatelyEqual(2.61, psi, 2.6, "Hazen-Williams calculation mismatch (Checking for factor of 100 error)");
-            // Note: I put a huge tolerance just to see if it runs, but `AssertApproximatelyEqual` will fail if diff is large.
-            // If I am fixing the code, I should use the correct expected value.
+            TestTolerance.AssertApproximatelyEqual(2.61, psi, 0.1, "Hazen-Williams calculation mismatch");
         }
 
         [TestMethod]
