@@ -26,17 +26,16 @@ namespace RTM.Ductolator.Models
             }
         }
 
-        // IPC Table 1106.2 (2021) Vertical Conductors and Leaders
-        // Diameter (in) -> Max Flow (gpm)
-        private static readonly List<(double DiameterIn, double MaxGpm)> VerticalLeaderCapacity = new()
+        // Table Registry
+        private static readonly Dictionary<string, List<(double DiameterIn, double MaxGpm)>> StormLeaderTables = new();
+
+        public static void RegisterStormLeaderTable(string key, List<(double DiameterIn, double MaxGpm)> rows)
         {
-            (2.0, 30),
-            (3.0, 92),
-            (4.0, 192),
-            (5.0, 360),
-            (6.0, 563),
-            (8.0, 1208)
-        };
+            if (string.IsNullOrWhiteSpace(key) || rows == null) return;
+            StormLeaderTables[key] = rows.OrderBy(r => r.DiameterIn).ToList();
+        }
+
+        public static bool HasStormLeaderTable(string key) => !string.IsNullOrWhiteSpace(key) && StormLeaderTables.ContainsKey(key);
 
         /// <summary>
         /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
@@ -98,52 +97,80 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
-        /// Maximum gpm that can be carried by a vertical leader (IPC Table 1106.2).
+        /// Maximum gpm that can be carried by a vertical leader.
         /// </summary>
-        public static double VerticalLeaderMaxFlow(double diameterIn)
+        public static bool TryVerticalLeaderMaxFlow(double diameterIn, string key, out double maxGpm, out string warning)
         {
-            if (diameterIn <= 0) return 0;
-            var match = VerticalLeaderCapacity.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
-            if (match != default)
-                return match.MaxGpm;
+            maxGpm = 0;
+            warning = string.Empty;
 
-            // Interpolate or extrapolate if not exact match found
-            // Since this is a code table, usually we pick the next smaller size's capacity (safe) or next larger size?
-            // Safer to return 0 or interpolate carefully.
-            // For now, let's find the largest size smaller than diameterIn.
-
-            var lower = VerticalLeaderCapacity.Where(x => x.DiameterIn <= diameterIn).OrderByDescending(x => x.DiameterIn).FirstOrDefault();
-
-            // If it's larger than our largest, we might need to extrapolate, but IPC stops at 8".
-            // Some extended tables go higher. Let's stick to the table logic.
-            if (lower != default)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                // If it's effectively equal, we returned it above.
-                // If we are between sizes (e.g. 2.5"), strictly speaking code requires next larger pipe size for the flow.
-                // So capacity of a 2.5" pipe is effectively the capacity of a 2" pipe? No, that's for sizing.
-                // Capacity of 2.5" pipe is at least capacity of 2" pipe.
-                return lower.MaxGpm;
+                warning = "No storm leader table key provided.";
+                return false;
             }
 
-            return 0;
+            if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing storm leader table: {key}";
+                return false;
+            }
+
+            if (diameterIn <= 0) return true;
+
+            var match = rows.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
+            if (match != default)
+            {
+                maxGpm = match.MaxGpm;
+                return true;
+            }
+
+            // Find smaller size
+            var lower = rows.Where(x => x.DiameterIn <= diameterIn).OrderByDescending(x => x.DiameterIn).FirstOrDefault();
+
+            if (lower != default)
+            {
+                maxGpm = lower.MaxGpm;
+                return true;
+            }
+
+            warning = "Diameter smaller than all entries in table.";
+            return false;
         }
 
         /// <summary>
-        /// Minimum vertical leader diameter (in) for a given flow using IPC Table 1106.2.
+        /// Minimum vertical leader diameter (in) for a given flow.
         /// </summary>
-        public static double VerticalLeaderDiameter(double flowGpm)
+        public static bool TryVerticalLeaderDiameter(double flowGpm, string key, out double diameter, out string warning)
         {
-            if (flowGpm <= 0) return 0;
+            diameter = 0;
+            warning = string.Empty;
 
-            foreach (var entry in VerticalLeaderCapacity)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                if (entry.MaxGpm >= flowGpm)
-                    return entry.DiameterIn;
+                warning = "No storm leader table key provided.";
+                return false;
             }
 
-            // If flow exceeds largest table entry (8" = 1208 GPM), return 0 or largest?
-            // Return 0 to indicate "Too large for standard table"
-            return 0;
+            if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing storm leader table: {key}";
+                return false;
+            }
+
+            if (flowGpm <= 0) return true;
+
+            foreach (var entry in rows)
+            {
+                if (entry.MaxGpm >= flowGpm)
+                {
+                    diameter = entry.DiameterIn;
+                    return true;
+                }
+            }
+
+            warning = "Flow exceeds capacity of largest leader in table.";
+            return false;
         }
 
         private static double SolveByBisection(double targetFlow, double lo, double hi, Func<double, double> flowFromDiameter)

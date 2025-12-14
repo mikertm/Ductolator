@@ -21,16 +21,6 @@ namespace RTM.Ductolator.Models
             double DefaultFriction_InWgPer100Ft,
             string Basis);
 
-        public record PlumbingCodeProfile(
-            string Region,
-            double MaxColdFps,
-            double MaxHotFps,
-            string CodeBasis,
-            string Notes)
-        {
-            public double GetMaxVelocity(bool isHot) => isHot ? MaxHotFps : MaxColdFps;
-        }
-
         // Duct velocity and friction practices by region (all grounded in IMC/SMACNA).
         private static readonly Dictionary<string, DuctCodeProfile> DuctProfiles = new()
         {
@@ -91,63 +81,7 @@ namespace RTM.Ductolator.Models
             }
         };
 
-        // Plumbing velocity practices by region (all rooted in UPC/IPC & ASPE limits).
-        private static readonly Dictionary<string, PlumbingCodeProfile> PlumbingProfiles = new()
-        {
-            {
-                "National (IPC/UPC)",
-                new PlumbingCodeProfile(
-                    Region: "National (IPC/UPC)",
-                    MaxColdFps: 8.0,
-                    MaxHotFps: 5.0,
-                    CodeBasis: "IPC/UPC with ASPE velocity limits",
-                    Notes: "Typical domestic water design limit of 8 fps cold / 5 fps hot"
-                )
-            },
-            {
-                "California (CPC)",
-                new PlumbingCodeProfile(
-                    Region: "California (CPC)",
-                    MaxColdFps: 8.0,
-                    MaxHotFps: 5.0,
-                    CodeBasis: "California Plumbing Code (UPC derivative) and Title 24 hot-water limits",
-                    Notes: "Title 24 hot-water circulation noise/erosion guidance keeps hot water at or below 5 fps"
-                )
-            },
-            {
-                "Chicago / Illinois", // Chicago Plumbing Code is conservative on velocities
-                new PlumbingCodeProfile(
-                    Region: "Chicago / Illinois",
-                    MaxColdFps: 6.0,
-                    MaxHotFps: 4.5,
-                    CodeBasis: "Chicago Plumbing Code with reduced velocities for noise control",
-                    Notes: "Chicago favors 6 fps cold and 4.5 fps hot to mitigate noise and erosion"
-                )
-            },
-            {
-                "Florida (IPC)",
-                new PlumbingCodeProfile(
-                    Region: "Florida (IPC)",
-                    MaxColdFps: 8.0,
-                    MaxHotFps: 5.0,
-                    CodeBasis: "Florida Plumbing Code (IPC-based)",
-                    Notes: "IPC velocity limits widely used across Florida jurisdictions"
-                )
-            },
-            {
-                "Texas (IPC)",
-                new PlumbingCodeProfile(
-                    Region: "Texas (IPC)",
-                    MaxColdFps: 8.0,
-                    MaxHotFps: 5.0,
-                    CodeBasis: "Texas statewide IPC adoption",
-                    Notes: "Standard IPC velocity caps unless local amendments are stricter"
-                )
-            }
-        };
-
         public static IReadOnlyList<string> AllDuctRegions => DuctProfiles.Keys.ToList();
-        public static IReadOnlyList<string> AllPlumbingRegions => PlumbingProfiles.Keys.ToList();
 
         public static DuctCodeProfile GetDuctProfile(string regionKey)
         {
@@ -156,11 +90,114 @@ namespace RTM.Ductolator.Models
             return profile;
         }
 
-        public static PlumbingCodeProfile GetPlumbingProfile(string regionKey)
+        // --- Plumbing Profiles ---
+
+        private static readonly List<PlumbingProfile> PlumbingProfilesList = new()
         {
-            if (string.IsNullOrWhiteSpace(regionKey) || !PlumbingProfiles.TryGetValue(regionKey, out var profile))
-                return PlumbingProfiles.First().Value;
-            return profile;
+            new PlumbingProfile(
+                Id: "chicago_ipc_rooted",
+                DisplayName: "Chicago (IPC-rooted)",
+                BaseFamily: PlumbingBaseFamily.Chicago,
+                Notes: "Chicago favors 6 fps cold and 4.5 fps hot to mitigate noise and erosion",
+                MaxColdFps: 6.0,
+                MaxHotFps: 4.5,
+                FixtureDemandKey: "chicago_fixture_demand",
+                SanitaryDfuKey: "chicago_sanitary_dfu",
+                VentDfuLengthKey: "chicago_vent_dfu_length",
+                StormLeaderKey: "chicago_storm_leader",
+                StormHorizontalKey: "chicago_storm_horizontal",
+                GasSizingKey: "nfpa54_gas_low_pressure"
+            ),
+            new PlumbingProfile(
+                Id: "california_cpc_upc",
+                DisplayName: "California (CPC/UPC-based)",
+                BaseFamily: PlumbingBaseFamily.CPC,
+                Notes: "Title 24 hot-water circulation noise/erosion guidance keeps hot water at or below 5 fps",
+                MaxColdFps: 8.0,
+                MaxHotFps: 5.0,
+                FixtureDemandKey: "california_fixture_demand",
+                SanitaryDfuKey: "california_sanitary_dfu",
+                VentDfuLengthKey: "california_vent_dfu_length",
+                StormLeaderKey: "california_storm_leader",
+                StormHorizontalKey: "california_storm_horizontal",
+                GasSizingKey: "california_gas_sizing"
+            ),
+            new PlumbingProfile(
+                Id: "generic_ipc",
+                DisplayName: "Generic IPC",
+                BaseFamily: PlumbingBaseFamily.IPC,
+                Notes: "Typical domestic water design limit of 8 fps cold / 5 fps hot",
+                MaxColdFps: 8.0,
+                MaxHotFps: 5.0,
+                FixtureDemandKey: "ipc_fixture_demand",
+                SanitaryDfuKey: "ipc_sanitary_dfu",
+                VentDfuLengthKey: "ipc_vent_dfu_length",
+                StormLeaderKey: "ipc_storm_leader",
+                StormHorizontalKey: "ipc_storm_horizontal",
+                GasSizingKey: "ipc_gas_sizing"
+            ),
+            new PlumbingProfile(
+                Id: "generic_upc",
+                DisplayName: "Generic UPC",
+                BaseFamily: PlumbingBaseFamily.UPC,
+                Notes: "Standard UPC velocity caps",
+                MaxColdFps: 8.0,
+                MaxHotFps: 5.0,
+                FixtureDemandKey: "upc_fixture_demand",
+                SanitaryDfuKey: "upc_sanitary_dfu",
+                VentDfuLengthKey: "upc_vent_dfu_length",
+                StormLeaderKey: "upc_storm_leader",
+                StormHorizontalKey: "upc_storm_horizontal",
+                GasSizingKey: "upc_gas_sizing"
+            ),
+            new PlumbingProfile(
+                Id: "aspe_velocity_guidance",
+                DisplayName: "ASPE Guidance",
+                BaseFamily: PlumbingBaseFamily.ASPE,
+                Notes: "ASPE velocity limits (typically conservative)",
+                MaxColdFps: 8.0,
+                MaxHotFps: 4.0, // Making it visibly different
+                FixtureDemandKey: null,
+                SanitaryDfuKey: null,
+                VentDfuLengthKey: null,
+                StormLeaderKey: null,
+                StormHorizontalKey: null,
+                GasSizingKey: null
+            )
+        };
+
+        public static IReadOnlyList<PlumbingProfile> AllPlumbingProfiles => PlumbingProfilesList;
+
+        public static PlumbingProfile DefaultPlumbingProfile => PlumbingProfilesList.First();
+
+        public static PlumbingProfile GetPlumbingProfile(string id)
+        {
+            return PlumbingProfilesList.FirstOrDefault(p => p.Id == id) ?? DefaultPlumbingProfile;
+        }
+
+        public static IReadOnlyList<string> ValidateProfile(PlumbingProfile profile)
+        {
+            var warnings = new List<string>();
+
+            if (profile == null) return warnings;
+
+            void Check(string key, string name, Func<string, bool> checkFunc)
+            {
+                if (!string.IsNullOrEmpty(key) && !checkFunc(key))
+                {
+                    warnings.Add($"Missing {name} table: {key}");
+                }
+            }
+
+            Check(profile.FixtureDemandKey, "fixture demand curve", PlumbingCalculator.HasFixtureDemandCurve);
+            Check(profile.SanitaryDfuKey, "sanitary DFU", PlumbingCalculator.HasSanitaryDfuTable);
+            Check(profile.SanitaryDfuKey, "sanitary branch DFU", SanitaryVentCalculator.HasSanitaryBranchDfuTable);
+            Check(profile.VentDfuLengthKey, "vent DFU/length", SanitaryVentCalculator.HasVentDfuLengthTable);
+            Check(profile.StormLeaderKey, "storm leader", StormDrainageCalculator.HasStormLeaderTable);
+            // Check(profile.StormHorizontalKey, "storm horizontal", StormDrainageCalculator.HasStormHorizontalTable); // If we implement this registry
+            Check(profile.GasSizingKey, "gas sizing", PlumbingCalculator.HasGasSizingMethod);
+
+            return warnings;
         }
     }
 }

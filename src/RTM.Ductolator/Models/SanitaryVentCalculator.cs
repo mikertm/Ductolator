@@ -12,138 +12,205 @@ namespace RTM.Ductolator.Models
     public static class SanitaryVentCalculator
     {
         private const double InPerFt = 12.0;
-        private const double SlopeQuarterInPerFt_FtPerFt = 0.25 / InPerFt;   // 1/4 in per ft
-        private const double SlopeEighthInPerFt_FtPerFt = 0.125 / InPerFt;   // 1/8 in per ft
-        private const double SlopeSixteenthInPerFt_FtPerFt = 0.0625 / InPerFt; // 1/16 in per ft
 
-        // IPC/UPC style DFU limits for horizontal branches (nominal diameter, max DFU)
-        // IPC Table 710.1(2) Horizontal Fixture Branches and Stacks.
-        // NOTE: This table is independent of slope (unlike Building Drain).
-        // The original code used Building Drain capacities here which was incorrect for "Branches".
-        // Now updated to use Fixture Branch limits (more conservative).
-        private static List<(double DiameterIn, double MaxDfu)> HorizontalBranchCapacity = new()
+        // Table Registries
+        private static readonly Dictionary<string, List<(double DiameterIn, double MaxDfu)>> SanitaryBranchDfuTables = new();
+        private static readonly Dictionary<string, (List<(double DiameterIn, double MaxDfu)> BranchRows, List<(double DiameterIn, double BaseMaxDfu)> StackRows)> VentDfuLengthTables = new();
+
+        public static void RegisterSanitaryBranchDfuTable(string key, List<(double DiameterIn, double MaxDfu)> rows)
         {
-            (1.5, 3),
-            (2.0, 6),
-            (2.5, 12),
-            (3.0, 20),
-            (4.0, 160),
-            (5.0, 360),
-            (6.0, 620),
-            (8.0, 1400)
-        };
-
-        // If we want to support the old structure for Building Drains just in case, we can keep it,
-        // but given the class name "SanitaryVentCalculator" and method "MinBranchDiameter",
-        // it strongly implies fixture branches.
-        // However, the signature uses 'slopeFtPerFt', which implies building drain logic.
-        // If the user passes a slope, they might expect slope-dependent sizing (Building Drain).
-        // But "Branch" usually means fixture branch.
-        // To be safe and correct per the name "Horizontal Branch", we should use the Branch table.
-        // We will ignore the slope for capacity lookup but check it for minimum velocity/code compliance if needed (1/4" usually min for <=2.5").
-
-        // IPC Table 906.1 / UPC vent stack-vent capacities (nominal diameter, max DFU at typical developed lengths)
-        // The length reduction factor derates long vents for friction and load diversity.
-        private static List<(double DiameterIn, double BaseMaxDfu)> VentStackBaseCapacity = new()
-        {
-            (1.25, 1),
-            (1.5, 8),
-            (2.0, 24),
-            (2.5, 84),
-            (3.0, 212),
-            (4.0, 500)
-        };
-
-        public static void SetHorizontalBranchCapacity(List<(double DiameterIn, double MaxDfu)> capacityTable)
-        {
-            if (capacityTable == null || capacityTable.Count == 0) return;
-
-             var row = capacityTable
-                .Where(v => v.DiameterIn > 0 && v.MaxDfu > 0)
-                .OrderBy(v => v.DiameterIn)
-                .ToList();
-
-            if (row.Count > 0)
-                HorizontalBranchCapacity = row;
+            if (string.IsNullOrWhiteSpace(key) || rows == null) return;
+            SanitaryBranchDfuTables[key] = rows.OrderBy(r => r.DiameterIn).ToList();
         }
 
-        public static void SetVentStackBaseCapacity(List<(double DiameterIn, double BaseMaxDfu)> capacityTable)
-        {
-            if (capacityTable == null || capacityTable.Count == 0) return;
-            var filtered = capacityTable
-                .Where(v => v.DiameterIn > 0 && v.BaseMaxDfu > 0)
-                .OrderBy(v => v.DiameterIn)
-                .ToList();
+        public static bool HasSanitaryBranchDfuTable(string key) => !string.IsNullOrWhiteSpace(key) && SanitaryBranchDfuTables.ContainsKey(key);
 
-            if (filtered.Count > 0)
-                VentStackBaseCapacity = filtered;
+        public static void RegisterVentDfuLengthTable(string key, List<(double DiameterIn, double MaxDfu)> branchRows, List<(double DiameterIn, double BaseMaxDfu)> stackRows)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
+            VentDfuLengthTables[key] = (
+                branchRows?.OrderBy(r => r.DiameterIn).ToList() ?? new List<(double, double)>(),
+                stackRows?.OrderBy(r => r.DiameterIn).ToList() ?? new List<(double, double)>()
+            );
         }
+
+        public static bool HasVentDfuLengthTable(string key) => !string.IsNullOrWhiteSpace(key) && VentDfuLengthTables.ContainsKey(key);
+
 
         /// <summary>
         /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal fixture branch.
-        /// Uses IPC Table 710.1(2). Slope is ignored for capacity but must meet code minimums (usually 1/4" per ft).
-        /// Returns 0 when no table value satisfies the demand.
+        /// Uses registered table.
         /// </summary>
-        public static double MinBranchDiameterFromDfu(double drainageFixtureUnits, double slopeFtPerFt)
+        public static bool TryBranchMinDiameter(double dfu, double slopeFtPerFt, string key, out double diameter, out string warning)
         {
-            if (drainageFixtureUnits <= 0) return 0;
+            diameter = 0;
+            warning = string.Empty;
 
-            // Note: Slope is not used for capacity lookup of Horizontal Fixture Branches in IPC.
-            // Capacity is fixed by diameter.
-
-            foreach (var entry in HorizontalBranchCapacity)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                if (drainageFixtureUnits <= entry.MaxDfu)
-                    return entry.DiameterIn;
+                warning = "No sanitary branch DFU table key provided.";
+                return false;
             }
 
-            return 0;
+            if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing sanitary branch DFU table: {key}";
+                return false;
+            }
+
+            if (dfu <= 0) return true;
+
+            foreach (var entry in rows)
+            {
+                if (dfu <= entry.MaxDfu)
+                {
+                    diameter = entry.DiameterIn;
+                    return true;
+                }
+            }
+
+            warning = "Demand exceeds capacity in table.";
+            return false;
         }
 
         /// <summary>
-        /// Maximum allowable DFU for a given nominal diameter for a horizontal fixture branch.
-        /// Uses IPC Table 710.1(2).
-        /// Returns 0 if the diameter is not present.
+        /// Reports the estimated DFU capacity for a horizontal fixture branch.
         /// </summary>
-        public static double AllowableFixtureUnits(double diameterIn, double slopeFtPerFt)
+        public static bool TryAllowableFixtureUnits(double diameterIn, double slopeFtPerFt, string key, out double allowableDfu, out string warning)
         {
-            if (diameterIn <= 0) return 0;
+            allowableDfu = 0;
+            warning = string.Empty;
 
-            var match = HorizontalBranchCapacity.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
-            return match == default ? 0 : match.MaxDfu;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                warning = "No sanitary branch DFU table key provided.";
+                return false;
+            }
+
+            if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing sanitary branch DFU table: {key}";
+                return false;
+            }
+
+            if (diameterIn <= 0) return true;
+
+            var match = rows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
+            if (match != default)
+            {
+                allowableDfu = match.MaxDfu;
+                return true;
+            }
+
+            warning = "Diameter not found in table.";
+            return false;
+        }
+
+
+        /// <summary>
+        /// Minimum vent branch diameter.
+        /// </summary>
+        public static bool TryVentBranchMinDiameter(double dfu, double developedLengthFt, string key, out double diameter, out string warning)
+        {
+            diameter = 0;
+            warning = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                warning = "No vent table key provided.";
+                return false;
+            }
+
+            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.BranchRows.Count == 0)
+            {
+                warning = $"Missing vent branch DFU table: {key}";
+                return false;
+            }
+
+            if (dfu <= 0) return true;
+
+            // Branch rows in vent tables usually just mapping diameter to max Dfu (length independent often, or handled otherwise)
+            // If the user provided VentBranchRows, we use them.
+
+            foreach (var entry in tables.BranchRows)
+            {
+                if (dfu <= entry.MaxDfu)
+                {
+                    diameter = entry.DiameterIn;
+                    return true;
+                }
+            }
+
+            warning = "Demand exceeds vent branch capacity in table.";
+            return false;
         }
 
         /// <summary>
         /// Minimum vent stack or stack vent diameter (in) for a given total vented DFU and developed length (ft).
-        /// Uses IPC/UPC style vent stack capacities with a simple derate beyond 100 ft.
         /// </summary>
-        public static double VentStackMinDiameter(double ventedDfu, double developedLengthFt)
+        public static bool TryVentStackMinDiameter(double ventedDfu, double developedLengthFt, string key, out double diameter, out string warning)
         {
-            if (ventedDfu <= 0) return 0;
+             diameter = 0;
+            warning = string.Empty;
 
-            double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
-
-            foreach (var entry in VentStackBaseCapacity)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                if (ventedDfu <= entry.BaseMaxDfu * lengthFactor)
-                    return entry.DiameterIn;
+                warning = "No vent table key provided.";
+                return false;
             }
 
-            return 0;
-        }
+            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
+            {
+                warning = $"Missing vent stack DFU table: {key}";
+                return false;
+            }
 
-        /// <summary>
-        /// Reports the estimated DFU capacity for a vent stack diameter and developed length using the embedded table and derate.
-        /// </summary>
-        public static double VentStackAllowableFixtureUnits(double diameterIn, double developedLengthFt)
-        {
-            if (diameterIn <= 0) return 0;
+            if (ventedDfu <= 0) return true;
 
             double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
-            var match = VentStackBaseCapacity.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
-            if (match == default) return 0;
 
-            return match.BaseMaxDfu * lengthFactor;
+            foreach (var entry in tables.StackRows)
+            {
+                if (ventedDfu <= entry.BaseMaxDfu * lengthFactor)
+                {
+                    diameter = entry.DiameterIn;
+                    return true;
+                }
+            }
+
+            warning = "Demand exceeds vent stack capacity in table.";
+            return false;
+        }
+
+        public static bool TryVentStackAllowableFixtureUnits(double diameterIn, double developedLengthFt, string key, out double allowableDfu, out string warning)
+        {
+            allowableDfu = 0;
+            warning = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                warning = "No vent table key provided.";
+                return false;
+            }
+
+            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
+            {
+                warning = $"Missing vent stack DFU table: {key}";
+                return false;
+            }
+
+            if (diameterIn <= 0) return true;
+
+            double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
+            var match = tables.StackRows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
+            if (match == default)
+            {
+                warning = "Diameter not found in vent stack table.";
+                return false;
+            }
+
+            allowableDfu = match.BaseMaxDfu * lengthFactor;
+            return true;
         }
     }
 }
