@@ -1477,13 +1477,12 @@ namespace RTM.Ductolator
             _lastDuctFittingSnapshot = _ductFittings.Select(f => f with { }).ToList();
 
             // Legacy export object
-            _lastDuctExport = new DuctExportRow(
-                $"{cfm},{usedVelFpm},{dpPer100},{vp},{totalDp},{straightLengthFt},{fittingEquivalentLength},{totalRunLengthFt},{sumLossCoeff}," +
-                $"{(sumLossCoeff > 0 ? sumLossCoeff * vp : 0)},{supplyStatic},{returnStatic},{pressureClass},{leakageCfm},{fanBhp},{airTempF},{altitudeFt}," +
+            string csvLine = $"{cfm},{usedVelFpm},{dpPer100},{vp},{totalDp},{straightLengthFt},{fittingEquivalentLength},{totalRunLengthFt},{sumLossCoeff}," +
+                $"{(sumLossCoeff > 0 ? sumLossCoeff * vp : 0)},{supplyStatic},{returnStatic},{0},{leakageClass},{fanEfficiency},{airTempF},{altitudeFt}," +
                 $"{air.DensityLbmPerFt3},{air.KinematicViscosityFt2PerS},{ParseBox(OutDia)},{ParseBox(OutRS1)},{ParseBox(OutRS2)},{ParseBox(OutRArea)}," +
                 $"{ParseBox(OutRPerim)},{ParseBox(OutRAR)},{ParseBox(OutOS1)},{ParseBox(OutOS2)},{ParseBox(OutOArea)},{ParseBox(OutOPerim)},{ParseBox(OutOAR)}," +
-                $"{existingInsulR},{heatTransfer},{deltaTAirCalc},{maxDeltaTF},{existingInsulR},{FittingListSummary(_lastDuctFittingSnapshot)}"
-            );
+                $"{existingInsulR},{0},{0},{maxDeltaTF},{existingInsulR},{FittingListSummary(_lastDuctFittingSnapshot)}";
+            _lastDuctExport = new DuctExportRow(csvLine);
         }
 
         private void BtnPlCalc_Click(object sender, RoutedEventArgs e)
@@ -1590,13 +1589,12 @@ namespace RTM.Ductolator
             double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material);
             double fittingLossPsiUsed = fittingPsi > 0 ? fittingPsi : fittingPsiHw;
 
-            _lastPlumbingExport = new PlumbingExportRow(
-                $"{profile.Id},{profile.DisplayName},{profile.BaseFamily},{profile.FixtureDemandKey},{profile.SanitaryDfuKey},{profile.VentSizingKey}," +
+            string csvLine = $"{profile.Id},{profile.DisplayName},{profile.BaseFamily},{profile.FixtureDemandKey},{profile.SanitaryDfuKey},{profile.VentSizingKey}," +
                 $"{profile.StormSizingKey},{profile.StormSizingKey},{profile.GasSizingKey}," +
                 $"{gpm},{lengthFt},{eqLen},{lengthFt + eqLen},{material.DisplayName},{nominal},{idIn},{useAged},{isHot},{fluidType},{fluidTempF},{antifreezePercent}," +
                 $"{fluidProps.DensityLbmPerFt3},{fluidProps.KinematicViscosityFt2PerS},{velocityFps},{limit},{re},{f},{psiPer100Hw},{psiTotalHw}," +
-                $"{psiPer100Darcy},{psiTotalDarcy},{cFactor},{roughness},{waveSpeed},{sumK},{fittingLossPsiUsed},{FittingListSummary(_lastPlumbingFittingSnapshot)}"
-            );
+                $"{psiPer100Darcy},{psiTotalDarcy},{cFactor},{roughness},{waveSpeed},{sumK},{fittingLossPsiUsed},{FittingListSummary(_lastPlumbingFittingSnapshot)}";
+            _lastPlumbingExport = new PlumbingExportRow(csvLine);
         }
 
         private void BtnExportDuct_Click(object sender, RoutedEventArgs e)
