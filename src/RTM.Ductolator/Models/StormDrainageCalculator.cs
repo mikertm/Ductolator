@@ -99,30 +99,30 @@ namespace RTM.Ductolator.Models
         /// <summary>
         /// Maximum gpm that can be carried by a vertical leader.
         /// </summary>
-        public static bool TryVerticalLeaderMaxFlow(double diameterIn, string key, out double maxGpm, out string warning)
+        public static double VerticalLeaderMaxFlow(double diameterIn, double n, string key, out string warning)
         {
-            maxGpm = 0;
+            double maxGpm = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No storm leader table key provided.";
-                return false;
+                return 0;
             }
 
             if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
             {
-                warning = $"Missing storm leader table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (diameterIn <= 0) return true;
+            if (diameterIn <= 0) return 0;
 
             var match = rows.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
             if (match != default)
             {
                 maxGpm = match.MaxGpm;
-                return true;
+                return maxGpm;
             }
 
             // Find smaller size
@@ -131,46 +131,46 @@ namespace RTM.Ductolator.Models
             if (lower != default)
             {
                 maxGpm = lower.MaxGpm;
-                return true;
+                return maxGpm;
             }
 
             warning = "Diameter smaller than all entries in table.";
-            return false;
+            return 0;
         }
 
         /// <summary>
         /// Minimum vertical leader diameter (in) for a given flow.
         /// </summary>
-        public static bool TryVerticalLeaderDiameter(double flowGpm, string key, out double diameter, out string warning)
+        public static double VerticalLeaderDiameter(double flowGpm, double n, string key, out string warning)
         {
-            diameter = 0;
+            double diameter = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No storm leader table key provided.";
-                return false;
+                return 0;
             }
 
             if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
             {
-                warning = $"Missing storm leader table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (flowGpm <= 0) return true;
+            if (flowGpm <= 0) return 0;
 
             foreach (var entry in rows)
             {
                 if (entry.MaxGpm >= flowGpm)
                 {
                     diameter = entry.DiameterIn;
-                    return true;
+                    return diameter;
                 }
             }
 
             warning = "Flow exceeds capacity of largest leader in table.";
-            return false;
+            return 0;
         }
 
         private static double SolveByBisection(double targetFlow, double lo, double hi, Func<double, double> flowFromDiameter)

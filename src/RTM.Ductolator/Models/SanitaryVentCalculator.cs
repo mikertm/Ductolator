@@ -41,131 +41,92 @@ namespace RTM.Ductolator.Models
         /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal fixture branch.
         /// Uses registered table.
         /// </summary>
-        public static bool TryBranchMinDiameter(double dfu, double slopeFtPerFt, string key, out double diameter, out string warning)
+        public static double MinBranchDiameterFromDfu(double dfu, double slopeFtPerFt, string key, out string warning)
         {
-            diameter = 0;
+            double diameter = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No sanitary branch DFU table key provided.";
-                return false;
+                return 0;
             }
 
             if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
             {
-                warning = $"Missing sanitary branch DFU table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (dfu <= 0) return true;
+            if (dfu <= 0) return 0;
 
             foreach (var entry in rows)
             {
                 if (dfu <= entry.MaxDfu)
                 {
                     diameter = entry.DiameterIn;
-                    return true;
+                    return diameter;
                 }
             }
 
             warning = "Demand exceeds capacity in table.";
-            return false;
+            return 0;
         }
 
         /// <summary>
         /// Reports the estimated DFU capacity for a horizontal fixture branch.
         /// </summary>
-        public static bool TryAllowableFixtureUnits(double diameterIn, double slopeFtPerFt, string key, out double allowableDfu, out string warning)
+        public static double AllowableFixtureUnits(double diameterIn, double slopeFtPerFt, string key, out string warning)
         {
-            allowableDfu = 0;
+            double allowableDfu = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No sanitary branch DFU table key provided.";
-                return false;
+                return 0;
             }
 
             if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
             {
-                warning = $"Missing sanitary branch DFU table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (diameterIn <= 0) return true;
+            if (diameterIn <= 0) return 0;
 
             var match = rows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
             if (match != default)
             {
                 allowableDfu = match.MaxDfu;
-                return true;
+                return allowableDfu;
             }
 
             warning = "Diameter not found in table.";
-            return false;
-        }
-
-
-        /// <summary>
-        /// Minimum vent branch diameter.
-        /// </summary>
-        public static bool TryVentBranchMinDiameter(double dfu, double developedLengthFt, string key, out double diameter, out string warning)
-        {
-            diameter = 0;
-            warning = string.Empty;
-
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                warning = "No vent table key provided.";
-                return false;
-            }
-
-            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.BranchRows.Count == 0)
-            {
-                warning = $"Missing vent branch DFU table: {key}";
-                return false;
-            }
-
-            if (dfu <= 0) return true;
-
-            // Branch rows in vent tables usually just mapping diameter to max Dfu (length independent often, or handled otherwise)
-            // If the user provided VentBranchRows, we use them.
-
-            foreach (var entry in tables.BranchRows)
-            {
-                if (dfu <= entry.MaxDfu)
-                {
-                    diameter = entry.DiameterIn;
-                    return true;
-                }
-            }
-
-            warning = "Demand exceeds vent branch capacity in table.";
-            return false;
+            return 0;
         }
 
         /// <summary>
         /// Minimum vent stack or stack vent diameter (in) for a given total vented DFU and developed length (ft).
         /// </summary>
-        public static bool TryVentStackMinDiameter(double ventedDfu, double developedLengthFt, string key, out double diameter, out string warning)
+        public static double VentStackMinDiameter(double ventedDfu, double developedLengthFt, string key, out string warning)
         {
-             diameter = 0;
+            double diameter = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No vent table key provided.";
-                return false;
+                return 0;
             }
 
             if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
             {
-                warning = $"Missing vent stack DFU table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (ventedDfu <= 0) return true;
+            if (ventedDfu <= 0) return 0;
 
             double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
 
@@ -174,43 +135,43 @@ namespace RTM.Ductolator.Models
                 if (ventedDfu <= entry.BaseMaxDfu * lengthFactor)
                 {
                     diameter = entry.DiameterIn;
-                    return true;
+                    return diameter;
                 }
             }
 
             warning = "Demand exceeds vent stack capacity in table.";
-            return false;
+            return 0;
         }
 
-        public static bool TryVentStackAllowableFixtureUnits(double diameterIn, double developedLengthFt, string key, out double allowableDfu, out string warning)
+        public static double VentStackAllowableFixtureUnits(double diameterIn, double developedLengthFt, string key, out string warning)
         {
-            allowableDfu = 0;
+            double allowableDfu = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 warning = "No vent table key provided.";
-                return false;
+                return 0;
             }
 
             if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
             {
-                warning = $"Missing vent stack DFU table: {key}";
-                return false;
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
             }
 
-            if (diameterIn <= 0) return true;
+            if (diameterIn <= 0) return 0;
 
             double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
             var match = tables.StackRows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
             if (match == default)
             {
                 warning = "Diameter not found in vent stack table.";
-                return false;
+                return 0;
             }
 
             allowableDfu = match.BaseMaxDfu * lengthFactor;
-            return true;
+            return allowableDfu;
         }
     }
 }

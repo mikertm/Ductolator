@@ -181,8 +181,6 @@
             Grid.Row="2"
             Margin="0,8,0,0">
             <TabItem Header="Duct Sizing">
-                <!-- Content same as original Duct Sizing tab (abbreviated for update logic, but including full content in final block) -->
-                <!-- The duct sizing content is unchanged, so I will paste it back fully to ensure the file is complete -->
                 <Grid Margin="6">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -1184,13 +1182,13 @@
                                         TextWrapping="Wrap" />
                                     <WrapPanel>
                                         <Border Style="{StaticResource ChipBorderStyle}">
-                                            <TextBlock x:Name="PlChipA" FontSize="11" Text="BASE: ?" />
+                                            <TextBlock x:Name="PlProfileChipPrimaryText" FontSize="11" Text="BASE: ?" />
                                         </Border>
                                         <Border Style="{StaticResource ChipBorderStyle}">
-                                            <TextBlock x:Name="PlChipB" FontSize="11" Text="VEL: ?" />
+                                            <TextBlock x:Name="PlProfileChipSecondaryText" FontSize="11" Text="VEL: ?" />
                                         </Border>
                                         <Border Style="{StaticResource ChipBorderStyle}">
-                                            <TextBlock x:Name="PlChipC" FontSize="11" Text="TABLES: ?" />
+                                            <TextBlock x:Name="PlProfileChipTertiaryText" FontSize="11" Text="TABLES: ?" />
                                         </Border>
                                     </WrapPanel>
                                 </StackPanel>
@@ -1291,7 +1289,7 @@
                                             Margin="0,0,8,0"
                                             VerticalAlignment="Center"
                                             Text="Code Profile" />
-                                        <ComboBox Name="PlRegionCombo" Width="260" />
+                                        <ComboBox Name="PlRegionCombo" Width="260" SelectionChanged="PlRegionCombo_SelectionChanged" />
                                     </StackPanel>
 
                                     <Border
@@ -1692,10 +1690,20 @@
                                         Foreground="{StaticResource Brush.TextSubtle}"
                                         Text="Step 1: Build a fixture list. Step 2: Review the auto-summed fixture units and probable demand. Step 3: Use the demand to size branches and mains."
                                         TextWrapping="Wrap" />
-                                        <!-- ... Content ... -->
+                                    <TextBlock FontWeight="Bold" Text="Fixture Units &amp; Drainage" />
+                                    <TextBlock
+                                        Margin="0,0,0,8"
+                                        FontSize="12"
+                                        Text="Select fixture types, quantities, and optional overrides. Defaults come from IPC/UPC fixture-unit tables. The schedule auto-sums total FU and probable demand."
+                                        TextWrapping="Wrap" />
                                      <StackPanel Margin="0,0,0,8">
                                         <TextBlock FontWeight="Bold" Text="Custom fixture types" />
-                                        <!-- ... -->
+                                        <TextBlock
+                                            Margin="0,0,0,4"
+                                            FontSize="12"
+                                            Foreground="{StaticResource Brush.TextSubtle}"
+                                            Text="Add your own fixtures with default FU values, then edit or delete them as needed."
+                                            TextWrapping="Wrap" />
                                         <UniformGrid Margin="0,0,0,6" Columns="3">
                                             <StackPanel Margin="4">
                                                 <TextBlock Text="Fixture name" />

@@ -12,6 +12,8 @@ namespace RTM.Ductolator.Models
     /// </summary>
     public static class PlumbingCalculator
     {
+        public const string DarcyFrictionMethodName = "Swamee-Jain (Colebrook approximation); laminar 64/Re";
+
         // === Water properties & constants (imperial) ===
         private const double WaterDensity_LbmPerFt3 = 62.4; // at ~60 °F
         private const double LbmPerSlug = 32.174;
