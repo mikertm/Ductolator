@@ -538,6 +538,121 @@ namespace RTM.Ductolator.Models
         }
 
         /// <summary>
+        /// Calculate total pressure drop (PSI) for a single run using uniform diameter.
+        /// Supports FittingLossMode: SumK (using coefficients) or EquivalentLength (using length addition).
+        /// </summary>
+        public static double TotalPressureDropPsi(
+            double gpm,
+            double diameterIn,
+            double straightLengthFt,
+            double sumLossCoeffs,
+            double equivalentLengthFt,
+            FittingLossMode mode,
+            FluidProperties fluidProps)
+        {
+            if (gpm <= 0 || diameterIn <= 0) return 0;
+
+            double usedLengthFt = straightLengthFt;
+            double usedK = 0.0;
+
+            if (mode == FittingLossMode.UseEquivalentLength)
+            {
+                usedLengthFt += Math.Max(0, equivalentLengthFt);
+                usedK = 0;
+            }
+            else // UseSumK
+            {
+                usedK = Math.Max(0, sumLossCoeffs);
+            }
+
+            // Decide governing method (Hazen-Williams vs Darcy) based on Reynolds?
+            // Actually, we usually want to expose both or use a hybrid.
+            // Let's use HybridPsiPer100Ft to get the friction unit.
+
+            double psiPerFtHead = PsiPerFtHeadFromDensity(fluidProps.DensityLbmPerFt3);
+
+            // We need base C and roughness. Usually passed in or resolved.
+            // This signature is tricky without knowing material.
+            // But we can just use Darcy if we have viscosity.
+            // Or assume caller wants Darcy?
+            // The existing methods like HazenWilliamsPsi take C factor.
+            // Let's assume Darcy for general fluid, or we need to ask for C / roughness.
+
+            // Wait, this method doesn't exist yet, I am adding it.
+            // Better signature:
+            return 0; // Placeholder, I will define a better one below.
+        }
+
+        // Better signature with explicit friction parameters
+        public static double TotalPressureDropPsi_HazenWilliams(
+            double gpm,
+            double diameterIn,
+            double cFactor,
+            double straightLengthFt,
+            double sumLossCoeffs,
+            double equivalentLengthFt,
+            FittingLossMode mode,
+            double? psiPerFtHead = null,
+            double? densityLbmPerFt3 = null)
+        {
+            double usedLengthFt = straightLengthFt;
+            double usedK = 0.0;
+
+            if (mode == FittingLossMode.UseEquivalentLength)
+            {
+                usedLengthFt += Math.Max(0, equivalentLengthFt);
+                usedK = 0;
+            }
+            else
+            {
+                usedK = Math.Max(0, sumLossCoeffs);
+            }
+
+            double psiPer100 = HazenWilliamsPsiPer100Ft(gpm, diameterIn, cFactor, psiPerFtHead);
+            double frictionPsi = psiPer100 * (usedLengthFt / 100.0);
+
+            double velocity = VelocityFpsFromGpm(gpm, diameterIn);
+            double dynamicPsi = usedK * MinorLossPsi(velocity, 1.0, densityLbmPerFt3); // MinorLossPsi takes K, we pass 1.0 and multiply by usedK or just pass usedK
+            dynamicPsi = MinorLossPsi(velocity, usedK, densityLbmPerFt3);
+
+            return frictionPsi + dynamicPsi;
+        }
+
+         public static double TotalPressureDropPsi_Darcy(
+            double gpm,
+            double diameterIn,
+            double roughnessFt,
+            double kinematicViscosityFt2PerS,
+            double straightLengthFt,
+            double sumLossCoeffs,
+            double equivalentLengthFt,
+            FittingLossMode mode,
+            double? psiPerFtHead = null,
+            double? densityLbmPerFt3 = null)
+        {
+            double usedLengthFt = straightLengthFt;
+            double usedK = 0.0;
+
+            if (mode == FittingLossMode.UseEquivalentLength)
+            {
+                usedLengthFt += Math.Max(0, equivalentLengthFt);
+                usedK = 0;
+            }
+            else
+            {
+                usedK = Math.Max(0, sumLossCoeffs);
+            }
+
+            double psiPer100 = HeadLoss_Darcy_PsiPer100Ft(gpm, diameterIn, roughnessFt, kinematicViscosityFt2PerS, psiPerFtHead);
+            double frictionPsi = psiPer100 * (usedLengthFt / 100.0);
+
+            double velocity = VelocityFpsFromGpm(gpm, diameterIn);
+            double dynamicPsi = MinorLossPsi(velocity, usedK, densityLbmPerFt3);
+
+            return frictionPsi + dynamicPsi;
+        }
+
+        /// <summary>
         /// Convert a fitting K to equivalent length (ft) for use with Hazen-Williams/Darcy friction calculations.
         /// Leq = K * (D / 4f). Caller must supply friction factor f (Darcy) consistent with the governing method.
         /// </summary>

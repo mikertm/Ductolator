@@ -33,9 +33,11 @@ namespace RTM.Ductolator.Models
 
         // 1 in.w.g. (60F) = 5.2023 lbf/ft^2 (psf)
         // Historically 5.202 or 5.2.
-        public const double PsfPerInWg = 5.202;
+        public const double PsfPerInWg = 5.2023; // Adjusted to standard 60F value
         public const double InWgPerPsf = 1.0 / PsfPerInWg;
-        public const double InWgPerPsi = 27.7076; // 1 psi ~ 27.7 in.w.g.
+
+        // Consistent conversion: InWgPerPsi = InWgPerPsf / PsiPerPsf = (1/5.2023) / (1/144) = 144 / 5.2023
+        public const double InWgPerPsi = PsfPerPsi / PsfPerInWg; // ~27.679
 
         // === Mass / Force ===
         // Standard Gravity g_c

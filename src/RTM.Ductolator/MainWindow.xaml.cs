@@ -1338,10 +1338,18 @@ namespace RTM.Ductolator
             double totalRunLengthFt = straightLengthFt + fittingEquivalentLength;
             SetBox(DuctTotalRunLengthOutput, totalRunLengthFt, "0.#");
 
+            // Fitting Loss Policy
+            // Rule: If Leq > 0, use Equivalent Length method (ignore K).
+            // Else if sumK > 0, use SumK method.
+            FittingLossMode fittingMode = (fittingEquivalentLength > 0)
+                ? FittingLossMode.UseEquivalentLength
+                : FittingLossMode.UseSumK;
+
             _lastDuctReport.AddLine("Inputs", "Straight Length", straightLengthFt.ToString());
             _lastDuctReport.AddLine("Inputs", "Eq. Length", fittingEquivalentLength.ToString());
             _lastDuctReport.AddLine("Inputs", "Total Length", totalRunLengthFt.ToString());
             _lastDuctReport.AddLine("Inputs", "Sum K", sumLossCoeff.ToString());
+            _lastDuctReport.AddLine("Method", "Fitting Mode", fittingMode.ToString());
 
             // ... (Logic)
             double areaFt2 = 0;
@@ -1437,22 +1445,18 @@ namespace RTM.Ductolator
             double f = DuctCalculator.FrictionFactor(reForFriction, dhIn);
             double dpPer100 = DuctCalculator.DpPer100Ft_InWG(usedVelFpm, dhIn, f, air);
             double vp = DuctCalculator.VelocityPressure_InWG(usedVelFpm, air);
-            // Fitting logic: double counting prevention?
-            // "whether you used ΣK minor loss or equivalent length substitution"
-            // Logic: if eq length > 0, we add it to run length. Do we zero out K?
-            // The prompt says "explicit note if you set ΣK to zero when eq length included (to prevent double count)"
-            // The logic: totalDp = friction * (totalLen/100) + sumLoss * VP.
-            // If user provides BOTH, we usually sum them. But if sumLoss comes from the same fittings as eqLen, it's double.
-            // My UI adds fittings which provide BOTH K and Leq.
-            // If I use Leq (totalRunLength includes it), I should probably NOT use K.
-            // Current code: fittingEquivalentLength > 0 ? 0 : sumLossCoeff
-            bool usedEqLength = fittingEquivalentLength > 0;
-            double kUsed = usedEqLength ? 0 : sumLossCoeff;
 
-            double totalDp = DuctCalculator.TotalPressureDrop_InWG(dpPer100, totalRunLengthFt, kUsed, usedVelFpm, air);
+            double totalDp = DuctCalculator.TotalPressureDrop_InWG(
+                dpPer100, straightLengthFt, sumLossCoeff, fittingEquivalentLength, fittingMode, usedVelFpm, air);
 
-            _lastDuctReport.AddLine("Method", "Fitting Loss", usedEqLength ? "Equivalent Length method" : "K-factor method");
-            if (usedEqLength) _lastDuctReport.AddLine("Method", "Note", "K-factors ignored to prevent double counting with Eq Length.");
+            if (fittingMode == FittingLossMode.UseEquivalentLength)
+            {
+                _lastDuctReport.AddLine("Method", "Fitting Logic", "Equivalent Length used; K-factor ignored to prevent double counting.");
+            }
+            else
+            {
+                _lastDuctReport.AddLine("Method", "Fitting Logic", "Sum K used; Equivalent Length not applied.");
+            }
 
             _lastDuctReport.AddLine("Results", "Re", re.ToString("0"));
             _lastDuctReport.AddLine("Results", "f", f.ToString("0.0000"));
@@ -1539,39 +1543,44 @@ namespace RTM.Ductolator
             _lastPlumbingReport.AddLine("Results", "Reynolds", re.ToString("0"));
             _lastPlumbingReport.AddLine("Method", "Darcy", PlumbingCalculator.DarcyFrictionMethodName);
 
-            // ... (Hazen/Darcy calcs) ...
-
             // Fittings
             var (sumK, eqLen) = CurrentPlumbingFittingTotals();
-            // Logic: fittingPsi is calculated if using K.
-            double fittingPsiK = PlumbingCalculator.MinorLossPsi(velocityFps, sumK, fluidProps.DensityLbmPerFt3);
-            // If using EqLen, we add to length.
-            // Which one is used? Code in previous turn used "fittingPsi > 0 ? fittingPsi : psiPer100 * eqLen..."
-            // So if K > 0, it uses K.
+
+            // Explicitly prefer Eq Length if available to match Duct logic, or prefer K?
+            // "Make that rule explicit and consistent across duct + plumbing."
+            // Duct logic: If Leq > 0, use Leq.
+            FittingLossMode fittingMode = (eqLen > 0) ? FittingLossMode.UseEquivalentLength : FittingLossMode.UseSumK;
 
             _lastPlumbingReport.AddLine("Inputs", "Fittings Sum K", sumK.ToString());
             _lastPlumbingReport.AddLine("Inputs", "Fittings Eq Len", eqLen.ToString());
-            _lastPlumbingReport.AddLine("Method", "Fitting Logic", sumK > 0 ? "Minor Loss (K)" : "Equivalent Length");
+            _lastPlumbingReport.AddLine("Method", "Fitting Mode", fittingMode.ToString());
 
             SetBox(PlVelocityOutput, velocityFps, "0.00");
             SetBox(PlReOutput, re, "0");
-            // ... (Set other boxes) ...
+
             double psiPer100Hw = (gpm > 0 && cFactor > 0) ? PlumbingCalculator.HazenWilliamsPsiPer100Ft(gpm, idIn, cFactor, psiPerFtHead) : 0;
-            double fittingPsi = velocityFps > 0 && sumK > 0
-                ? PlumbingCalculator.MinorLossPsi(velocityFps, sumK, fluidProps.DensityLbmPerFt3)
-                : 0;
-            double frictionPsiHw = psiPer100Hw * (lengthFt > 0 ? lengthFt / 100.0 : 0);
-            double fittingPsiHw = fittingPsi > 0
-                ? fittingPsi
-                : psiPer100Hw * (eqLen > 0 ? eqLen / 100.0 : 0);
-            double psiTotalHw = frictionPsiHw + fittingPsiHw;
+
+            double psiTotalHw = PlumbingCalculator.TotalPressureDropPsi_HazenWilliams(
+                gpm, idIn, cFactor, lengthFt, sumK, eqLen, fittingMode, psiPerFtHead, fluidProps.DensityLbmPerFt3);
 
             double psiPer100Darcy = (gpm > 0) ? PlumbingCalculator.HeadLoss_Darcy_PsiPer100Ft(gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, psiPerFtHead) : 0;
-            double frictionPsiDarcy = psiPer100Darcy * (lengthFt > 0 ? lengthFt / 100.0 : 0);
-            double fittingPsiDarcy = fittingPsi > 0
-                ? fittingPsi
-                : psiPer100Darcy * (eqLen > 0 ? eqLen / 100.0 : 0);
-            double psiTotalDarcy = frictionPsiDarcy + fittingPsiDarcy;
+
+            double psiTotalDarcy = PlumbingCalculator.TotalPressureDropPsi_Darcy(
+                gpm, idIn, roughness, fluidProps.KinematicViscosityFt2PerS, lengthFt, sumK, eqLen, fittingMode, psiPerFtHead, fluidProps.DensityLbmPerFt3);
+
+            // For export reporting of fitting loss (psi) specifically
+            double fittingLossPsiUsed = 0;
+            if (fittingMode == FittingLossMode.UseSumK)
+            {
+                fittingLossPsiUsed = PlumbingCalculator.MinorLossPsi(velocityFps, sumK, fluidProps.DensityLbmPerFt3);
+            }
+            else
+            {
+                // Friction of Leq
+                // We'll report Darcy-based fitting loss for consistency or Hazen?
+                // Usually Darcy is "more physics based". Let's report Darcy.
+                fittingLossPsiUsed = psiPer100Darcy * (eqLen / 100.0);
+            }
 
             SetBox(PlHazenPsi100Output, psiPer100Hw, "0.000");
             SetBox(PlHazenPsiTotalOutput, psiTotalHw, "0.000");
@@ -1587,7 +1596,6 @@ namespace RTM.Ductolator
             if (re > 0 && re < 2300) _lastPlumbingReport.Warnings.Add("Laminar flow");
 
             double waveSpeed = PlumbingCalculator.GetWaveSpeedFps(material);
-            double fittingLossPsiUsed = fittingPsi > 0 ? fittingPsi : fittingPsiHw;
 
             string csvLine = $"{profile.Id},{profile.DisplayName},{profile.BaseFamily},{profile.FixtureDemandKey},{profile.SanitaryDfuKey},{profile.VentSizingKey}," +
                 $"{profile.StormSizingKey},{profile.StormSizingKey},{profile.GasSizingKey}," +

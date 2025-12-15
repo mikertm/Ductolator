@@ -248,9 +248,46 @@ namespace RTM.Ductolator.Models
 
         /// <summary>
         /// Total pressure drop over a run length with fittings.
+        /// Supports FittingLossMode: SumK (using coefficients) or EquivalentLength (using length addition).
+        /// </summary>
+        public static double TotalPressureDrop_InWG(
+            double frictionPer100,
+            double straightLengthFt,
+            double sumLossCoeffs,
+            double equivalentLengthFt,
+            FittingLossMode mode,
+            double velocityFpm,
+            AirProperties air)
+        {
+            double usedLengthFt = straightLengthFt;
+            double usedK = 0.0;
+
+            if (mode == FittingLossMode.UseEquivalentLength)
+            {
+                usedLengthFt += Math.Max(0, equivalentLengthFt);
+                usedK = 0; // K ignored
+            }
+            else // UseSumK
+            {
+                // Length is just straight length
+                usedK = Math.Max(0, sumLossCoeffs);
+                // Leq ignored
+            }
+
+            double frictionTotal = frictionPer100 * (usedLengthFt / 100.0);
+            double vp = VelocityPressure_InWG(velocityFpm, air);
+            double dynamicLoss = usedK * vp;
+
+            return frictionTotal + dynamicLoss;
+        }
+
+        /// <summary>
+        /// Overload for backward compatibility / legacy calls, assumes caller handles logic (deprecated).
+        /// Maps directly to the new method assuming the caller already decided what 'runLength' and 'sumLossCoeffs' means.
         /// </summary>
         public static double TotalPressureDrop_InWG(double frictionPer100, double runLength, double sumLossCoeffs, double velocityFpm, AirProperties air)
         {
+            // Backward compat: Treat runLength as the total used length, sumLossCoeffs as the used K.
             double frictionTotal = frictionPer100 * (runLength / 100.0);
             double vp = VelocityPressure_InWG(velocityFpm, air);
             double dynamicLoss = sumLossCoeffs * vp;
