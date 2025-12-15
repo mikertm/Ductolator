@@ -75,7 +75,7 @@ namespace RTM.Ductolator.Tests
             // Hazen Williams
             // 50 gpm, 2.067 in ID, C=120
             // Returns PSI per 100 ft
-            double loss = PlumbingCalculator.HazenWilliamsPsiPer100Ft(50, 2.067, 120);
+            double loss = PlumbingCalculator.HazenWilliamsPsiPer100Ft(50, 2.067, 120, 0.433);
 
             // Expected ~ 2.6 psi
             TestTolerance.AssertApproximatelyEqual(2.6, loss, 0.2, "Plumbing loss units check");

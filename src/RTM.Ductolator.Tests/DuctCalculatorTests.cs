@@ -70,7 +70,8 @@ namespace RTM.Ductolator.Tests
             // VP = rho * (V_fps)^2 / (2 * 32.174) * (1/5.202)
             double vFps = vFpm / 60.0;
             double rho = air.DensityLbmPerFt3;
-            double vpExpected = (rho * vFps * vFps) / (2.0 * 32.174) * (1.0 / 5.202);
+            // Using Units values for consistency
+            double vpExpected = (rho * vFps * vFps) / (2.0 * Units.Gc) * Units.InWgPerPsf;
 
             // 3. Re
             double dFt = diaIn / 12.0;

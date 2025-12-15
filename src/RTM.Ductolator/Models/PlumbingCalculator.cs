@@ -16,6 +16,12 @@ namespace RTM.Ductolator.Models
 
         // === Water properties & constants (imperial) ===
         private const double WaterDensity_LbmPerFt3 = 62.4; // at ~60 °F
+        private const double LbmPerSlug = 32.174;
+        private const double GravitationalAcceleration_FtPerS2 = 32.174;
+        private const double InPerFt = 12.0;
+        private const double FtPer100Ft = 100.0;
+        private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
+        private const double CfsToGpm = 448.831;
         private const double BtuhPerGpmDeltaTF = 500.0; // water, 60 °F
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
@@ -734,24 +740,28 @@ namespace RTM.Ductolator.Models
 
         // === Low-pressure natural gas sizing (IFGC/NFPA 54 style) ===
 
+        private const double InWcPerPsi = 27.7076;
         private const double GasHeatingValue_BtuPerScf = 1000.0; // typical pipeline gas
 
         /// <summary>
         /// IFGC/NFPA 54 low-pressure gas formula (Equation 4-1).
+        /// Q = 1.316 * sqrt((DeltaH * D^5) / (Cr * L))
+        /// Note: The constant 1.316 is for Q in KCFH (thousands of SCFH).
+        /// We return SCFH, so multiply by 1000.
         /// </summary>
         public static double GasFlow_Scfh(double diameterIn, double lengthFt, double pressureDropInWc,
                                           double specificGravity = 0.6, double basePressurePsi = 0.5)
         {
             if (diameterIn <= 0 || lengthFt <= 0 || pressureDropInWc <= 0 || specificGravity <= 0) return 0;
 
-            // IFGC Equation 4-1: Q = 1.316 * sqrt(ΔH * D^5 / (Cr * L))
+            // IFGC Equation 4-1: Q(kcfh) = 1.316 * sqrt(ΔH * D^5 / (Cr * L))
             // Cr for natural gas (SG=0.60) is 0.6094
             // For other specific gravities: Cr = 0.6094 * (SG / 0.60)
             double cr = 0.6094 * (specificGravity / 0.60);
             double d5 = Math.Pow(diameterIn, 5.0);
             double term = (pressureDropInWc * d5) / (cr * lengthFt);
             
-            return 1.316 * Math.Sqrt(term);
+            return 1000.0 * 1.316 * Math.Sqrt(term);
         }
 
         public static double GasFlow_Mbh(double diameterIn, double lengthFt, double pressureDropInWc,
