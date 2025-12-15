@@ -11,9 +11,7 @@ namespace RTM.Ductolator.Models
     /// </summary>
     public static class StormDrainageCalculator
     {
-        private const double InPerFt = 12.0;
         private const double ManningCoefficient = 1.486; // US customary Manning constant
-        private const double CfsToGpm = 448.831;
         private static double _defaultRoughnessN = 0.012;
 
         public static double DefaultRoughnessN
@@ -26,17 +24,16 @@ namespace RTM.Ductolator.Models
             }
         }
 
-        // IPC Table 1106.2 (2021) Vertical Conductors and Leaders
-        // Diameter (in) -> Max Flow (gpm)
-        private static readonly List<(double DiameterIn, double MaxGpm)> VerticalLeaderCapacity = new()
+        // Table Registry
+        private static readonly Dictionary<string, List<(double DiameterIn, double MaxGpm)>> StormLeaderTables = new();
+
+        public static void RegisterStormLeaderTable(string key, List<(double DiameterIn, double MaxGpm)> rows)
         {
-            (2.0, 30),
-            (3.0, 92),
-            (4.0, 192),
-            (5.0, 360),
-            (6.0, 563),
-            (8.0, 1208)
-        };
+            if (string.IsNullOrWhiteSpace(key) || rows == null) return;
+            StormLeaderTables[key] = rows.OrderBy(r => r.DiameterIn).ToList();
+        }
+
+        public static bool HasStormLeaderTable(string key) => !string.IsNullOrWhiteSpace(key) && StormLeaderTables.ContainsKey(key);
 
         /// <summary>
         /// Storm flow in gpm from roof/area (ft²) and rainfall intensity (in/hr):
@@ -60,12 +57,12 @@ namespace RTM.Ductolator.Models
 
             double FlowFromDiameter(double dIn)
             {
-                double dFt = dIn / InPerFt;
+                double dFt = Units.FromInchesToFeet(dIn);
                 double area = Math.PI * dFt * dFt / 4.0;
                 double wettedPerimeter = Math.PI * dFt;
                 double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
                 double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * CfsToGpm; // to gpm
+                return Units.FromCfsToGpm(qCfs);
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
@@ -85,64 +82,92 @@ namespace RTM.Ductolator.Models
 
             double FlowFromDiameter(double dIn)
             {
-                double dFt = dIn / InPerFt;
+                double dFt = Units.FromInchesToFeet(dIn);
                 double area = PartiallyFullArea(dFt, depthRatio);
                 double wettedPerimeter = PartiallyFullWettedPerimeter(dFt, depthRatio);
                 if (wettedPerimeter <= 0 || area <= 0) return 0;
                 double hydraulicRadius = area / wettedPerimeter;
                 double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * CfsToGpm; // to gpm
+                return Units.FromCfsToGpm(qCfs);
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
         }
 
         /// <summary>
-        /// Maximum gpm that can be carried by a vertical leader (IPC Table 1106.2).
+        /// Maximum gpm that can be carried by a vertical leader.
         /// </summary>
-        public static double VerticalLeaderMaxFlow(double diameterIn)
+        public static double VerticalLeaderMaxFlow(double diameterIn, double n, string key, out string warning)
         {
-            if (diameterIn <= 0) return 0;
-            var match = VerticalLeaderCapacity.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
-            if (match != default)
-                return match.MaxGpm;
+            double maxGpm = 0;
+            warning = string.Empty;
 
-            // Interpolate or extrapolate if not exact match found
-            // Since this is a code table, usually we pick the next smaller size's capacity (safe) or next larger size?
-            // Safer to return 0 or interpolate carefully.
-            // For now, let's find the largest size smaller than diameterIn.
-
-            var lower = VerticalLeaderCapacity.Where(x => x.DiameterIn <= diameterIn).OrderByDescending(x => x.DiameterIn).FirstOrDefault();
-
-            // If it's larger than our largest, we might need to extrapolate, but IPC stops at 8".
-            // Some extended tables go higher. Let's stick to the table logic.
-            if (lower != default)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                // If it's effectively equal, we returned it above.
-                // If we are between sizes (e.g. 2.5"), strictly speaking code requires next larger pipe size for the flow.
-                // So capacity of a 2.5" pipe is effectively the capacity of a 2" pipe? No, that's for sizing.
-                // Capacity of 2.5" pipe is at least capacity of 2" pipe.
-                return lower.MaxGpm;
+                warning = "No storm leader table key provided.";
+                return 0;
             }
 
+            if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
+            }
+
+            if (diameterIn <= 0) return 0;
+
+            var match = rows.FirstOrDefault(x => Math.Abs(x.DiameterIn - diameterIn) < 0.1);
+            if (match != default)
+            {
+                maxGpm = match.MaxGpm;
+                return maxGpm;
+            }
+
+            // Find smaller size
+            var lower = rows.Where(x => x.DiameterIn <= diameterIn).OrderByDescending(x => x.DiameterIn).FirstOrDefault();
+
+            if (lower != default)
+            {
+                maxGpm = lower.MaxGpm;
+                return maxGpm;
+            }
+
+            warning = "Diameter smaller than all entries in table.";
             return 0;
         }
 
         /// <summary>
-        /// Minimum vertical leader diameter (in) for a given flow using IPC Table 1106.2.
+        /// Minimum vertical leader diameter (in) for a given flow.
         /// </summary>
-        public static double VerticalLeaderDiameter(double flowGpm)
+        public static double VerticalLeaderDiameter(double flowGpm, double n, string key, out string warning)
         {
-            if (flowGpm <= 0) return 0;
+            double diameter = 0;
+            warning = string.Empty;
 
-            foreach (var entry in VerticalLeaderCapacity)
+            if (string.IsNullOrWhiteSpace(key))
             {
-                if (entry.MaxGpm >= flowGpm)
-                    return entry.DiameterIn;
+                warning = "No storm leader table key provided.";
+                return 0;
             }
 
-            // If flow exceeds largest table entry (8" = 1208 GPM), return 0 or largest?
-            // Return 0 to indicate "Too large for standard table"
+            if (!StormLeaderTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            {
+                warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
+                return 0;
+            }
+
+            if (flowGpm <= 0) return 0;
+
+            foreach (var entry in rows)
+            {
+                if (entry.MaxGpm >= flowGpm)
+                {
+                    diameter = entry.DiameterIn;
+                    return diameter;
+                }
+            }
+
+            warning = "Flow exceeds capacity of largest leader in table.";
             return 0;
         }
 
