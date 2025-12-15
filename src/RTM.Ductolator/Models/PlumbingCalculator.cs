@@ -16,12 +16,6 @@ namespace RTM.Ductolator.Models
 
         // === Water properties & constants (imperial) ===
         private const double WaterDensity_LbmPerFt3 = 62.4; // at ~60 °F
-        private const double LbmPerSlug = 32.174;
-        private const double GravitationalAcceleration_FtPerS2 = 32.174;
-        private const double InPerFt = 12.0;
-        private const double FtPer100Ft = 100.0;
-        private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
-        private const double CfsToGpm = 448.831;
         private const double BtuhPerGpmDeltaTF = 500.0; // water, 60 °F
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
