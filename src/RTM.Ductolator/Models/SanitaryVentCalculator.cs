@@ -11,8 +11,6 @@ namespace RTM.Ductolator.Models
     /// </summary>
     public static class SanitaryVentCalculator
     {
-        private const double InPerFt = 12.0;
-
         // Table Registries
         private static readonly Dictionary<string, List<(double DiameterIn, double MaxDfu)>> SanitaryBranchDfuTables = new();
         private static readonly Dictionary<string, (List<(double DiameterIn, double MaxDfu)> BranchRows, List<(double DiameterIn, double BaseMaxDfu)> StackRows)> VentDfuLengthTables = new();

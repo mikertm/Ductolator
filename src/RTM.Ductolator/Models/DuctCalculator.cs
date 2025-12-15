@@ -13,18 +13,6 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public const double DefaultGalvanizedRoughnessFt = 0.0003;
 
-        /// <summary>
-        /// Gravitational constant (lbm·ft / lbf·s²).
-        /// </summary>
-        public const double Gc = 32.174;
-
-        /// <summary>
-        /// Conversion from psf (lb/ft²) to in. w.g.
-        /// Standard water density ~ 62.4 lbm/ft³ => 1 psi = 27.7 in.wg => 144 psf = 27.7 in.wg => 1 psf = 0.192 in.wg.
-        /// Or 1 in.wg = 5.202 lb/ft² (at standard gravity/water density).
-        /// </summary>
-        public const double InWgPerPsf = 1.0 / 5.202; // Using 5.202 as standard conversion
-
         public const string FrictionFactorMethodName = "Darcy-Weisbach (Colebrook-White)";
         public const string AirModelName = "Standard atmosphere (density) + Sutherland viscosity (ν)";
 
@@ -40,9 +28,14 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static AirProperties AirAt(double tempF, double altitudeFt)
         {
-            double tempR = tempF + 459.67;
+            double tempR = tempF + Units.RankineZeroF;
+            // P_psia = 14.696 * (1 - 6.8754e-6 * Z_ft)^5.2559
             double pPsia = 14.696 * Math.Pow(1.0 - 6.8754e-6 * altitudeFt, 5.2559);
-            double rho = (pPsia * 144.0) / (53.35 * tempR);
+
+            // R_specific for dry air = 53.35 ft·lbf/(lbm·R)
+            // rho = P / (R * T)
+            // P in psf = pPsia * 144
+            double rho = (pPsia * Units.SqInchesPerSqFoot) / (53.35 * tempR);
 
             double muRef = 1.22e-5; // lbm/(ft·s) at 70 F (529.67 R)
             double tRef = 529.67;
@@ -59,20 +52,20 @@ namespace RTM.Ductolator.Models
         public static double Area_Round_Ft2(double diameterIn)
         {
             if (diameterIn <= 0) return 0;
-            return Math.PI * Math.Pow(diameterIn / 12.0, 2) / 4.0;
+            return Math.PI * Math.Pow(Units.FromInchesToFeet(diameterIn), 2) / 4.0;
         }
 
         public static double Circumference_Round_Ft(double diameterIn)
         {
             if (diameterIn <= 0) return 0;
-            return Math.PI * (diameterIn / 12.0);
+            return Math.PI * Units.FromInchesToFeet(diameterIn);
         }
 
         public static (double AreaFt2, double PerimeterFt) RectGeometry(double side1In, double side2In)
         {
             if (side1In <= 0 || side2In <= 0) return (0, 0);
-            double w = side1In / 12.0;
-            double h = side2In / 12.0;
+            double w = Units.FromInchesToFeet(side1In);
+            double h = Units.FromInchesToFeet(side2In);
             return (w * h, 2.0 * (w + h));
         }
 
@@ -90,7 +83,7 @@ namespace RTM.Ductolator.Models
 
             double perimeterIn = 2.0 * straightLen + Math.PI * b;
 
-            return (areaIn2 / 144.0, perimeterIn / 12.0);
+            return (Units.FromSqInchesToSqFeet(areaIn2), Units.FromInchesToFeet(perimeterIn));
         }
 
         /// <summary>
@@ -115,11 +108,6 @@ namespace RTM.Ductolator.Models
         public static double EquivalentRound_FlatOval(double minorIn, double majorIn)
         {
             if (minorIn <= 0 || majorIn <= 0) return 0;
-            // Use geometry helper to get A and P in base units (sq in, in) for the formula
-            // Formula expects A in sq inches and P in inches? Let's verify scaling.
-            // De ~ L. A ~ L^2. P ~ L.
-            // A^0.625 / P^0.25 ~ (L^2)^0.625 / L^0.25 = L^1.25 / L^0.25 = L^1.0. Correct.
-            // So units don't matter as long as they are consistent (in -> in).
 
             double a = Math.Max(minorIn, majorIn);
             double b = Math.Min(minorIn, majorIn);
@@ -155,8 +143,8 @@ namespace RTM.Ductolator.Models
         public static double Reynolds(double velocityFpm, double diameterIn, AirProperties air)
         {
             if (velocityFpm <= 0 || diameterIn <= 0 || air.KinematicViscosityFt2PerS <= 0) return 0;
-            double velFps = velocityFpm / 60.0;
-            double dFt = diameterIn / 12.0;
+            double velFps = Units.FromFpmToFps(velocityFpm);
+            double dFt = Units.FromInchesToFeet(diameterIn);
             return (velFps * dFt) / air.KinematicViscosityFt2PerS;
         }
 
@@ -183,7 +171,7 @@ namespace RTM.Ductolator.Models
                 return 64.0 / reynolds;
             }
 
-            double dFt = diameterIn / 12.0;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             double relRough = roughnessFt / dFt;
 
             // Initial guess using Haaland
@@ -209,7 +197,6 @@ namespace RTM.Ductolator.Models
             }
 
             // If not converged, return approximation (and maybe log/warn in real app)
-            // Haaland is accurate within +/- 2%
             return FrictionFactor_HaalandDarcy(reynolds, diameterIn, roughnessFt);
         }
 
@@ -222,7 +209,7 @@ namespace RTM.Ductolator.Models
             if (reynolds <= 0 || diameterIn <= 0) return 0;
             if (reynolds < 2300) return 64.0 / reynolds;
 
-            double dFt = diameterIn / 12.0;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             double relRough = roughnessFt / dFt;
 
             double term = Math.Pow(relRough / 3.7, 1.11) + 6.9 / reynolds;
@@ -239,12 +226,10 @@ namespace RTM.Ductolator.Models
         public static double VelocityPressure_InWG(double velocityFpm, AirProperties air)
         {
             if (velocityFpm <= 0) return 0;
-            double vFps = velocityFpm / 60.0;
-            // Dynamic Pressure (psf) = 0.5 * rho * v^2 / g_c ?
-            // Standard: P_dynamic = 0.5 * rho * v^2 (if consistent units)
-            // With g_c (lbm vs lbf): P_dyn_psf = rho_lbm * v^2 / (2 * g_c)
-            double vpPsf = (air.DensityLbmPerFt3 * vFps * vFps) / (2.0 * Gc);
-            return vpPsf * InWgPerPsf;
+            double vFps = Units.FromFpmToFps(velocityFpm);
+            // Dynamic Pressure (psf) = rho_lbm * v^2 / (2 * g_c)
+            double vpPsf = (air.DensityLbmPerFt3 * vFps * vFps) / (2.0 * Units.Gc);
+            return vpPsf * Units.InWgPerPsf;
         }
 
         /// <summary>
@@ -254,7 +239,7 @@ namespace RTM.Ductolator.Models
         public static double DpPer100Ft_InWG(double velocityFpm, double diameterIn, double f, AirProperties air)
         {
             if (diameterIn <= 0) return 0;
-            double dFt = diameterIn / 12.0;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             double vp = VelocityPressure_InWG(velocityFpm, air);
 
             // ΔP_100 = f * (100 / D_ft) * VP_inwg
@@ -335,7 +320,7 @@ namespace RTM.Ductolator.Models
         public static (double s1In, double s2In) RectangleFromAreaAndAR(double areaFt2, double ar)
         {
             if (areaFt2 <= 0 || ar <= 0) return (0, 0);
-            double areaIn2 = areaFt2 * 144.0;
+            double areaIn2 = Units.FromSqFeetToSqInches(areaFt2);
             double s2 = Math.Sqrt(areaIn2 / ar);
             double s1 = areaIn2 / s2;
             return (s1, s2);
@@ -364,7 +349,7 @@ namespace RTM.Ductolator.Models
         public static double FanBrakeHorsepower(double cfm, double totalPressureInWg, double fanEfficiency)
         {
             if (cfm <= 0 || totalPressureInWg <= 0 || fanEfficiency <= 0) return 0;
-            // 6356 is conversion constant
+            // bhp = (CFM * TP) / (6356 * eff) where 6356 is unit conversion constant
             return (cfm * totalPressureInWg) / (6356.0 * fanEfficiency);
         }
 

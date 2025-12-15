@@ -16,12 +16,6 @@ namespace RTM.Ductolator.Models
 
         // === Water properties & constants (imperial) ===
         private const double WaterDensity_LbmPerFt3 = 62.4; // at ~60 °F
-        private const double LbmPerSlug = 32.174;
-        private const double GravitationalAcceleration_FtPerS2 = 32.174;
-        private const double InPerFt = 12.0;
-        private const double FtPer100Ft = 100.0;
-        private const double GpmToCfs = 0.00222800926; // 1 gpm = 0.002228 ft³/s
-        private const double CfsToGpm = 448.831;
         private const double BtuhPerGpmDeltaTF = 500.0; // water, 60 °F
 
         // Kinematic viscosity of water at 60 °F (ASHRAE/ASPE tables)
@@ -123,7 +117,7 @@ namespace RTM.Ductolator.Models
         /// <summary>
         /// Convert a static head (ft) to psi for a given fluid density.
         /// </summary>
-        public static double PsiPerFtHeadFromDensity(double densityLbmPerFt3) => densityLbmPerFt3 / 144.0;
+        public static double PsiPerFtHeadFromDensity(double densityLbmPerFt3) => densityLbmPerFt3 * Units.PsiPerPsf;
 
         private static double Interpolate(double x0, double x1, double y0, double y1, double x)
         {
@@ -267,8 +261,8 @@ namespace RTM.Ductolator.Models
         {
             if (diameterIn <= 0) return 0;
 
-            double area = Area_Round_Ft2(diameterIn);
-            double flowCfs = gpm * GpmToCfs;
+            double area = DuctCalculator.Area_Round_Ft2(diameterIn);
+            double flowCfs = Units.FromGpmToCfs(gpm);
             return area > 0 ? flowCfs / area : 0;
         }
 
@@ -279,8 +273,8 @@ namespace RTM.Ductolator.Models
         {
             if (velocityFps <= 0 || diameterIn <= 0) return 0;
 
-            double area = Area_Round_Ft2(diameterIn);
-            return velocityFps * area / GpmToCfs;
+            double area = DuctCalculator.Area_Round_Ft2(diameterIn);
+            return Units.FromCfsToGpm(velocityFps * area);
         }
 
         /// <summary>
@@ -289,7 +283,7 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double Reynolds(double velocityFps, double diameterIn, double? kinematicViscosityFt2PerS = null)
         {
-            double dFt = diameterIn / InPerFt;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             if (velocityFps <= 0 || dFt <= 0) return 0;
 
             double nu = kinematicViscosityFt2PerS ?? WaterNu60F_Ft2PerS;
@@ -334,7 +328,7 @@ namespace RTM.Ductolator.Models
             if (lengthFt <= 0) return 0;
 
             double psiPer100 = HazenWilliamsPsiPer100Ft(gpm, diameterIn, cFactor, psiPerFtHead);
-            return psiPer100 * (lengthFt / FtPer100Ft);
+            return psiPer100 * (lengthFt / 100.0);
         }
 
         /// <summary>
@@ -451,7 +445,7 @@ namespace RTM.Ductolator.Models
         {
             if (reynolds <= 0 || diameterIn <= 0 || roughnessFt < 0) return 0;
 
-            double dFt = diameterIn / InPerFt;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             if (reynolds < 2000)
                 return 64.0 / reynolds;
 
@@ -473,8 +467,8 @@ namespace RTM.Ductolator.Models
             double f = FrictionFactor(re, diameterIn, roughnessFt);
             if (f <= 0) return 0;
 
-            double dFt = diameterIn / InPerFt;
-            double headPer100Ft = f * (FtPer100Ft / dFt) * (velocityFps * velocityFps) / (2.0 * GravitationalAcceleration_FtPerS2);
+            double dFt = Units.FromInchesToFeet(diameterIn);
+            double headPer100Ft = f * (100.0 / dFt) * (velocityFps * velocityFps) / (2.0 * Units.Gc);
             return headPer100Ft;
         }
 
@@ -493,7 +487,7 @@ namespace RTM.Ductolator.Models
             if (lengthFt <= 0) return 0;
 
             double psiPer100 = HeadLoss_Darcy_PsiPer100Ft(gpm, diameterIn, roughnessFt, kinematicViscosityFt2PerS, psiPerFtHead);
-            return psiPer100 * (lengthFt / FtPer100Ft);
+            return psiPer100 * (lengthFt / 100.0);
         }
 
         /// <summary>
@@ -504,9 +498,10 @@ namespace RTM.Ductolator.Models
             if (velocityFps <= 0 || kCoefficient < 0) return 0;
 
             double density = fluidDensityLbmPerFt3 ?? WaterDensity_LbmPerFt3;
-            double velocityPressure_LbPerFt2 = density / LbmPerSlug * velocityFps * velocityFps / 2.0;
-            double deltaP_LbPerFt2 = kCoefficient * velocityPressure_LbPerFt2;
-            return deltaP_LbPerFt2 / 144.0; // 1 psi = 144 lb/ft²
+            // P_dynamic (psf) = rho_lbm * v^2 / (2 * g_c)
+            double velocityPressure_Psf = (density * velocityFps * velocityFps) / (2.0 * Units.Gc);
+            double deltaP_Psf = kCoefficient * velocityPressure_Psf;
+            return deltaP_Psf * Units.PsiPerPsf;
         }
 
         /// <summary>
@@ -550,7 +545,7 @@ namespace RTM.Ductolator.Models
         {
             if (kCoefficient < 0 || diameterIn <= 0 || frictionFactor <= 0) return 0;
 
-            double dFt = diameterIn / InPerFt;
+            double dFt = Units.FromInchesToFeet(diameterIn);
             return kCoefficient * (dFt / (4.0 * frictionFactor));
         }
 
@@ -739,7 +734,6 @@ namespace RTM.Ductolator.Models
 
         // === Low-pressure natural gas sizing (IFGC/NFPA 54 style) ===
 
-        private const double InWcPerPsi = 27.7076;
         private const double GasHeatingValue_BtuPerScf = 1000.0; // typical pipeline gas
 
         /// <summary>
@@ -843,8 +837,8 @@ namespace RTM.Ductolator.Models
         public static double GasVelocityFps(double flowScfh, double diameterIn)
         {
             if (flowScfh <= 0 || diameterIn <= 0) return 0;
-            double flowCfs = flowScfh / 3600.0;
-            double area = Area_Round_Ft2(diameterIn);
+            double flowCfs = flowScfh / Units.SecondsPerMinute / Units.MinutesPerHour;
+            double area = DuctCalculator.Area_Round_Ft2(diameterIn);
             return area > 0 ? flowCfs / area : 0;
         }
 
@@ -884,7 +878,7 @@ namespace RTM.Ductolator.Models
             double a = GetWaveSpeedFps(material);
             double densitySlugPerFt3 = WaterDensity_LbmPerFt3 / LbmPerSlug;
             double deltaPLbPerFt2 = densitySlugPerFt3 * a * velocityChangeFps;
-            return deltaPLbPerFt2 / 144.0;
+            return deltaPLbPerFt2 / Units.PsfPerPsi;
         }
 
         public static double SurgePressureWithClosure(double flowVelocityFps, double pipeLengthFt, double closureTimeSeconds, PipeMaterialProfile material)

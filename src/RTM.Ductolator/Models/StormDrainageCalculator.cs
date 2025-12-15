@@ -11,9 +11,7 @@ namespace RTM.Ductolator.Models
     /// </summary>
     public static class StormDrainageCalculator
     {
-        private const double InPerFt = 12.0;
         private const double ManningCoefficient = 1.486; // US customary Manning constant
-        private const double CfsToGpm = 448.831;
         private static double _defaultRoughnessN = 0.012;
 
         public static double DefaultRoughnessN
@@ -59,12 +57,12 @@ namespace RTM.Ductolator.Models
 
             double FlowFromDiameter(double dIn)
             {
-                double dFt = dIn / InPerFt;
+                double dFt = Units.FromInchesToFeet(dIn);
                 double area = Math.PI * dFt * dFt / 4.0;
                 double wettedPerimeter = Math.PI * dFt;
                 double hydraulicRadius = wettedPerimeter > 0 ? area / wettedPerimeter : 0;
                 double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * CfsToGpm; // to gpm
+                return Units.FromCfsToGpm(qCfs);
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
@@ -84,13 +82,13 @@ namespace RTM.Ductolator.Models
 
             double FlowFromDiameter(double dIn)
             {
-                double dFt = dIn / InPerFt;
+                double dFt = Units.FromInchesToFeet(dIn);
                 double area = PartiallyFullArea(dFt, depthRatio);
                 double wettedPerimeter = PartiallyFullWettedPerimeter(dFt, depthRatio);
                 if (wettedPerimeter <= 0 || area <= 0) return 0;
                 double hydraulicRadius = area / wettedPerimeter;
                 double qCfs = (ManningCoefficient / nValue) * area * Math.Pow(hydraulicRadius, 2.0 / 3.0) * Math.Sqrt(slopeFtPerFt);
-                return qCfs * CfsToGpm; // to gpm
+                return Units.FromCfsToGpm(qCfs);
             }
 
             return SolveByBisection(flowGpm, minDiameterIn, maxDiameterIn, FlowFromDiameter);
