@@ -509,7 +509,8 @@ namespace RTM.Ductolator
                             SanitaryVentCalculator.RegisterVentDfuLengthTable(
                                 table.Key!,
                                 table.BranchRows?.Select(r => (r.DiameterIn, r.MaxDfu)).ToList() ?? new(),
-                                table.StackRows?.Select(r => (r.DiameterIn, r.BaseMaxDfu)).ToList() ?? new()
+                                table.StackRows?.Select(r => (r.DiameterIn, r.BaseMaxDfu)).ToList() ?? new(),
+                                table.LengthAdjustments?.Select(a => (a.MaxLengthFt, a.Factor)).ToList()
                             );
                         }
                     }

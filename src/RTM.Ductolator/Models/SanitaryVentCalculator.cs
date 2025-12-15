@@ -11,29 +11,38 @@ namespace RTM.Ductolator.Models
     /// </summary>
     public static class SanitaryVentCalculator
     {
-        // Table Registries
-        private static readonly Dictionary<string, List<(double DiameterIn, double MaxDfu)>> SanitaryBranchDfuTables = new();
-        private static readonly Dictionary<string, (List<(double DiameterIn, double MaxDfu)> BranchRows, List<(double DiameterIn, double BaseMaxDfu)> StackRows)> VentDfuLengthTables = new();
-
+        // Wrapper for legacy Register methods to populate the Provider
         public static void RegisterSanitaryBranchDfuTable(string key, List<(double DiameterIn, double MaxDfu)> rows)
         {
             if (string.IsNullOrWhiteSpace(key) || rows == null) return;
-            SanitaryBranchDfuTables[key] = rows.OrderBy(r => r.DiameterIn).ToList();
+            var table = new SimpleSanitaryBranchTable(key, rows);
+            PlumbingTableProvider.Instance.RegisterSanitaryBranchTable(table);
         }
 
-        public static bool HasSanitaryBranchDfuTable(string key) => !string.IsNullOrWhiteSpace(key) && SanitaryBranchDfuTables.ContainsKey(key);
+        public static bool HasSanitaryBranchDfuTable(string key)
+        {
+            return PlumbingTableProvider.Instance.GetSanitaryBranchTable(key) != null;
+        }
 
-        public static void RegisterVentDfuLengthTable(string key, List<(double DiameterIn, double MaxDfu)> branchRows, List<(double DiameterIn, double BaseMaxDfu)> stackRows)
+        public static void RegisterVentDfuLengthTable(
+            string key,
+            List<(double DiameterIn, double MaxDfu)>? branchRows,
+            List<(double DiameterIn, double BaseMaxDfu)> stackRows,
+            List<(double MaxLength, double Factor)>? lengthAdjustments = null)
         {
             if (string.IsNullOrWhiteSpace(key)) return;
-            VentDfuLengthTables[key] = (
-                branchRows?.OrderBy(r => r.DiameterIn).ToList() ?? new List<(double, double)>(),
-                stackRows?.OrderBy(r => r.DiameterIn).ToList() ?? new List<(double, double)>()
-            );
+
+            if (stackRows != null)
+            {
+                var table = new SimpleVentStackTable(key, stackRows, lengthAdjustments);
+                PlumbingTableProvider.Instance.RegisterVentStackTable(table);
+            }
         }
 
-        public static bool HasVentDfuLengthTable(string key) => !string.IsNullOrWhiteSpace(key) && VentDfuLengthTables.ContainsKey(key);
-
+        public static bool HasVentDfuLengthTable(string key)
+        {
+            return PlumbingTableProvider.Instance.GetVentStackTable(key) != null;
+        }
 
         /// <summary>
         /// Minimum nominal diameter (in) to carry the given sanitary DFU on a horizontal fixture branch.
@@ -41,7 +50,6 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double MinBranchDiameterFromDfu(double dfu, double slopeFtPerFt, string key, out string warning)
         {
-            double diameter = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
@@ -50,7 +58,8 @@ namespace RTM.Ductolator.Models
                 return 0;
             }
 
-            if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            var table = PlumbingTableProvider.Instance.GetSanitaryBranchTable(key);
+            if (table == null)
             {
                 warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
                 return 0;
@@ -58,17 +67,13 @@ namespace RTM.Ductolator.Models
 
             if (dfu <= 0) return 0;
 
-            foreach (var entry in rows)
+            double dia = table.GetMinDiameter(dfu);
+            if (dia <= 0)
             {
-                if (dfu <= entry.MaxDfu)
-                {
-                    diameter = entry.DiameterIn;
-                    return diameter;
-                }
+                warning = "Demand exceeds capacity in table.";
+                return 0;
             }
-
-            warning = "Demand exceeds capacity in table.";
-            return 0;
+            return dia;
         }
 
         /// <summary>
@@ -76,7 +81,6 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double AllowableFixtureUnits(double diameterIn, double slopeFtPerFt, string key, out string warning)
         {
-            double allowableDfu = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
@@ -85,7 +89,8 @@ namespace RTM.Ductolator.Models
                 return 0;
             }
 
-            if (!SanitaryBranchDfuTables.TryGetValue(key, out var rows) || rows.Count == 0)
+            var table = PlumbingTableProvider.Instance.GetSanitaryBranchTable(key);
+            if (table == null)
             {
                 warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
                 return 0;
@@ -93,15 +98,13 @@ namespace RTM.Ductolator.Models
 
             if (diameterIn <= 0) return 0;
 
-            var match = rows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
-            if (match != default)
+            double maxDfu = table.GetMaxDfu(diameterIn);
+            if (maxDfu <= 0)
             {
-                allowableDfu = match.MaxDfu;
-                return allowableDfu;
+                warning = "Diameter not found in table.";
+                return 0;
             }
-
-            warning = "Diameter not found in table.";
-            return 0;
+            return maxDfu;
         }
 
         /// <summary>
@@ -109,7 +112,6 @@ namespace RTM.Ductolator.Models
         /// </summary>
         public static double VentStackMinDiameter(double ventedDfu, double developedLengthFt, string key, out string warning)
         {
-            double diameter = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
@@ -118,7 +120,8 @@ namespace RTM.Ductolator.Models
                 return 0;
             }
 
-            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
+            var table = PlumbingTableProvider.Instance.GetVentStackTable(key);
+            if (table == null)
             {
                 warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
                 return 0;
@@ -126,24 +129,17 @@ namespace RTM.Ductolator.Models
 
             if (ventedDfu <= 0) return 0;
 
-            double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
-
-            foreach (var entry in tables.StackRows)
+            double dia = table.GetMinDiameter(ventedDfu, developedLengthFt);
+            if (dia <= 0)
             {
-                if (ventedDfu <= entry.BaseMaxDfu * lengthFactor)
-                {
-                    diameter = entry.DiameterIn;
-                    return diameter;
-                }
+                warning = "Demand exceeds vent stack capacity in table.";
+                return 0;
             }
-
-            warning = "Demand exceeds vent stack capacity in table.";
-            return 0;
+            return dia;
         }
 
         public static double VentStackAllowableFixtureUnits(double diameterIn, double developedLengthFt, string key, out string warning)
         {
-            double allowableDfu = 0;
             warning = string.Empty;
 
             if (string.IsNullOrWhiteSpace(key))
@@ -152,7 +148,8 @@ namespace RTM.Ductolator.Models
                 return 0;
             }
 
-            if (!VentDfuLengthTables.TryGetValue(key, out var tables) || tables.StackRows.Count == 0)
+            var table = PlumbingTableProvider.Instance.GetVentStackTable(key);
+            if (table == null)
             {
                 warning = $"Missing table '{key}'. Load plumbing-code-tables.json in the catalog folder.";
                 return 0;
@@ -160,16 +157,13 @@ namespace RTM.Ductolator.Models
 
             if (diameterIn <= 0) return 0;
 
-            double lengthFactor = developedLengthFt <= 100 ? 1.0 : developedLengthFt <= 200 ? 0.9 : 0.8;
-            var match = tables.StackRows.FirstOrDefault(e => Math.Abs(e.DiameterIn - diameterIn) < 1e-6);
-            if (match == default)
+            double maxDfu = table.GetMaxDfu(diameterIn, developedLengthFt);
+            if (maxDfu <= 0)
             {
                 warning = "Diameter not found in vent stack table.";
                 return 0;
             }
-
-            allowableDfu = match.BaseMaxDfu * lengthFactor;
-            return allowableDfu;
+            return maxDfu;
         }
     }
 }

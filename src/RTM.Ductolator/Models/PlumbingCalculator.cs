@@ -612,8 +612,7 @@ namespace RTM.Ductolator.Models
             double frictionPsi = psiPer100 * (usedLengthFt / 100.0);
 
             double velocity = VelocityFpsFromGpm(gpm, diameterIn);
-            double dynamicPsi = usedK * MinorLossPsi(velocity, 1.0, densityLbmPerFt3); // MinorLossPsi takes K, we pass 1.0 and multiply by usedK or just pass usedK
-            dynamicPsi = MinorLossPsi(velocity, usedK, densityLbmPerFt3);
+            double dynamicPsi = MinorLossPsi(velocity, usedK, densityLbmPerFt3);
 
             return frictionPsi + dynamicPsi;
         }
