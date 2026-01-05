@@ -1903,6 +1903,121 @@ namespace RTM.Ductolator
             }
         }
 
+        // === Mixed air UI ===
+
+        private void MixedAirCalcButton_Click(object sender, RoutedEventArgs e)
+        {
+            MixedAirStatus.Text = string.Empty;
+
+            if (!TryParseProvidedBox(MixedTotalCfmInput, out double totalCfmInput, out bool totalProvided))
+            {
+                MessageBox.Show("Total supply airflow must be numeric.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!TryParseProvidedBox(MixedOaCfmInput, out double oaCfmInput, out bool oaProvided))
+            {
+                MessageBox.Show("Outside air cfm must be numeric.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!TryParseProvidedBox(MixedRaCfmInput, out double raCfmInput, out bool raProvided))
+            {
+                MessageBox.Show("Return air cfm must be numeric.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!TryParseProvidedBox(MixedOaPercentInput, out double oaPercentInput, out bool percentProvided))
+            {
+                MessageBox.Show("Outside air percent must be numeric.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            int providedFlowInputs = new[] { totalProvided, oaProvided, raProvided, percentProvided }.Count(b => b);
+            if (providedFlowInputs < 2)
+            {
+                MessageBox.Show("Provide any two of total supply, OA cfm, RA cfm, or OA percent.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (percentProvided && (oaPercentInput < 0 || oaPercentInput > 100))
+            {
+                MessageBox.Show("Outside air percent must be between 0 and 100.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!TryParseProvidedBox(MixedAltitudeInput, out double altitudeFt, out bool altitudeProvided))
+            {
+                MessageBox.Show("Altitude must be numeric.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!double.TryParse(MixedOutdoorDbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double outdoorDb))
+            {
+                MessageBox.Show("Enter an outdoor dry-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!double.TryParse(MixedOutdoorWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double outdoorWb))
+            {
+                MessageBox.Show("Enter an outdoor wet-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!double.TryParse(MixedReturnDbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double returnDb))
+            {
+                MessageBox.Show("Enter a return/indoor dry-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!double.TryParse(MixedReturnWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double returnWb))
+            {
+                MessageBox.Show("Enter a return/indoor wet-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                var result = MixedAirCalculator.Calculate(
+                    totalProvided ? totalCfmInput : null,
+                    oaProvided ? oaCfmInput : null,
+                    raProvided ? raCfmInput : null,
+                    percentProvided ? oaPercentInput : null,
+                    outdoorDb,
+                    outdoorWb,
+                    returnDb,
+                    returnWb,
+                    altitudeProvided ? altitudeFt : 0);
+
+                SetBox(MixedTotalCfmInput, result.TotalCfm, "0.###");
+                SetBox(MixedOaCfmInput, result.OutsideAirCfm, "0.###");
+                SetBox(MixedRaCfmInput, result.ReturnAirCfm, "0.###");
+                SetBox(MixedOaPercentInput, result.OutsideAirPercent, "0.##");
+
+                SetBox(MixedTotalCfmOutput, result.TotalCfm, "0.###");
+                SetBox(MixedOaPercentOutput, result.OutsideAirPercent, "0.##");
+                SetBox(MixedOaCfmOutput, result.OutsideAirCfm, "0.###");
+                SetBox(MixedRaCfmOutput, result.ReturnAirCfm, "0.###");
+
+                SetBox(MixedAirDbOutput, result.MixedAir.DryBulbF, "0.##");
+                SetBox(MixedAirWbOutput, result.MixedAir.WetBulbF, "0.##");
+                SetBox(MixedAirDpOutput, result.MixedAir.DewPointF, "0.##");
+                SetBox(MixedAirHrOutput, result.MixedAir.HumidityRatioGrainsPerLb, "0.##");
+                SetBox(MixedAirEnthalpyOutput, result.MixedAir.EnthalpyBtuPerLb, "0.##");
+                SetBox(MixedAirDensityOutput, result.MixedAir.DensityLbPerFt3, "0.####");
+                SetBox(MixedAirSpVolOutput, result.MixedAir.SpecificVolumeFt3PerLb, "0.####");
+                SetBox(MixedAirMassFlowOutput, result.MixedAirMassFlowLbPerHr, "0.##");
+
+                string altitudeNote = altitudeProvided ? $"{altitudeFt:0} ft" : "sea level";
+                MixedAirStatus.Text = $"Solved mixed air with {providedFlowInputs} airflow inputs at {altitudeNote} using mass/enthalpy weighting.";
+            }
+            catch (Exception ex)
+            {
+                MixedAirStatus.Text = ex.Message;
+                MessageBox.Show($"Unable to calculate mixed air: {ex.Message}", "Calculation error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         // === Plumbing UI ===
 
         private void BtnPlCalc_Click(object sender, RoutedEventArgs e)
