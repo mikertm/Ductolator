@@ -1905,6 +1905,31 @@ namespace RTM.Ductolator
 
         // === Mixed air UI ===
 
+        private void MixedSimpleMode_Checked(object sender, RoutedEventArgs e)
+        {
+            if (MixedOutdoorWbPanel == null) return;
+            MixedOutdoorWbPanel.Visibility = Visibility.Collapsed;
+            MixedReturnWbPanel.Visibility = Visibility.Collapsed;
+            MixedAltitudePanel.Visibility = Visibility.Collapsed;
+
+            // Clear advanced values to avoid confusion
+            if (MixedOutdoorWbInput != null) MixedOutdoorWbInput.Text = string.Empty;
+            if (MixedReturnWbInput != null) MixedReturnWbInput.Text = string.Empty;
+            if (MixedAltitudeInput != null) MixedAltitudeInput.Text = string.Empty;
+
+            if (MixedAirStatus != null) MixedAirStatus.Text = "Mode: Simple (Dry-bulb volumetric weighted average).";
+        }
+
+        private void MixedSimpleMode_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (MixedOutdoorWbPanel == null) return;
+            MixedOutdoorWbPanel.Visibility = Visibility.Visible;
+            MixedReturnWbPanel.Visibility = Visibility.Visible;
+            MixedAltitudePanel.Visibility = Visibility.Visible;
+
+            if (MixedAirStatus != null) MixedAirStatus.Text = "Mode: Advanced (Full psychrometric analysis available).";
+        }
+
         private void MixedAirCalcButton_Click(object sender, RoutedEventArgs e)
         {
             MixedAirStatus.Text = string.Empty;
@@ -1958,11 +1983,8 @@ namespace RTM.Ductolator
                 return;
             }
 
-            if (!double.TryParse(MixedOutdoorWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double outdoorWb))
-            {
-                MessageBox.Show("Enter an outdoor wet-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            // Wet-bulb is optional for quick calc - only required for full psychrometric
+            bool hasOutdoorWb = double.TryParse(MixedOutdoorWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double outdoorWb);
 
             if (!double.TryParse(MixedReturnDbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double returnDb))
             {
@@ -1970,55 +1992,129 @@ namespace RTM.Ductolator
                 return;
             }
 
-            if (!double.TryParse(MixedReturnWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double returnWb))
-            {
-                MessageBox.Show("Enter a return/indoor wet-bulb temperature.", "Inputs required", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            // Wet-bulb is optional for quick calc - only required for full psychrometric
+            bool hasReturnWb = double.TryParse(MixedReturnWbInput?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double returnWb);
+            bool hasAllWetBulbs = hasOutdoorWb && hasReturnWb;
 
             try
             {
-                var result = MixedAirCalculator.Calculate(
+                // Solve airflows first
+                var (totalCfm, oaCfm, raCfm, oaPercent) = MixedAirCalculator.SolveAirflows(
                     totalProvided ? totalCfmInput : null,
                     oaProvided ? oaCfmInput : null,
                     raProvided ? raCfmInput : null,
-                    percentProvided ? oaPercentInput : null,
-                    outdoorDb,
-                    outdoorWb,
-                    returnDb,
-                    returnWb,
-                    altitudeProvided ? altitudeFt : 0);
+                    percentProvided ? oaPercentInput : null);
 
-                SetBox(MixedTotalCfmInput, result.TotalCfm, "0.###");
-                SetBox(MixedOaCfmInput, result.OutsideAirCfm, "0.###");
-                SetBox(MixedRaCfmInput, result.ReturnAirCfm, "0.###");
-                SetBox(MixedOaPercentInput, result.OutsideAirPercent, "0.##");
+                // Update input boxes with solved values
+                SetBox(MixedTotalCfmInput, totalCfm, "0.###");
+                SetBox(MixedOaCfmInput, oaCfm, "0.###");
+                SetBox(MixedRaCfmInput, raCfm, "0.###");
+                SetBox(MixedOaPercentInput, oaPercent, "0.##");
 
-                SetBox(MixedTotalCfmOutput, result.TotalCfm, "0.###");
-                SetBox(MixedOaPercentOutput, result.OutsideAirPercent, "0.##");
-                SetBox(MixedOaCfmOutput, result.OutsideAirCfm, "0.###");
-                SetBox(MixedRaCfmOutput, result.ReturnAirCfm, "0.###");
+                // Update solved airflows output
+                SetBox(MixedTotalCfmOutput, totalCfm, "0.###");
+                SetBox(MixedOaPercentOutput, oaPercent, "0.##");
+                SetBox(MixedOaCfmOutput, oaCfm, "0.###");
+                SetBox(MixedRaCfmOutput, raCfm, "0.###");
 
-                SetBox(MixedAirDbOutput, result.MixedAir.DryBulbF, "0.##");
-                SetBox(MixedAirWbOutput, result.MixedAir.WetBulbF, "0.##");
-                SetBox(MixedAirDpOutput, result.MixedAir.DewPointF, "0.##");
-                SetBox(MixedAirHrOutput, result.MixedAir.HumidityRatioGrainsPerLb, "0.##");
-                SetBox(MixedAirEnthalpyOutput, result.MixedAir.EnthalpyBtuPerLb, "0.##");
-                SetBox(MixedAirDensityOutput, result.MixedAir.DensityLbPerFt3, "0.####");
-                SetBox(MixedAirSpVolOutput, result.MixedAir.SpecificVolumeFt3PerLb, "0.####");
-                SetBox(MixedAirMassFlowOutput, result.MixedAirMassFlowLbPerHr, "0.##");
+                // Quick Calc - just needs dry-bulb temps (like Excel formula)
+                // Mixed = (OA_Temp × OA_CFM + RA_Temp × RA_CFM) / Total_CFM
+                double quickMixedDb = (outdoorDb * oaCfm + returnDb * raCfm) / totalCfm;
+                SetBox(QuickMixedDbOutput, quickMixedDb, "0.##");
 
-                string altitudeNote = altitudeProvided ? $"{altitudeFt:0} ft" : "sea level";
-                MixedAirStatus.Text = $"Solved mixed air with {providedFlowInputs} airflow inputs at {altitudeNote} using mass/enthalpy weighting.";
+                // Only calculate WB if we have both wet-bulb inputs
+                if (hasAllWetBulbs)
+                {
+                    double quickMixedWb = (outdoorWb * oaCfm + returnWb * raCfm) / totalCfm;
+                    SetBox(QuickMixedWbOutput, quickMixedWb, "0.##");
+
+                    // Full psychrometric calculation
+                    var result = MixedAirCalculator.Calculate(
+                        totalCfm, oaCfm, raCfm, oaPercent,
+                        outdoorDb, outdoorWb, returnDb, returnWb,
+                        altitudeProvided ? altitudeFt : 0);
+
+                    // Full psychrometric results
+                    SetBox(MixedAirDbOutput, result.MixedAir.DryBulbF, "0.##");
+                    SetBox(MixedAirWbOutput, result.MixedAir.WetBulbF, "0.##");
+                    SetBox(MixedAirDpOutput, result.MixedAir.DewPointF, "0.##");
+                    SetBox(MixedAirHrOutput, result.MixedAir.HumidityRatioGrainsPerLb, "0.##");
+                    SetBox(MixedAirEnthalpyOutput, result.MixedAir.EnthalpyBtuPerLb, "0.##");
+                    SetBox(MixedAirDensityOutput, result.MixedAir.DensityLbPerFt3, "0.####");
+                    SetBox(MixedAirSpVolOutput, result.MixedAir.SpecificVolumeFt3PerLb, "0.####");
+                    SetBox(MixedAirMassFlowOutput, result.MixedAirMassFlowLbPerHr, "0.##");
+
+                    // Show comparison between methods
+                    double dbDelta = Math.Abs(result.MixedAir.DryBulbF - quickMixedDb);
+                    double wbDelta = Math.Abs(result.MixedAir.WetBulbF - quickMixedWb);
+                    string comparison = dbDelta < 0.5 && wbDelta < 0.5
+                        ? "Methods agree within 0.5°F — density effects are minimal for these conditions."
+                        : $"Psychrometric differs by {dbDelta:0.#}°F DB, {wbDelta:0.#}°F WB due to density/humidity effects.";
+                    MixedAirComparisonNote.Text = comparison;
+
+                    string altitudeNote = altitudeProvided ? $"{altitudeFt:0} ft" : "sea level";
+                    MixedAirStatus.Text = $"Quick Calc + Full Psychrometric at {altitudeNote}.";
+                }
+                else
+                {
+                    // No wet-bulb: only show quick calc results
+                    SetBox(QuickMixedWbOutput, double.NaN, "N/A");
+                    if (MixedAirDbOutput != null) MixedAirDbOutput.Text = string.Empty;
+                    if (MixedAirWbOutput != null) MixedAirWbOutput.Text = string.Empty;
+                    if (MixedAirDpOutput != null) MixedAirDpOutput.Text = string.Empty;
+                    if (MixedAirHrOutput != null) MixedAirHrOutput.Text = string.Empty;
+                    if (MixedAirEnthalpyOutput != null) MixedAirEnthalpyOutput.Text = string.Empty;
+                    if (MixedAirDensityOutput != null) MixedAirDensityOutput.Text = string.Empty;
+                    if (MixedAirSpVolOutput != null) MixedAirSpVolOutput.Text = string.Empty;
+                    if (MixedAirMassFlowOutput != null) MixedAirMassFlowOutput.Text = string.Empty;
+                    MixedAirComparisonNote.Text = "Add wet-bulb temps for full psychrometric analysis.";
+                    MixedAirStatus.Text = $"Quick Calc done. Mixed DB = {quickMixedDb:0.#}°F";
+                }
             }
             catch (Exception ex)
             {
                 MixedAirStatus.Text = ex.Message;
+                MixedAirComparisonNote.Text = string.Empty;
                 MessageBox.Show($"Unable to calculate mixed air: {ex.Message}", "Calculation error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         // === Plumbing UI ===
+
+
+        private void MixedAirClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MixedTotalCfmInput != null) MixedTotalCfmInput.Text = string.Empty;
+            if (MixedOaCfmInput != null) MixedOaCfmInput.Text = string.Empty;
+            if (MixedRaCfmInput != null) MixedRaCfmInput.Text = string.Empty;
+            if (MixedOaPercentInput != null) MixedOaPercentInput.Text = string.Empty;
+
+            if (MixedOutdoorDbInput != null) MixedOutdoorDbInput.Text = string.Empty;
+            if (MixedOutdoorWbInput != null) MixedOutdoorWbInput.Text = string.Empty;
+            if (MixedReturnDbInput != null) MixedReturnDbInput.Text = string.Empty;
+            if (MixedReturnWbInput != null) MixedReturnWbInput.Text = string.Empty;
+            if (MixedAltitudeInput != null) MixedAltitudeInput.Text = string.Empty;
+
+            if (MixedTotalCfmOutput != null) MixedTotalCfmOutput.Text = string.Empty;
+            if (MixedOaPercentOutput != null) MixedOaPercentOutput.Text = string.Empty;
+            if (MixedOaCfmOutput != null) MixedOaCfmOutput.Text = string.Empty;
+            if (MixedRaCfmOutput != null) MixedRaCfmOutput.Text = string.Empty;
+
+            if (QuickMixedDbOutput != null) QuickMixedDbOutput.Text = string.Empty;
+            if (QuickMixedWbOutput != null) QuickMixedWbOutput.Text = string.Empty;
+
+            if (MixedAirDbOutput != null) MixedAirDbOutput.Text = string.Empty;
+            if (MixedAirWbOutput != null) MixedAirWbOutput.Text = string.Empty;
+            if (MixedAirDpOutput != null) MixedAirDpOutput.Text = string.Empty;
+            if (MixedAirHrOutput != null) MixedAirHrOutput.Text = string.Empty;
+            if (MixedAirEnthalpyOutput != null) MixedAirEnthalpyOutput.Text = string.Empty;
+            if (MixedAirDensityOutput != null) MixedAirDensityOutput.Text = string.Empty;
+            if (MixedAirSpVolOutput != null) MixedAirSpVolOutput.Text = string.Empty;
+            if (MixedAirMassFlowOutput != null) MixedAirMassFlowOutput.Text = string.Empty;
+
+            if (MixedAirComparisonNote != null) MixedAirComparisonNote.Text = string.Empty;
+            if (MixedAirStatus != null) MixedAirStatus.Text = string.Empty;
+        }
 
         private void BtnPlCalc_Click(object sender, RoutedEventArgs e)
         {
@@ -2652,8 +2748,8 @@ namespace RTM.Ductolator
 
             if (n <= 0) n = 0.012;
 
-            double capacity = StormDrainageCalculator.VerticalLeaderMaxFlow(leaderDiameter, n);
-            double sizedDia = StormDrainageCalculator.VerticalLeaderDiameter(leaderFlow, n);
+            double capacity = StormDrainageCalculator.VerticalLeaderMaxFlow(leaderDiameter);
+            double sizedDia = StormDrainageCalculator.VerticalLeaderDiameter(leaderFlow);
 
             SetBox(StormLeaderCapacityOutput, capacity, "0.0");
             SetBox(StormLeaderSizedOutput, sizedDia, "0.##");

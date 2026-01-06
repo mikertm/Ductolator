@@ -24,6 +24,15 @@ namespace RTM.Ductolator.Models
         AirState MixedAir,
         double MixedAirMassFlowLbPerHr);
 
+    /// <summary>
+    /// Simple volumetric weighted average result (matches Excel formula).
+    /// T_mix = (%OA × T_OA) + (%RA × T_RA)
+    /// </summary>
+    public record QuickCalcResult(
+        double MixedDryBulbF,
+        double MixedWetBulbF,
+        double OutsideAirPercent);
+
     public static class MixedAirCalculator
     {
         public static MixedAirResult Calculate(
@@ -88,7 +97,35 @@ namespace RTM.Ductolator.Models
                 totalMassLbPerS * 3600.0);
         }
 
-        private static (double TotalCfm, double OutsideAirCfm, double ReturnAirCfm, double OutsideAirPercent) SolveAirflows(
+        /// <summary>
+        /// Simple volumetric weighted average calculation (matches Excel formula).
+        /// T_mix = (%OA × T_OA) + (%RA × T_RA)
+        /// </summary>
+        public static QuickCalcResult CalculateQuick(
+            double? totalCfm,
+            double? outsideAirCfm,
+            double? returnAirCfm,
+            double? outsideAirPercent,
+            double outdoorDbF,
+            double outdoorWbF,
+            double returnDbF,
+            double returnWbF)
+        {
+            ValidateTemperatures(outdoorDbF, outdoorWbF, nameof(outdoorDbF), nameof(outdoorWbF));
+            ValidateTemperatures(returnDbF, returnWbF, nameof(returnDbF), nameof(returnWbF));
+
+            var flows = SolveAirflows(totalCfm, outsideAirCfm, returnAirCfm, outsideAirPercent);
+            double oaFraction = flows.OutsideAirPercent / 100.0;
+            double raFraction = 1.0 - oaFraction;
+
+            // Simple volumetric weighted average: T_mix = (%OA × T_OA) + (%RA × T_RA)
+            double mixedDbF = oaFraction * outdoorDbF + raFraction * returnDbF;
+            double mixedWbF = oaFraction * outdoorWbF + raFraction * returnWbF;
+
+            return new QuickCalcResult(mixedDbF, mixedWbF, flows.OutsideAirPercent);
+        }
+
+        public static (double TotalCfm, double OutsideAirCfm, double ReturnAirCfm, double OutsideAirPercent) SolveAirflows(
             double? totalCfm,
             double? outsideAirCfm,
             double? returnAirCfm,
@@ -223,7 +260,8 @@ namespace RTM.Ductolator.Models
 
         private static double EnthalpyBtuPerLb(double dryBulbC, double humidityRatio)
         {
-            double enthalpyKjPerKg = 1.006 * dryBulbC + humidityRatio * (2501 + 1.86 * dryBulbC);
+            // ASHRAE Fundamentals: h = 1.006*t + W*(2501 + 1.805*t) kJ/kg
+            double enthalpyKjPerKg = 1.006 * dryBulbC + humidityRatio * (2501 + 1.805 * dryBulbC);
             return enthalpyKjPerKg * 0.429922614; // kJ/kg to Btu/lbm
         }
 
